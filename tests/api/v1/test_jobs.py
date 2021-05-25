@@ -43,7 +43,9 @@ def test_create_jobs(remoteci_context, components_user_ids, job_user_id,
         'components': components_user_ids,
         'previous_job_id': job_user_id,
         'topic_id': topic_user_id,
-        'data': {'config': 'config'}
+        'data': {'config': 'config'},
+        'name': 'my-job-name',
+        'configuration': 'my-configuration'
     }
     job = remoteci_context.post('/api/v1/jobs', data=data)
     job_id = job.data['job']['id']
@@ -51,12 +53,13 @@ def test_create_jobs(remoteci_context, components_user_ids, job_user_id,
     assert job.status_code == 201
     assert job.data['job']['comment'] == 'kikoolol'
 
-    job = remoteci_context.get('/api/v1/jobs/%s' % job_id)
-    assert job.status_code == 200
-    assert job.data['job']['comment'] == 'kikoolol'
-    assert job.data['job']['previous_job_id'] == job_user_id
-    assert job.data['job']['team_id'] == team_user_id
-    assert job.data['job']['data'] == {'config': 'config'}
+    job = remoteci_context.get('/api/v1/jobs/%s' % job_id).data['job']
+    assert job['comment'] == 'kikoolol'
+    assert job['previous_job_id'] == job_user_id
+    assert job['team_id'] == team_user_id
+    assert job['data'] == {'config': 'config'}
+    assert job['name'] == 'my-job-name'
+    assert job['configuration'] == 'my-configuration'
 
 
 def test_create_jobs_with_team_components(user, remoteci_context, components_user_ids, job_user_id,
@@ -308,7 +311,7 @@ def test_get_all_jobs_with_embed_not_valid(remoteci_context):
 
 
 def test_update_job(admin, job_user_id):
-    data_update = {'status': 'failure', 'comment': 'bar'}
+    data_update = {'status': 'failure', 'comment': 'bar', 'status_reason': 'lol'}
 
     res = admin.get('/api/v1/jobs/%s' % job_user_id)
     job = res.data['job']
@@ -321,6 +324,7 @@ def test_update_job(admin, job_user_id):
     assert res.status_code == 200
     assert job['status'] == 'failure'
     assert job['comment'] == 'bar'
+    assert job['status_reason'] == 'lol'
 
 
 def test_success_update_job_status(admin, job_user_id):
