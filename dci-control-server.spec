@@ -119,7 +119,7 @@ The implementation of the DCI control server API.
 
 %prep -a
 %autosetup -n %{name}-%{version}
-sed -i "s/==/>=/g" requirements.txt
+sed -i -e "s/==/>=/g" -e "s/psycopg2-binary/psycopg2/" requirements.txt
 
 %build
 %if 0%{?with_python2}
