@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe78dc96_f65dbc77",
+        "filename": "tox.ini",
+        "patchSetId": 9
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2021-06-08T14:48:54Z",
+      "side": 1,
+      "message": "scl enable rh-postgresql96 \u0027pip install -U {packages}\u0027",
+      "revId": "50e5c6fabace8d8901fd742213e2177cfd8f7d77",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c8f9865_35c30cb9",
+        "filename": "tox.ini",
+        "patchSetId": 9
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2021-06-08T14:48:54Z",
+      "side": 1,
+      "message": "scl",
+      "revId": "50e5c6fabace8d8901fd742213e2177cfd8f7d77",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
