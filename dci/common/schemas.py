@@ -232,6 +232,10 @@ schedule_job_schema = {
         "dry_run": with_default(Properties.boolean, False),
         "topic_id": Properties.uuid,
         "components_ids": with_default(Properties.array, []),
+        "comment": with_default(Properties.string, None),
+        "state": with_default(Properties.enum(valid_resource_states), "active"),
+        "tags": with_default(Properties.array, []),
+        "data": with_default(Properties.json, {})
     },
     "required": ["topic_id"],
     "addiadditionalProperties": False,
