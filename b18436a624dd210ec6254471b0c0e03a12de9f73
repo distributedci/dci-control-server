@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6a34b31a_59a7251e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2021-06-09T10:44:07Z",
+      "side": 1,
+      "message": "This is outdated now that we\u0027re using psycopg2 in requirements.txt",
+      "range": {
+        "startLine": 15,
+        "startChar": 0,
+        "endLine": 15,
+        "endChar": 61
+      },
+      "revId": "b18436a624dd210ec6254471b0c0e03a12de9f73",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
