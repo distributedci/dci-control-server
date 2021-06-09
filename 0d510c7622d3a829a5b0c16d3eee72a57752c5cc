@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "51a5b528_c13baa72",
+        "filename": "requirements.txt",
+        "patchSetId": 11
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2021-06-09T12:30:26Z",
+      "side": 1,
+      "message": "ack",
+      "revId": "0d510c7622d3a829a5b0c16d3eee72a57752c5cc",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
