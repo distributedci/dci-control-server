@@ -456,18 +456,6 @@ JOIN_USER_REMOTECIS = sa.Table(
               nullable=False, primary_key=True)
 )
 
-LOGS = sa.Table(
-    'logs', metadata,
-    sa.Column('id', pg.UUID(as_uuid=True), primary_key=True,
-              default=utils.gen_uuid),
-    sa.Column('created_at', sa.DateTime(),
-              default=datetime.datetime.utcnow, nullable=False),
-    sa.Column('user_id', pg.UUID(as_uuid=True),
-              nullable=False),
-    sa.Index('logs_user_id_idx', 'user_id'),
-    sa.Column('action', sa.Text, nullable=False)
-)
-
 ISSUES = sa.Table(
     'issues', metadata,
     sa.Column('id', pg.UUID(as_uuid=True), primary_key=True,
