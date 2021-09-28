@@ -17,6 +17,10 @@ from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 
 
 def get_certificate_headers(remoteci_context, remoteci, product, topic, component):
+    print(remoteci_context.put(
+        "/api/v1/remotecis/%s/keys" % remoteci["id"],
+        headers={"If-match": remoteci["etag"]},
+    ).data)
     keys = remoteci_context.put(
         "/api/v1/remotecis/%s/keys" % remoteci["id"],
         headers={"If-match": remoteci["etag"]},
