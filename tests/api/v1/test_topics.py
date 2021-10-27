@@ -622,3 +622,30 @@ def test_get_topic_by_id_export_control_true(
     request = user.get("/api/v1/topics/%s" % RHEL80Topic["id"])
     assert request.status_code == 200
     assert request.data["topic"]["id"] == RHEL80Topic["id"]
+
+
+def test_get_topic_with_rolling_topic_name(admin, product):
+    assert admin.post(
+        "/api/v1/topics",
+        data={
+            "name": 'RHEL-8.4',
+            "product_id": product["id"],
+            "component_types": ["type1", "type2"],
+        },
+    ).status_code == 201
+    r = admin.post(
+        "/api/v1/topics",
+        data={
+            "name": 'RHEL-8.5',
+            "product_id": product["id"],
+            "component_types": ["type1", "type2"],
+        },
+    )
+    assert r.status_code == 201
+    RHEL_85 = r.data["topic"]
+    assert admin.get("/api/v1/topics").data["_meta"]["count"] == 2
+
+    r = admin.get("/api/v1/topics?where=name:RHEL-8.Y&limit=1&offset=0")
+    assert r.status_code == 200
+    assert r.data["_meta"]["count"] == 1
+    assert r.data["topics"][0]["id"] == RHEL_85["id"]

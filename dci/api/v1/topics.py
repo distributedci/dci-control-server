@@ -90,6 +90,28 @@ def get_topic_by_id(user, topic_id):
     return base.get_resource_by_id(user, topic, _TABLE, _EMBED_MANY)
 
 
+def replace_partial_name_with_full_name(args):
+    where = args["where"]
+    new_where = []
+    if where:
+        for w in where:
+            new_w = w
+            if w.startswith("name:") and w.endswith(".Y"):
+                topic_name = new_w.split(".Y")[0].split("name:")[1]
+                topics_rows = flask.g.db_conn.execute(
+                    sql.select([models.TOPICS])
+                    .where(models.TOPICS.c.name.contains(topic_name))
+                    .where(models.TOPICS.c.state != "archived")
+                    .order_by(sql.desc(models.TOPICS.c.created_at))
+                )
+                topic = topics_rows.fetchone()
+                if topic:
+                    new_w = "name:%s" % topic.name
+            new_where.append(new_w)
+    args["where"] = new_where
+    return args
+
+
 @api.route('/topics', methods=['GET'])
 @decorators.login_required
 def get_all_topics(user):
@@ -109,6 +131,8 @@ def get_all_topics(user):
         return [up['products_id'] for up in user_products]
 
     args = check_and_get_args(flask.request.args.to_dict())
+    args = replace_partial_name_with_full_name(args)
+
     # if the user is an admin then he can get all the topics
     q_get_topics = v1_utils.QueryBuilder(_TABLE, args, _T_COLUMNS)
 
