@@ -549,7 +549,7 @@ def test_get_job_not_found(admin):
 def test_get_jobs_with_schedule(remoteci_context, topic_user_id,
                                 components_user_ids):
     # schedule a job
-    data = {'topic_id': topic_user_id, 'comment': 'kikoolol'}
+    data = {'topic_id': topic_user_id, 'comment': 'kikoolol', 'components_ids': components_user_ids}
     job = remoteci_context.post('/api/v1/jobs/schedule', data=data)
     assert job.status_code == 201
     job_id = job.data['job']['id']
