@@ -64,8 +64,7 @@ def _verify_component_and_topic_access(user, component):
         if user.is_not_in_team(component_team_id):
             dci_exc.Unauthorized()
     else:
-        topic = v1_utils.verify_existence_and_get(component.topic_id,
-                                                  models.TOPICS)
+        topic = base.get_resource_orm(models2.Topic, component.topic_id)
         export_control.verify_access_to_topic(user, topic)
 
 
