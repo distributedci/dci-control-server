@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f420cc43_8b5296fd",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-03T10:40:40Z",
+      "side": 1,
+      "message": "So this todo is done ? :D",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 47
+      },
+      "revId": "61fd6e0871c4f18526466f7d3898102973f32550",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "35a58732_0349fe45",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-03T10:40:40Z",
+      "side": 1,
+      "message": "It is hard to read\nIf possible, please keep black formatting",
+      "range": {
+        "startLine": 104,
+        "startChar": 8,
+        "endLine": 109,
+        "endChar": 38
+      },
+      "revId": "61fd6e0871c4f18526466f7d3898102973f32550",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b876086c_554987db",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 548,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-03T10:40:40Z",
+      "side": 1,
+      "message": "let me check with dci-ui and python-dciclient if this is not breaking the api",
+      "range": {
+        "startLine": 548,
+        "startChar": 4,
+        "endLine": 548,
+        "endChar": 34
+      },
+      "revId": "61fd6e0871c4f18526466f7d3898102973f32550",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
