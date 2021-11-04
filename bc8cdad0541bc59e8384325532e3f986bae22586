@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9559961d_ee949b5e",
+        "filename": "dci/api/v1/files.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2021-11-04T20:35:53Z",
+      "side": 1,
+      "message": "it also needs to have the same URL. This way, it will filter jobs from code changes as they will have a GitHub PR or Gerrit Review URL.",
+      "revId": "bc8cdad0541bc59e8384325532e3f986bae22586",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
