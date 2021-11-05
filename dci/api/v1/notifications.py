@@ -117,6 +117,7 @@ def send_events(events):
 
 
 def dispatcher(job):
+    print('rtiti')
     events = []
     emails = get_emails(job['remoteci_id'])
     email_event = get_email_event(job, emails)
