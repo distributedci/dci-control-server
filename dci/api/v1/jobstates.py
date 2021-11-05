@@ -77,6 +77,7 @@ def serialize_job(user, job):
         result_with_testcases = result.copy()
         result_with_testcases["testcases"] = jsonunit["testscases"]
         results_with_testcases.append(result_with_testcases)
+    print(results_with_testcases, "results_with_testcases")
     job["results"] = results_with_testcases
     return job
 
