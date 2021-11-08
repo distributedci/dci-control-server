@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c48b4b17_0938524a",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-08T10:06:31Z",
+      "side": 1,
+      "message": "not sure about this one\nAPI test should stay the same, components_ids should not be required",
+      "range": {
+        "startLine": 552,
+        "startChar": 0,
+        "endLine": 552,
+        "endChar": 100
+      },
+      "revId": "07d349c9dc840b22cd16b97ff179741a2ed74e7e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
