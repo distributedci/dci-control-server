@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "206b2961_8d148da1",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-10T10:59:15Z",
+      "side": 0,
+      "message": "Why did you remove this elements and introduced duplication in models2.py ?",
+      "range": {
+        "startLine": 27,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 0
+      },
+      "revId": "02448fd4b8c19c42edcf1a1e96c01ef2546be2be",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
