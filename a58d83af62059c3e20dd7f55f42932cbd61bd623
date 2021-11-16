@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e9c6d708_4bc89d8a",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2021-11-16T13:14:45Z",
+      "side": 1,
+      "message": "I see on one side \"endswith\" and on the other side \"contains\".\n\nIs that okay or should the code be \u0027query.filder(m_column.startswith(value.replace(\"*\", \"\"))\u0027 ?",
+      "range": {
+        "startLine": 114,
+        "startChar": 12,
+        "endLine": 115,
+        "endChar": 79
+      },
+      "revId": "a58d83af62059c3e20dd7f55f42932cbd61bd623",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
