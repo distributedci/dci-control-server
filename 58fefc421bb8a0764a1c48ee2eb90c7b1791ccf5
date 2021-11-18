@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6cb17e4b_0ec937aa",
+        "filename": "dci/api/v1/tags.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2021-11-18T10:39:40Z",
+      "side": 0,
+      "message": "we should also remove the tags table",
+      "revId": "58fefc421bb8a0764a1c48ee2eb90c7b1791ccf5",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
