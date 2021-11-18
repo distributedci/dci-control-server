@@ -610,3 +610,15 @@ file_upload_certification_schema = {
     "required": ["username", "password", "certification_id"],
     "additionalProperties": False,
 }
+
+
+###############################################################################
+#                                                                             #
+#                                  Analytics schema                           #
+#                                                                             #
+###############################################################################
+
+analytics_task_duration_cumulated = {
+    "topic_id": Properties.uuid,
+    "team_id": Properties.uuid,
+}
