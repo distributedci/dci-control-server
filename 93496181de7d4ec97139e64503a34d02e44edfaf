@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bef0cfac_92626db9",
+        "filename": "dci/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-19T13:37:37Z",
+      "side": 1,
+      "message": "you need a depends-on dci-infra-data-prod and dci-infra-data-ci change them",
+      "range": {
+        "startLine": 85,
+        "startChar": 0,
+        "endLine": 85,
+        "endChar": 17
+      },
+      "revId": "93496181de7d4ec97139e64503a34d02e44edfaf",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
