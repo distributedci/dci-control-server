@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "ce187443_b7df9fbd",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 624,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-11-23T09:23:21Z",
+      "side": 1,
+      "message": "Schema is not good, something like this is required\n\nanalytics_task_duration_cumulated_properties \u003d {\n    \"topic_id\": Properties.uuid,\n    \"remoteci_id\": Properties.uuid,\n}\nfile_upload_certification_schema \u003d {\n    \"type\": \"object\",\n    \"properties\": analytics_task_duration_cumulated_properties,\n    \"required\": [\"topic_id\", \"remoteci_id\"],\n    \"additionalProperties\": False,\n}\n\nalso remoteci_id instead of team_id no ?",
+      "range": {
+        "startLine": 621,
+        "startChar": 0,
+        "endLine": 624,
+        "endChar": 1
+      },
+      "revId": "93496181de7d4ec97139e64503a34d02e44edfaf",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "bef0cfac_92626db9",
         "filename": "dci/settings.py",
         "patchSetId": 1
