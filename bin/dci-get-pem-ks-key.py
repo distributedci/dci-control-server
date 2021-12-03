@@ -43,7 +43,6 @@ def get_latest_public_key(sso_url, realm):
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
 
-
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         usage = """
