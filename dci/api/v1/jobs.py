@@ -370,6 +370,7 @@ def get_all_jobs(user, topic_id=None):
         options(sa_orm.joinedload('files'))
     query = declarative.handle_args(query, models2.Job, args)
     nb_jobs = query.count()
+    query = declarative.handle_pagination(query, args)
 
     jobs = [j.serialize(ignore_columns=['data']) for j in query.all()]
 

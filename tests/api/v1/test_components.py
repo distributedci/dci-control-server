@@ -232,12 +232,14 @@ def test_get_all_components_with_pagination(admin, topic_id):
             '/api/v1/topics/%s/components?limit=5&offset=%s' %
             (topic_id, (i * 5))).data
         assert len(cs['components']) == 5
+        assert cs['_meta']['count'] == 20
 
     # if offset is out of bound, the api returns an empty list
     cs = admin.get(
         '/api/v1/topics/%s/components?limit=5&offset=300' % topic_id)
     assert cs.status_code == 200
     assert cs.data['components'] == []
+    assert cs.data['_meta']['count'] == 20
 
 
 def test_get_all_components_with_where(admin, topic_id):

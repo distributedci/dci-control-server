@@ -116,14 +116,17 @@ def test_get_all_remotecis_with_pagination(user, team_user_id):
     # verify limit and offset are working well
     remotecis = user.get('/api/v1/remotecis?limit=2&offset=0').data
     assert len(remotecis['remotecis']) == 2
+    assert remotecis['_meta']['count'] == 4
 
     remotecis = user.get('/api/v1/remotecis?limit=2&offset=2').data
     assert len(remotecis['remotecis']) == 2
+    assert remotecis['_meta']['count'] == 4
 
     # if offset is out of bound, the api returns an empty list
     remotecis = user.get('/api/v1/remotecis?limit=5&offset=300')
     assert remotecis.status_code == 200
     assert remotecis.data['remotecis'] == []
+    assert remotecis.data['_meta']['count'] == 4
 
 
 def test_get_all_remotecis_with_sort(user, team_user_id):

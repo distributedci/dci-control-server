@@ -199,14 +199,17 @@ def test_get_all_jobs_with_pagination(remoteci_context,
     # verify limit and offset are working well
     jobs = remoteci_context.get('/api/v1/jobs?limit=2&offset=0').data
     assert len(jobs['jobs']) == 2
+    assert jobs['_meta']['count'] == 4
 
     jobs = remoteci_context.get('/api/v1/jobs?limit=2&offset=2').data
     assert len(jobs['jobs']) == 2
+    assert jobs['_meta']['count'] == 4
 
     # if offset is out of bound, the api returns an empty list
     jobs = remoteci_context.get('/api/v1/jobs?limit=5&offset=300')
     assert jobs.status_code == 200
     assert jobs.data['jobs'] == []
+    assert jobs.data['_meta']['count'] == 4
 
 
 def test_get_all_jobs_with_subresources(admin, remoteci_context, team_user_id,

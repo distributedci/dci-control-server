@@ -164,14 +164,17 @@ def test_get_all_users_with_pagination(admin, team_id):
     # verify limit and offset are working well
     users = admin.get('/api/v1/users?limit=2&offset=0').data
     assert len(users['users']) == 2
+    assert users['_meta']['count'] == current_users + 4
 
     users = admin.get('/api/v1/users?limit=2&offset=2').data
     assert len(users['users']) == 2
+    assert users['_meta']['count'] == current_users + 4
 
     # if offset is out of bound, the api returns an empty list
     users = admin.get('/api/v1/users?limit=5&offset=300')
     assert users.status_code == 200
     assert users.data['users'] == []
+    assert users.data['_meta']['count'] == current_users + 4
 
 
 def test_get_all_users_with_sort(admin, team_id):

@@ -115,8 +115,4 @@ def handle_args(query, model_object, args):
                 query = query.filter(m_column.contains(value.replace("*", "")))
             else:
                 query = query.filter(m_column == value)
-    if args.get("limit"):
-        query = query.limit(args.get("limit"))
-    if args.get("offset"):
-        query = query.offset(args.get("offset"))
     return query
