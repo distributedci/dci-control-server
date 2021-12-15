@@ -29,23 +29,12 @@ depends_on = None
 
 from alembic import op
 import datetime
-from dci.db import models
 import sqlalchemy as sa
-from sqlalchemy import sql
 
 
 def upgrade():
-    db_conn = op.get_bind()
     op.add_column('components', sa.Column('released_at', sa.DateTime(),
                   default=datetime.datetime.utcnow, nullable=True))
-
-    query = sql.select([models.COMPONENTS])
-    components = db_conn.execute(query).fetchall()
-
-    for c in components:
-        query = models.COMPONENTS.update().where(models.COMPONENTS.c.id == c.id).\
-            values(released_at=c.created_at)
-        db_conn.execute(query)
 
 
 def downgrade():

@@ -58,6 +58,9 @@ COMPONENTS = sa.Table(
     sa.Column('title', sa.Text),
     sa.Column('message', sa.Text),
     sa.Column('url', sa.Text),
+    sa.Column('product_id', pg.UUID(as_uuid=True),
+              sa.ForeignKey('products.id', ondelete='CASCADE'),
+              nullable=True),
     sa.Column('topic_id', pg.UUID(as_uuid=True),
               sa.ForeignKey('topics.id', ondelete='CASCADE'),
               nullable=True),
@@ -68,7 +71,7 @@ COMPONENTS = sa.Table(
              'name', 'topic_id', 'type',
              unique=True,
              postgresql_where=sa.sql.text("components.state = 'active' AND components.team_id is NULL")),
-    sa.UniqueConstraint('name', 'topic_id', 'type', 'team_id', name='name_topic_id_type_team_id_unique'),
+    sa.UniqueConstraint('name', 'product_id', 'topic_id', 'type', 'team_id', name='components_name_product_id_topic_id_key'),
     sa.Index('components_topic_id_idx', 'topic_id'),
 
     sa.Column('state', STATES, default='active'),

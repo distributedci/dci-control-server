@@ -325,7 +325,7 @@ class Component(dci_declarative.Mixin, Base):
                                'name', 'topic_id', 'type',
                                unique=True,
                                postgresql_where=sa.sql.text("components.state = 'active' AND components.team_id is NULL")),
-                      sa.UniqueConstraint('name', 'topic_id', 'type', 'team_id', name='name_topic_id_type_team_id_unique'),
+                      sa.UniqueConstraint('name', 'product_id', 'topic_id', 'type', 'team_id', name='components_name_product_id_topic_id_key'),
                       sa.Index('components_topic_id_idx', 'topic_id'))
 
     id = sa.Column(pg.UUID(as_uuid=True),
@@ -350,6 +350,7 @@ class Component(dci_declarative.Mixin, Base):
     title = sa.Column(sa.Text)
     message = sa.Column(sa.Text)
     url = sa.Column(sa.Text)
+    product_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('products.id', ondelete='CASCADE'), nullable=True)
     topic_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('topics.id', ondelete='CASCADE'), nullable=True)
     team_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('teams.id', ondelete='CASCADE'), nullable=True)
     state = sa.Column(STATES, default='active')
