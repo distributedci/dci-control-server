@@ -186,6 +186,38 @@ def test_create_component_with_release_at(admin, topic_id):
     assert cmpt.data['component']['released_at'] == released_at
 
 
+def test_create_team_components_on_product(remoteci_context, admin, product_id, team_user_id):
+    data = {
+        'name': 'pname',
+        'type': 'gerrit_review',
+        'url': 'http://example.com/',
+        'state': 'active'}
+    pc = remoteci_context.post('/api/v1/components', data=data)
+    assert pc.status_code == 401
+
+    # missing product_id and team_id
+    data['product_id'] = product_id
+    pc = remoteci_context.post('/api/v1/components', data=data)
+    assert pc.status_code == 401
+
+    data['team_id'] = team_user_id
+    # remoteci team is not associated to the product_id
+    pc = remoteci_context.post('/api/v1/components', data=data)
+    assert pc.status_code == 401
+
+    # associate remoteci team to the product_id
+    admin.post('/api/v1/products/%s/teams' % product_id, data={'team_id': team_user_id})
+    pc = remoteci_context.post('/api/v1/components', data=data)
+    assert pc.status_code == 201
+    pc = pc.data
+    pc_id = pc['component']['id']
+    gc = remoteci_context.get('/api/v1/components/%s' % pc_id).data
+    assert gc['component']['name'] == 'pname'
+    assert gc['component']['state'] == 'active'
+    assert gc['component']['product_id'] == product_id
+    assert gc['component']['topic_id'] is None
+
+
 def test_get_all_components(admin, topic_id):
     created_c_ids = []
     for i in range(5):

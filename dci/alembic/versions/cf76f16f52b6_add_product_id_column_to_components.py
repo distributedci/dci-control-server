@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Red Hat, Inc
+# Copyright (C) 2021 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,28 +13,29 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""add release_date to components
+"""add product_id column to components
 
-Revision ID: 26cfed00671
-Revises: 2a66d59901a
-Create Date: 2020-09-29 12:45:37.073362
+Revision ID: cf76f16f52b6
+Revises: 61f71f157057
+Create Date: 2021-12-15 15:40:08.679191
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '26cfed00671'
-down_revision = '2a66d59901a'
+revision = 'cf76f16f52b6'
+down_revision = '61f71f157057'
 branch_labels = None
 depends_on = None
 
 from alembic import op
-import datetime
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql as pg
 
 
 def upgrade():
-    op.add_column('components', sa.Column('released_at', sa.DateTime(),
-                  default=datetime.datetime.utcnow, nullable=True))
+    op.add_column('components', sa.Column('product_id', pg.UUID(as_uuid=True),
+                                          sa.ForeignKey('products.id', ondelete='CASCADE'),
+                                          nullable=True))
 
 
 def downgrade():

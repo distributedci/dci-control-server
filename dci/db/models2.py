@@ -350,6 +350,7 @@ class Component(dci_declarative.Mixin, Base):
     title = sa.Column(sa.Text)
     message = sa.Column(sa.Text)
     url = sa.Column(sa.Text)
+    product_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('products.id', ondelete='CASCADE'), nullable=True)
     topic_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('topics.id', ondelete='CASCADE'), nullable=True)
     team_id = sa.Column(pg.UUID(as_uuid=True), sa.ForeignKey('teams.id', ondelete='CASCADE'), nullable=True)
     state = sa.Column(STATES, default='active')

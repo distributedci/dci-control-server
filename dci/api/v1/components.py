@@ -89,6 +89,15 @@ def create_components(user):
         if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
             raise dci_exc.Unauthorized()
 
+    if user.is_remoteci() and values.get("product_id") is not None:
+        if not export_control.is_teams_associated_to_product(user.teams_ids, values["product_id"]):
+            raise dci_exc.DCIException("remoteci team is not associated to the product", status_code=401)
+
+    if user.is_remoteci() and values.get("topic_id") is not None:
+        topic = base.get_resource_orm(models2.Topic, values["topic_id"])
+        if not export_control.has_access_to_topic(user, topic):
+            raise dci_exc.DCIException("topic is not accessible from the remoteci team", status_code=401)
+
     values["type"] = values["type"].lower()
 
     c = base.create_resource_orm(models2.Component, values)
