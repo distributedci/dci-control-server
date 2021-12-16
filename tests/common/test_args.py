@@ -15,6 +15,7 @@
 # under the License.
 import pytest
 
+from datetime import datetime
 from dci.common.exceptions import DCIException
 from dci.common.schemas import check_json_is_valid, args_schema
 from dci.common.args import parse_args
@@ -74,6 +75,8 @@ def test_parse_args():
         "sort": "field_1,field_2",
         "where": "field_1:value_1,field_2:value_2",
         "embed": "resource_1,resource_2",
+        "created_after": "2017-08-21T12:27:00.909914",
+        "updated_after": "2018-08-22"
     }
     args_expected = {
         "limit": 50,
@@ -81,5 +84,7 @@ def test_parse_args():
         "sort": ["field_1", "field_2"],
         "where": ["field_1:value_1", "field_2:value_2"],
         "embed": ["resource_1", "resource_2"],
+        "created_after": datetime.strptime("2017-08-21T12:27:00.909914", "%Y-%m-%dT%H:%M:%S.%f"),
+        "updated_after": datetime.strptime("2018-08-22", "%Y-%m-%d")
     }
     assert parse_args(args) == args_expected

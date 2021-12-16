@@ -73,6 +73,12 @@ all_validators["is_key_value_csv"] = _is_key_value_csv
 def _is_date_isoformat(validator, value, instance, schema):
     try:
         datetime.strptime(instance, "%Y-%m-%dT%H:%M:%S.%f")
+        return
+    except ValueError:
+        pass
+
+    try:
+        datetime.strptime(instance, "%Y-%m-%d")
     except ValueError:
         raise ValidationError("'%s' is not an iso format date" % instance)
 
@@ -153,6 +159,8 @@ args_schema = {
         "sort": Properties.string,
         "where": Properties.key_value_csv,
         "embed": Properties.string,
+        "created_after": Properties.isoformat_date,
+        "updated_after": Properties.isoformat_date
     },
     "dependencies": {
         "limit": {"required": ["offset"]},
