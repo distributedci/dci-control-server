@@ -63,10 +63,11 @@ class Mixin(object):
 
 
 def handle_pagination(query, args):
+    limit = 20
     if args.get('limit'):
-        query = query.limit(args.get('limit', 20))
-    if args.get('offset'):
-        query = query.offset(args.get('offset', 0))
+        limit = min(args.get('limit'), 200)
+    query = query.offset(args.get('offset', 0))
+    query = query.limit(limit)
     return query
 
 
@@ -115,8 +116,4 @@ def handle_args(query, model_object, args):
                 query = query.filter(m_column.contains(value.replace("*", "")))
             else:
                 query = query.filter(m_column == value)
-    if args.get("limit"):
-        query = query.limit(args.get("limit"))
-    if args.get("offset"):
-        query = query.offset(args.get("offset"))
     return query
