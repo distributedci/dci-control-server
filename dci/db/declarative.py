@@ -24,8 +24,8 @@ class Mixin(object):
         def _get_nested_columns():
             _res = {}
             for ic in ignore_columns:
-                if '.' in ic:
-                    k, v = ic.split('.')
+                if "." in ic:
+                    k, v = ic.split(".")
                     if k not in _res:
                         _res[k] = [v]
                     else:
@@ -57,7 +57,7 @@ class Mixin(object):
                 if attr in nested_ignore_columns:
                     _ignore_columns = nested_ignore_columns[attr]
                 _dict[attr] = attr_obj.serialize(ignore_columns=_ignore_columns)
-            elif not attr.startswith('_'):
+            elif not attr.startswith("_"):
                 _dict[attr] = self.__dict__[attr]
         return _dict
 
@@ -66,8 +66,8 @@ def handle_pagination(query, args):
     limit_max = 200
     default_limit = 20
     default_offset = 0
-    query = query.offset(args.get('offset', default_offset))
-    query = query.limit(min(args.get('limit', default_limit), limit_max))
+    query = query.offset(args.get("offset", default_offset))
+    query = query.limit(min(args.get("limit", default_limit), limit_max))
     return query
 
 

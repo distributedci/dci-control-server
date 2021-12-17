@@ -22,12 +22,12 @@ def test_handle_pagination():
     m = mock.MagicMock()
     m.limit = mock.MagicMock()
     m.offset = mock.MagicMock(return_value=m)
-    d.handle_pagination(m, {'limit': 20})
+    d.handle_pagination(m, {"limit": 20})
     m.offset.assert_called_once_with(0)
     m.limit.assert_called_once_with(20)
     for reset_m in (m, m.limit, m.offset):
         reset_m.reset_mock()
 
-    d.handle_pagination(m, {'limit': 300, 'offset': 12})
+    d.handle_pagination(m, {"limit": 300, "offset": 12})
     m.offset.assert_called_once_with(12)
     m.limit.assert_called_once_with(200)
