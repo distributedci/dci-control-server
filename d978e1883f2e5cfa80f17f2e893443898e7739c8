@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "46d281b7_72c49488",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2021-12-17T14:12:06Z",
+      "side": 1,
+      "message": "Better without magic numbers:\n\n```\nlimit_max \u003d 200\ndefault_limit \u003d 20\nlimit \u003d min(args.get(\u0027limit\u0027, default_limit), limit_max)\n```",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 68,
+        "endChar": 43
+      },
+      "revId": "d978e1883f2e5cfa80f17f2e893443898e7739c8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
