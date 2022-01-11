@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c7b93baf_2db205a3",
+        "filename": "dci/api/v1/jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 705,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "Yassine,\n\nwhy did you add those endpoints?",
+      "range": {
+        "startLine": 641,
+        "startChar": 0,
+        "endLine": 705,
+        "endChar": 0
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1312f7b0_095ef293",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "#noqa not needed no ?",
+      "range": {
+        "startLine": 449,
+        "startChar": 5,
+        "endLine": 449,
+        "endChar": 13
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2040211d_02bb08ae",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 498,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "same here",
+      "range": {
+        "startLine": 498,
+        "startChar": 66,
+        "endLine": 498,
+        "endChar": 73
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "221c4b79_bdcab87a",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "same here",
+      "range": {
+        "startLine": 521,
+        "startChar": 4,
+        "endLine": 521,
+        "endChar": 10
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a3269e8f_d972b6c0",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 541,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "same here",
+      "range": {
+        "startLine": 541,
+        "startChar": 11,
+        "endLine": 541,
+        "endChar": 17
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6ff097a7_681d1b09",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 706,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-11T10:21:09Z",
+      "side": 1,
+      "message": "and here",
+      "range": {
+        "startLine": 706,
+        "startChar": 74,
+        "endLine": 706,
+        "endChar": 80
+      },
+      "revId": "eb4bd8384d1437cc7bfae92a866588fab344d0d9",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0",
+      "unresolved": true
+    }
+  ]
+}
