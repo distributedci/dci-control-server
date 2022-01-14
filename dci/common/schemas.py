@@ -615,10 +615,21 @@ analytics_task_duration_cumulated_properties = {
     "topic_id": Properties.uuid,
     "remoteci_id": Properties.uuid,
 }
-
 analytics_task_duration_cumulated = {
     "type": "object",
     "properties": analytics_task_duration_cumulated_properties,
     "required": ["topic_id", "remoteci_id"],
+    "additionalProperties": False,
+}
+
+
+analytics_task_components_coverage_properties = {
+    "topic_id": Properties.uuid,
+    "team_id": Properties.string,
+}
+analytics_task_components_coverage = {
+    "type": "object",
+    "properties": analytics_task_components_coverage_properties,
+    "required": ["topic_id", "team_id"],
     "additionalProperties": False,
 }
