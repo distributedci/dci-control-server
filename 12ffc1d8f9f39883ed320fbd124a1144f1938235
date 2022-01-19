@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e999b0fc_2cfc8ed2",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-01-19T10:09:58Z",
+      "side": 1,
+      "message": "I would have liked these were variables from settings but hard-coded values isn\u0027t really a problem.",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 68,
+        "endChar": 22
+      },
+      "revId": "12ffc1d8f9f39883ed320fbd124a1144f1938235",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
