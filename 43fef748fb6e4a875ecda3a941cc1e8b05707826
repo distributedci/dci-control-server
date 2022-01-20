@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd31fb62_047ec5e7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-20T11:05:20Z",
+      "side": 1,
+      "message": "Hello Yassine, what is the order of the components ?",
+      "revId": "43fef748fb6e4a875ecda3a941cc1e8b05707826",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7978be0_fd08195a",
+        "filename": "dci/api/v1/analytics.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-01-20T11:05:20Z",
+      "side": 1,
+      "message": "We should get team_id from user identity",
+      "range": {
+        "startLine": 89,
+        "startChar": 4,
+        "endLine": 89,
+        "endChar": 11
+      },
+      "revId": "43fef748fb6e4a875ecda3a941cc1e8b05707826",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
