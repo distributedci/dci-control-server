@@ -18,6 +18,23 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a10fba7_db3c1a58",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-01-24T22:16:01Z",
+      "side": 1,
+      "message": "The order is the lexical order of the component name.",
+      "revId": "43fef748fb6e4a875ecda3a941cc1e8b05707826",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b7978be0_fd08195a",
@@ -31,6 +48,30 @@
       "writtenOn": "2022-01-20T11:05:20Z",
       "side": 1,
       "message": "We should get team_id from user identity",
+      "range": {
+        "startLine": 89,
+        "startChar": 4,
+        "endLine": 89,
+        "endChar": 11
+      },
+      "revId": "43fef748fb6e4a875ecda3a941cc1e8b05707826",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af583aa2_30b75dcb",
+        "filename": "dci/api/v1/analytics.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-01-24T22:16:01Z",
+      "side": 1,
+      "message": "In fact a user might belongs to multiple teams, so he should be able to choose between them i think ?",
+      "parentUuid": "b7978be0_fd08195a",
       "range": {
         "startLine": 89,
         "startChar": 4,
