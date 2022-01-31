@@ -18,6 +18,7 @@ import flask
 from flask import json
 import logging
 from sqlalchemy import exc as sa_exc
+from sqlalchemy import sql
 import sqlalchemy.orm as sa_orm
 from datetime import datetime, timedelta
 
@@ -464,34 +465,44 @@ def get_jobstates_by_job(user, job_id):
 @api.route("/jobs/<uuid:job_id>", methods=["GET"])
 @decorators.login_required
 def get_job_by_id(user, job_id):
-    query = flask.g.session.query(models2.Job)
-    query = query.filter(models2.Job.id == job_id)
-
-    # If not admin nor rh employee then restrict the view to the team
-    if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        query = query.filter(models2.Job.team_id.in_(user.teams_ids))
-
-    # Get only non archived job
-    query = query.filter(models2.Job.state != "archived")
-    query = (
-        query.options(sa_orm.joinedload("results"))
-        .options(sa_orm.joinedload("remoteci"))
-        .options(sa_orm.joinedload("components"))
-        .options(sa_orm.joinedload("topic"))
-        .options(sa_orm.joinedload("team"))
-        .options(sa_orm.joinedload("jobstates"))
-        .options(sa_orm.joinedload("files"))
-    )
-
     try:
-        job = query.one()
+        query = flask.g.session.query(models2.Job)
+        query = query.filter(models2.Job.id == job_id)
+
+        # If not admin nor rh employee then restrict the view to the team
+        if (
+            user.is_not_super_admin()
+            and user.is_not_read_only_user()
+            and user.is_not_epm()
+        ):
+            query = query.filter(models2.Job.team_id.in_(user.teams_ids))
+
+        # Get only non archived job
+        query = query.filter(models2.Job.state != "archived")
+        query = (
+            query.options(sa_orm.joinedload("results"))
+            .options(sa_orm.joinedload("remoteci"))
+            .options(sa_orm.joinedload("components"))
+            .options(sa_orm.joinedload("topic"))
+            .options(sa_orm.joinedload("team"))
+            .options(sa_orm.joinedload("jobstates"))
+        )
+        job = query.one().serialize()
+
+        file_query = flask.g.session.query(models2.File)
+        file_query = file_query.filter(
+            sql.and_(models2.File.job_id == job_id, models2.File.state != "archived")
+        )
+        files = [f.serialize() for f in file_query.all()]
+
+        job["files"] = files
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="job not found", status_code=404)
 
     return flask.Response(
-        json.dumps({"job": job.serialize()}),
+        json.dumps({"job": job}),
         200,
-        headers={"ETag": job.etag},
+        headers={"ETag": job["etag"]},
         content_type="application/json",
     )
 
