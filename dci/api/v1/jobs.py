@@ -18,6 +18,7 @@ import flask
 from flask import json
 import logging
 from sqlalchemy import exc as sa_exc
+from sqlalchemy import sql
 import sqlalchemy.orm as sa_orm
 from datetime import datetime, timedelta
 
@@ -474,15 +475,14 @@ def get_job_by_id(user, job_id):
     # Get only non archived job
     query = query.filter(models2.Job.state != "archived")
     query = (
-        query.options(sa_orm.joinedload("results"))
+        query.options(sa_orm.subqueryload("results"))
         .options(sa_orm.joinedload("remoteci"))
-        .options(sa_orm.joinedload("components"))
+        .options(sa_orm.subqueryload("components"))
         .options(sa_orm.joinedload("topic"))
         .options(sa_orm.joinedload("team"))
-        .options(sa_orm.joinedload("jobstates"))
-        .options(sa_orm.joinedload("files"))
+        .options(sa_orm.subqueryload("jobstates"))
+        .options(sa_orm.subqueryload("files"))
     )
-
     try:
         job = query.one()
     except sa_orm.exc.NoResultFound:
