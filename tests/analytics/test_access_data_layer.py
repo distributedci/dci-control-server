@@ -39,6 +39,7 @@ def test_get_jobs(
     jobs = a_d_l.get_jobs(session, 0, 10, "hours", 3)
     assert len(jobs) == 4
     assert "jobstates" in jobs[0]
+    assert "files" in jobs[0]["jobstates"]
     assert "components" in jobs[0]
     assert "files" in jobs[0]
 
