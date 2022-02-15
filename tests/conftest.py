@@ -469,6 +469,7 @@ def product_openstack(admin, team_id):
 
 @pytest.fixture
 def product(admin):
+    print(admin.get("/api/v1/products?where=label:AWSM").data)
     return admin.get("/api/v1/products?where=label:AWSM").data["products"][0]
 
 
