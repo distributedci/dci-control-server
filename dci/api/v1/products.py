@@ -109,7 +109,7 @@ def update_product(user, product_id):
 @decorators.login_required
 def get_all_products(user):
     args = check_and_get_args(flask.request.args.to_dict())
-
+    print(args)
     q = (
         flask.g.session.query(models2.Product)
         .filter(models2.Product.state != "archived")
