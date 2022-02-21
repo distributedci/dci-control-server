@@ -19,6 +19,7 @@ import datetime
 import dci.auth_mechanism as authm
 from dci.common import exceptions as dci_exc
 from dci import dci_config
+from sqlalchemy.orm import sessionmaker
 
 import flask
 import mock
@@ -49,6 +50,7 @@ def test_sso_auth_verified(
         flask.g.team_redhat_id = team_redhat_id
         flask.g.team_epm_id = team_epm_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         mech = authm.OpenIDCAuth(sso_headers)
         assert mech.authenticate()
         assert mech.identity.name == "dci"
@@ -74,6 +76,7 @@ def test_sso_auth_verified_public_key_rotation(
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         teams = user_sso.get("/api/v1/users/me")
         assert teams.status_code == 200
     assert dci_config.CONFIG["SSO_PUBLIC_KEY"] == sso_public_key
@@ -103,6 +106,7 @@ def test_sso_auth_verified_rh_employee(
         flask.g.team_redhat_id = team_redhat_id
         flask.g.team_epm_id = team_epm_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         mech = authm.OpenIDCAuth(sso_headers)
         assert mech.authenticate()
         assert mech.identity.name == "dci-rh"
@@ -138,6 +142,7 @@ def test_sso_auth_not_verified(
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         mech = authm.OpenIDCAuth(sso_headers)
         with pytest.raises(dci_exc.DCIException):
             mech.authenticate()
@@ -156,6 +161,7 @@ def test_sso_auth_get_users(m_datetime, user_sso, app, engine, team_admin_id):
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         gusers = user_sso.get("/api/v1/users")
         assert gusers.status_code == 401
 
@@ -170,5 +176,6 @@ def test_sso_auth_get_current_user(m_datetime, user_sso, app, engine, team_admin
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.db_conn = engine.connect()
+        flask.g.session = sessionmaker(bind=engine)()
         request = user_sso.get("/api/v1/users/me?embed=team,remotecis")
         assert request.status_code == 200
