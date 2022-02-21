@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8899701a_62a270a3",
+        "filename": "tests/auth/test_sso_mechanism.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-02-21T14:41:12Z",
+      "side": 1,
+      "message": "Outside of this patch context, but given their use in the code, these two lines seem redundant. Is there a plan to discard db_conn in favor of session everywhere ?",
+      "range": {
+        "startLine": 52,
+        "startChar": 0,
+        "endLine": 53,
+        "endChar": 53
+      },
+      "revId": "b874fbf5486c846effd6bcfe8a39a8c2f34d8786",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
