@@ -22,6 +22,30 @@
       },
       "revId": "f0e23e9f084c5544d5c9d53b59d236136d50e887",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ed11df5_aa8e4610",
+        "filename": "dci/alembic/versions/24963e101d13_null_component_types_optional_default_.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-02-28T12:27:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7e4df385_21fc9c00",
+      "range": {
+        "startLine": 38,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 50
+      },
+      "revId": "f0e23e9f084c5544d5c9d53b59d236136d50e887",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
