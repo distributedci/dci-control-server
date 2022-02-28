@@ -15,10 +15,19 @@
 # under the License.
 
 import mock
+import contextlib
+
+
+def reset_job_event(engine):
+    with contextlib.closing(engine.connect()) as con:
+        trans = con.begin()
+        con.execute("ALTER SEQUENCE jobs_events_id_seq RESTART WITH 1")
+        trans.commit()
 
 
 @mock.patch("dci.api.v1.notifications.dispatcher")
-def test_jobs_events_create(mocked_disp, admin, user, job_user_id, reset_job_event):
+def test_jobs_events_create(mocked_disp, admin, user, job_user_id, engine):
+    reset_job_event(engine)
     data = {"job_id": job_user_id, "status": "success", "comment": "kikoolol"}
     user.post("/api/v1/jobstates", data=data).data
     j_events = admin.get("/api/v1/jobs_events/0?sort=id")
@@ -30,8 +39,9 @@ def test_jobs_events_create(mocked_disp, admin, user, job_user_id, reset_job_eve
 
 @mock.patch("dci.api.v1.notifications.dispatcher")
 def test_jobs_events_delete_from_sequence_number(
-    mocked_disp, admin, user, job_user_id, reset_job_event
+    mocked_disp, admin, user, job_user_id, engine
 ):
+    reset_job_event(engine)
     data = {"job_id": job_user_id, "status": "success", "comment": "kikoolol"}
     user.post("/api/v1/jobstates", data=data).data
     j_events = admin.get("/api/v1/jobs_events/0?sort=id").data
