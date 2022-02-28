@@ -16,7 +16,6 @@
 
 import dci.app
 from dci import dci_config
-from dci.db import models
 import tests.utils as utils
 import tests.sso_tokens as sso_tokens
 
@@ -38,7 +37,10 @@ def engine(request):
 
     if not sqlalchemy_utils.functions.database_exists(db_uri):
         sqlalchemy_utils.functions.create_database(db_uri)
-    utils.restore_db(engine)
+
+    utils.delete_db(engine)
+    utils.create_db(engine)
+
     return engine
 
 
@@ -48,29 +50,12 @@ def session(engine):
 
 
 @pytest.fixture
-def empty_db(engine):
-    with contextlib.closing(engine.connect()) as con:
-        meta = models.metadata
-        trans = con.begin()
-        for table in reversed(meta.sorted_tables):
-            con.execute(table.delete())
-        trans.commit()
-    return True
-
-
-@pytest.fixture
 def reset_job_event(engine):
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         con.execute("ALTER SEQUENCE jobs_events_id_seq RESTART WITH 1")
         trans.commit()
     return True
-
-
-@pytest.fixture
-def delete_db(request, engine, teardown_db_clean):
-    models.metadata.drop_all(engine)
-    engine.execute("DROP TABLE IF EXISTS alembic_version")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -93,39 +78,23 @@ def memoize_password_hash():
 
 
 @pytest.fixture
-def teardown_db_clean(request, engine):
-    request.addfinalizer(lambda: utils.restore_db(engine))
-
-
-@pytest.fixture
-def fs_clean(request):
-    """Clean test file upload directory"""
-    request.addfinalizer(utils.rm_upload_folder)
-
-
-@pytest.fixture
-def db_provisioning(empty_db, session):
+def db_provisioning(engine, session):
+    utils.empty_db(engine)
     utils.provision(session)
 
 
 @pytest.fixture
-def app(db_provisioning, engine, fs_clean):
+def app(engine, db_provisioning):
     app = dci.app.create_app()
     app.testing = True
     app.engine = engine
-    return app
+    yield app
+    utils.rm_upload_folder()
 
 
 @pytest.fixture
 def admin(app):
     return utils.generate_client(app, ("admin", "admin"))
-
-
-@pytest.fixture
-def admin_id(admin):
-    team = admin.get("/api/v1/users?where=name:admin")
-    team = admin.get("/api/v1/users/%s" % team.data["users"][0]["id"]).data
-    return str(team["user"]["id"])
 
 
 @pytest.fixture

@@ -28,7 +28,6 @@ import shutil
 import six
 
 import dci.auth as auth
-from dci.db import models
 from dci.db import models2
 import dci.dci_config as config
 from dci.common import utils
@@ -36,14 +35,28 @@ from dciauth.v2.headers import generate_headers
 
 import os
 import subprocess
+import contextlib
 
 # convenient alias
 conf = config.CONFIG
 
 
-def restore_db(engine):
-    models.metadata.drop_all(engine)
-    models.metadata.create_all(engine)
+def delete_db(engine):
+    models2.Base.metadata.reflect(engine)
+    models2.Base.metadata.drop_all(engine)
+
+
+def empty_db(engine):
+    with contextlib.closing(engine.connect()) as con:
+        meta = models2.Base.metadata
+        trans = con.begin()
+        for table in reversed(meta.sorted_tables):
+            con.execute(table.delete())
+        trans.commit()
+
+
+def create_db(engine):
+    models2.Base.metadata.create_all(engine)
 
 
 def rm_upload_folder():
