@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f3e0956a_c4967f32",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-02-28T13:04:17Z",
+      "side": 1,
+      "message": "No null value for those 2 columns\n\ndci\u003d# select * from components where updated_at is null;\n id | created_at | name | type | canonical_project_name | data | title | message | url | topic_id | updated_at | etag | state | tags | team_id | released_at \n----+------------+------+------+------------------------+------+-------+---------+-----+----------+------------+------+-------+------+---------+-------------\n(0 rows)\n\ndci\u003d# select * from components where etag is null;\n id | created_at | name | type | canonical_project_name | data | title | message | url | topic_id | updated_at | etag | state | tags | team_id | released_at \n----+------------+------+------+------------------------+------+-------+---------+-----+----------+------------+------+-------+------+---------+-------------\n(0 rows)",
+      "revId": "ba814b1f519d1a1ceb19e5fe88c6fe11737a07be",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
