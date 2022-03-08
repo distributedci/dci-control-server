@@ -16,6 +16,24 @@
       "message": "Are you sure to remove this test ?",
       "revId": "c51f0a73ff4a32e510e5efcaa78619ccd1aa2073",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcf6e9e6_2af99b1a",
+        "filename": "tests/api/v1/test_components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 685,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-03-08T14:49:26Z",
+      "side": 0,
+      "message": "This method is never reach directly but through GET /api/v1/topics/:id no ?",
+      "parentUuid": "da7c914d_0076e169",
+      "revId": "c51f0a73ff4a32e510e5efcaa78619ccd1aa2073",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
