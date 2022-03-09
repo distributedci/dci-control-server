@@ -495,13 +495,6 @@ FILES = sa.Table(
     ),
     sa.Index("files_jobstate_id_idx", "jobstate_id"),
     sa.Column(
-        "test_id",
-        pg.UUID(as_uuid=True),
-        sa.ForeignKey("tests.id", ondelete="CASCADE"),
-        nullable=True,
-        default=None,
-    ),
-    sa.Column(
         "team_id",
         pg.UUID(as_uuid=True),
         sa.ForeignKey("teams.id", ondelete="CASCADE"),
