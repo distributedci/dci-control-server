@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b76a3390_1ecf62cf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-03-09T13:56:26Z",
+      "side": 1,
+      "message": "Tested file upload \u0026 download against Swift on cloud.distributed-ci.io",
+      "revId": "daa8d1b1e8dec40740b41bfce917e6190766a3ca",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
