@@ -16,17 +16,25 @@
 
 from datetime import datetime as dt, timedelta as td
 import sqlalchemy.orm as sa_orm
+from sqlalchemy import sql
 
 from dci.db import models2
 
 
-def get_jobs(session, offset, limit, unit, amount):
+def get_jobs(session, offset, limit, unit, amount, start_date=None, end_date=None):
 
     delta = {unit: amount}
 
     query = session.query(models2.Job)
     query = query.filter(models2.Job.state != "archived")
-    query = query.filter(models2.Job.created_at >= (dt.now() - td(**delta)))
+    if start_date and end_date:
+        query = query.filter(
+            sql.and_(
+                models2.Job.created_at >= start_date, models2.Job.created_at <= end_date
+            )
+        )
+    else:
+        query = query.filter(models2.Job.created_at >= (dt.now() - td(**delta)))
     query = query.order_by(models2.Job.created_at.asc())
     query = query.from_self()
 
