@@ -46,7 +46,6 @@ from dci.db import models2
 
 from dci.api.v1 import files
 from dci.api.v1 import export_control
-from dci.api.v1 import issues
 from dci.api.v1 import jobstates
 from dci import dci_config
 
@@ -60,7 +59,6 @@ _EMBED_MANY = {
     "files": True,
     "topic": False,
     "components": True,
-    "issues": True,
     "jobstates": True,
     "remoteci": False,
     "team": False,
@@ -536,27 +534,6 @@ def add_file_to_jobs(user, j_id):
     values.update({"job_id": j_id})
 
     return files.create_files(user, values)
-
-
-@api.route("/jobs/<uuid:j_id>/issues", methods=["GET"])
-@decorators.login_required
-def retrieve_issues_from_job(user, j_id):
-    """Retrieve all issues attached to a job."""
-    return issues.get_issues_by_resource(j_id, _TABLE)
-
-
-@api.route("/jobs/<uuid:j_id>/issues", methods=["POST"])
-@decorators.login_required
-def attach_issue_to_jobs(user, j_id):
-    """Attach an issue to a job."""
-    return issues.attach_issue(j_id, _TABLE, user.id)
-
-
-@api.route("/jobs/<uuid:j_id>/issues/<uuid:i_id>", methods=["DELETE"])
-@decorators.login_required
-def unattach_issue_from_job(user, j_id, i_id):
-    """Unattach an issue to a job."""
-    return issues.unattach_issue(j_id, i_id, _TABLE)
 
 
 @api.route("/jobs/<uuid:j_id>/files", methods=["GET"])

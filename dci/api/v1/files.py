@@ -99,17 +99,11 @@ def _compute_regressions_successfix(jsonunit, previous_jsonunit):
     return jsonunit
 
 
-def _compute_known_tests_cases(jsonunit, job):
-    tests_to_issues = tests.get_tests_to_issues(job.topic_id)
-    return tsfm.add_known_issues_to_tests(jsonunit, tests_to_issues)
-
-
 def _process_junit_file(values, junit_file, job):
     jsonunit = tsfm.junit2dict(junit_file)
     previous_jsonunit = _get_previous_jsonunit(job, values["name"])
 
     jsonunit = _compute_regressions_successfix(jsonunit, previous_jsonunit)
-    jsonunit = _compute_known_tests_cases(jsonunit, job)
 
     tr = models2.TestsResult()
     tr.id = utils.gen_uuid()
