@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import flask
+import hashlib
+import logging
 import re
 from flask import json
 from sqlalchemy import exc as sa_exc
@@ -38,6 +40,10 @@ from dci.common import signature
 from dci.common import utils
 from dci.db import declarative as d
 from dci.db import models2
+from dci.settings import SALT
+
+
+logger = logging.getLogger(__name__)
 
 
 @api.route("/remotecis", methods=["POST"])
@@ -313,5 +319,32 @@ def update_remoteci_keys(user, remoteci_id):
             }
         ),
         201,
+        content_type="application/json",
+    )
+
+
+@api.route("/remotecis/<uuid:remoteci_id>/password", methods=["GET"])
+@decorators.login_required
+def password(user, remoteci_id):
+    args = flask.request.args.to_dict()
+    key = args.get("key", "")
+    logger.info("password %s %s %s" % (user, remoteci_id, key))
+    r = base.get_resource_orm(
+        models2.Remoteci,
+        remoteci_id,
+        options=[
+            sa_orm.joinedload("team", innerjoin=True),
+            sa_orm.selectinload("users"),
+        ],
+    )
+    if user.is_not_in_team(r.team_id) and user.is_not_read_only_user():
+        raise dci_exc.Unauthorized()
+
+    password = hashlib.sha1((SALT + str(remoteci_id) + key).encode("utf-8")).hexdigest()
+
+    return flask.Response(
+        json.dumps({"password": password}),
+        200,
+        headers={"ETag": r.etag},
         content_type="application/json",
     )

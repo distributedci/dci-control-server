@@ -22,6 +22,7 @@ HOST = os.getenv("API_HOST", "127.0.0.1")
 PORT = int(os.getenv("API_PORT", "5000"))
 DEBUG = True
 JSONIFY_PRETTYPRINT_REGULAR = False
+SALT = os.getenv("SALT", None) or open("/etc/machine-id").read(-1)
 
 # Database (SQLAlchemy) related parameters
 #
