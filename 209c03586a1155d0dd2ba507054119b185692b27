@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a670015_3f6e35d2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-03-16T10:33:02Z",
+      "side": 1,
+      "message": "Just a question on the way the teams are queried.",
+      "revId": "209c03586a1155d0dd2ba507054119b185692b27",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f4225ea_7f9745f8",
+        "filename": "dci/api/v1/products.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-03-16T10:33:02Z",
+      "side": 1,
+      "message": "The construction looks weird, if we want teams why not query teams with a join (for the many-to-many \u0026 filter on product_id instead of selecting the product + associated teams \u0026 having to serialize all this ?",
+      "range": {
+        "startLine": 280,
+        "startChar": 0,
+        "endLine": 288,
+        "endChar": 39
+      },
+      "revId": "209c03586a1155d0dd2ba507054119b185692b27",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62db3a0d_9a015a74",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-03-16T10:33:02Z",
+      "side": 1,
+      "message": "same here …",
+      "range": {
+        "startLine": 245,
+        "startChar": 1,
+        "endLine": 247,
+        "endChar": 5
+      },
+      "revId": "209c03586a1155d0dd2ba507054119b185692b27",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
