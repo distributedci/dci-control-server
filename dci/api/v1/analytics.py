@@ -27,6 +27,7 @@ from dci.common import exceptions as dci_exc
 from dci.common.schemas import (
     analytics_task_duration_cumulated,
     analytics_task_components_coverage,
+    analytics_tasks_junit,
     check_json_is_valid,
 )
 from dci.dci_config import CONFIG
@@ -134,6 +135,44 @@ def tasks_components_coverage(user):
                 404,
                 content_type="application/json",
             )
+        else:
+            logger.error("analytics error: %s" % str(res.text))
+            return flask.Response(
+                json.dumps({"error": "error with backend service"}),
+                res.status_code,
+                content_type="application/json",
+            )
+    except ConnectionError as e:
+        logger.error("analytics error: %s" % str(e))
+        return flask.Response(
+            json.dumps({"error": "connection error with backend service"}),
+            503,
+            content_type="application/json",
+        )
+
+
+@api.route("/analytics/junit_comparison", methods=["POST"])
+@decorators.login_required
+def tasks_junit_comparison(user):
+    args = flask.request.args.to_dict()
+    check_json_is_valid(analytics_tasks_junit, args)
+
+    team_1_id = args.get("team_1_id")
+    team_2_id = args.get("team_2_id")
+
+    if user.is_not_super_admin() and user.is_not_epm() and user.is_not_read_only_user():
+        if team_1_id not in user.teams_id or team_2_id not in user.teams_id:
+            raise dci_exc.Unauthorized()
+
+    try:
+        res = requests.post(
+            "%s/analytics/junit_topics_comparison" % CONFIG["analytics_URL"],
+            headers={"Content-Type": "application/json"},
+            json=args,
+        )
+
+        if res.status_code == 200:
+            return flask.jsonify(res.json())
         else:
             logger.error("analytics error: %s" % str(res.text))
             return flask.Response(
