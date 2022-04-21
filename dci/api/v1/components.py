@@ -22,7 +22,7 @@ import logging
 from sqlalchemy import sql
 
 from dci import dci_config
-from dci.api.v1 import api
+from dci.api.v1 import api, notifications
 from dci.api.v1 import base
 from dci.api.v1 import export_control
 from dci.api.v1 import utils as v1_utils
@@ -81,6 +81,12 @@ def create_components(user):
     values["type"] = values["type"].lower()
 
     c = base.create_resource_orm(models2.Component, values)
+
+    c_notification = dict(c)
+    t = base.get_resource_orm(models2.Topic, c["topic_id"])
+    c_notification["topic_name"] = t.name
+
+    notifications.dispatcher(component=c_notification)
 
     return flask.Response(
         json.dumps({"component": c}),
