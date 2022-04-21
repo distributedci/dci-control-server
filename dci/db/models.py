@@ -678,3 +678,22 @@ FEEDERS = sa.Table(
     sa.UniqueConstraint("name", "team_id", name="feeders_name_team_id_key"),
     sa.Column("state", STATES, default="active"),
 )
+
+USERS_TOPICS = sa.Table(
+    "users_topics",
+    metadata,
+    sa.Column(
+        "user_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+    sa.Column(
+        "topic_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("topics.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+)
