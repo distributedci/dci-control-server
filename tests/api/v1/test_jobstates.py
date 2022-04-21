@@ -25,7 +25,7 @@ def test_create_jobstates(user, job_user_id):
 
     with mock.patch("dci.api.v1.notifications") as mocked_notif:
         js = user.post("/api/v1/jobstates", data=data).data
-        assert not mocked_notif.displatcher.called
+        assert not mocked_notif.dispatcher.called
     js_id = js["jobstate"]["id"]
 
     js = user.get("/api/v1/jobstates/%s" % js_id).data
