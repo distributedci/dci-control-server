@@ -195,6 +195,24 @@ class Team(dci_declarative.Mixin, Base):
     )
 
 
+class UserTopic(dci_declarative.Mixin, Base):
+    __tablename__ = "users_topics"
+    user_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    )
+    topic_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("topics.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    )
+    topic = sa_orm.relationship("Topic")
+    user = sa_orm.relationship("User")
+
+
 class Topic(dci_declarative.Mixin, Base):
     __tablename__ = "topics"
     __table_args__ = (
