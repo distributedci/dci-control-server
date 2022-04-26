@@ -70,6 +70,30 @@
       },
       "revId": "fa4d4f938b9f4c9ff8bafffdac17cf2fefd114ea",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20286eea_7776b485",
+        "filename": "dci/api/v1/notifications.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-04-26T08:50:26Z",
+      "side": 1,
+      "message": "@Yassine, I tried this in an python interpreter in dci_api container in dci-dev-env:\n\n\nIn [1]: import sqlalchemy.orm as sa_orm\n\nIn [2]: from dci import dci_config\n\nIn [3]: from dci.db import models2\n\nIn [4]: session \u003d sa_orm.sessionmaker(bind\u003ddci_config.get_engine())()\n\nIn [5]: q \u003d session.query(models2.UserTopic).filter(models2.UserTopic.topic_id \u003d\u003d \"asdasdasdad\").options(sa_orm.joinedload(\"user\", innerjoin\u003dTrue))\n\nIn [6]: str(q)\nOut[6]: \u0027SELECT users_topics.user_id AS users_topics_user_id, users_topics.topic_id AS users_topics_topic_id, users_1.id AS users_1_id, users_1.created_at AS users_1_created_at, users_1.updated_at AS users_1_updated_at, users_1.etag AS users_1_etag, users_1.name AS users_1_name, users_1.sso_username AS users_1_sso_username, users_1.fullname AS users_1_fullname, users_1.email AS users_1_email, users_1.password AS users_1_password, users_1.timezone AS users_1_timezone, users_1.state AS users_1_state \\nFROM users_topics JOIN users AS users_1 ON users_1.id \u003d users_topics.user_id \\nWHERE users_topics.topic_id \u003d %(topic_id_1)s\u0027\n\nIn [7]: q \u003d session.query(models2.User.email).join(models2.UserTopic).filter(models2.UserTopic.topic_id \u003d\u003d \"asdasdasdad\")\n\nIn [8]: str(q)\nOut[8]: \u0027SELECT users.email AS users_email \\nFROM users JOIN users_topics ON users.id \u003d users_topics.user_id \\nWHERE users_topics.topic_id \u003d %(topic_id_1)s\u0027\n\n\nThe two ways to to the join produce the same equivalent SQL.\nHowever, I find the statement on line [7] easier to read and avoiding \"joinedload\" when possible makes the code more simple in general.\n\nAlso, querying only the required field(s) from the User table \u0026 then joining allows to fetch the minimal possible data from the database.",
+      "parentUuid": "758ef580_d14b9f8e",
+      "range": {
+        "startLine": 155,
+        "startChar": 0,
+        "endLine": 159,
+        "endChar": 9
+      },
+      "revId": "fa4d4f938b9f4c9ff8bafffdac17cf2fefd114ea",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
