@@ -22,6 +22,30 @@
       },
       "revId": "f9e4f49bc3bbdb562f804a6af8a9709c7044405b",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "13d11432_42749309",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-04-26T17:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33000d9c_f23424aa",
+      "range": {
+        "startLine": 283,
+        "startChar": 0,
+        "endLine": 288,
+        "endChar": 55
+      },
+      "revId": "f9e4f49bc3bbdb562f804a6af8a9709c7044405b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
