@@ -16,7 +16,7 @@
 
 import os
 
-from dci.stores import filesystem, swift
+from dci.stores import filesystem, swift, s3
 
 import flask
 import sqlalchemy
@@ -46,11 +46,11 @@ def get_engine():
 
 def get_store(container):
     configuration = {}
-    if container == "files":
-        configuration["container"] = CONFIG["STORE_FILES_CONTAINER"]
-    elif container == "components":
-        configuration["container"] = CONFIG["STORE_COMPONENTS_CONTAINER"]
     if CONFIG["STORE_ENGINE"] == CONFIG["SWIFT_STORE"]:
+        if container == "files":
+            configuration["container"] = CONFIG["STORE_FILES_CONTAINER"]
+        elif container == "components":
+            configuration["container"] = CONFIG["STORE_COMPONENTS_CONTAINER"]
         configuration["os_username"] = CONFIG["STORE_USERNAME"]
         configuration["os_password"] = CONFIG["STORE_PASSWORD"]
         configuration["os_tenant_name"] = CONFIG["STORE_TENANT_NAME"]
@@ -66,7 +66,21 @@ def get_store(container):
             "STORE_PROJECT_DOMAIN_NAME"
         )
         store_engine = swift.Swift(configuration)
+    elif CONFIG["STORE_ENGINE"] == CONFIG["S3_STORE"]:
+        configuration["aws_access_key_id"] = CONFIG["STORE_S3_AWS_ACCESS_KEY_ID"]
+        configuration["aws_secret_access_key"] = CONFIG[
+            "STORE_S3_AWS_SECRET_ACCESS_KEY"
+        ]
+        configuration["aws_region"] = CONFIG["STORE_S3_AWS_REGION"]
+        configuration["bucket"] = CONFIG["STORE_S3_BUCKET"][container]
+        configuration["endpoint_url"] = CONFIG["STORE_S3_ENDPOINT_URL"]
+        configuration["signature_version"] = CONFIG["STORE_S3_SIGNATURE_VERSION"]
+        store_engine = s3.S3(configuration)
     else:
+        if container == "files":
+            configuration["container"] = CONFIG["STORE_FILES_CONTAINER"]
+        elif container == "components":
+            configuration["container"] = CONFIG["STORE_COMPONENTS_CONTAINER"]
         configuration["path"] = CONFIG["STORE_FILE_PATH"]
         store_engine = filesystem.FileSystem(configuration)
     return store_engine
