@@ -120,17 +120,24 @@ class Swift(stores.Store):
                 status_code=exc.http_status,
             )
 
-    def upload(self, file_path, iterable, pseudo_folder=None, create_container=True):
+    def upload(self, filename, iterable):
         try:
             self.connection.head_container(self.container)
         except swiftclient.exceptions.ClientException as exc:
-            if exc.http_status == 404 and create_container:
-                try:
-                    self.connection.put_container(self.container)
-                except swiftclient.exceptions.ClientException as exc:
-                    raise exceptions.StoreExceptions(
-                        "Error while creating file " "%s: %s" % (file_path, str(exc)),
-                        status_code=exc.http_status,
-                    )
+            if exc.http_status != 404:
+                raise exceptions.StoreExceptions(
+                    "Error while creating container for file "
+                    "%s: %s" % (filename, str(exc)),
+                    status_code=exc.http_status,
+                )
 
-        self.connection.put_object(self.container, file_path, iterable)
+            try:
+                self.connection.put_container(self.container)
+            except swiftclient.exceptions.ClientException as exc:
+                raise exceptions.StoreExceptions(
+                    "Error while creating container for file "
+                    "%s: %s" % (filename, str(exc)),
+                    status_code=exc.http_status,
+                )
+
+        self.connection.put_object(self.container, filename, iterable)

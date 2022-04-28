@@ -78,7 +78,7 @@ class FileSystem(stores.Store):
             "content-type": "application/octet-stream",
         }
 
-    def upload(self, filename, iterable, pseudo_folder=None, create_container=True):
+    def upload(self, filename, iterable):
         file_path = os.path.join(self._root_directory, filename)
         path = os.path.dirname(file_path)
         if not os.path.exists(path):
