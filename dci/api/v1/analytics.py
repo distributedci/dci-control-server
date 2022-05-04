@@ -113,6 +113,7 @@ def tasks_components_coverage(user):
             raise dci_exc.Unauthorized()
 
     query = {
+        "size": 1000,
         "query": {
             "bool": {
                 "must": [
