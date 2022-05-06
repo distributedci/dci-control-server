@@ -134,7 +134,9 @@ def tasks_components_coverage(user):
     if types:
         query["query"]["bool"]["should"] = []
         for t in types:
-            query["query"]["bool"]["should"].append({"term": {"type": t}})
+            query["query"]["bool"]["must"].append(
+                {"bool": {"should": [{"term": {"type": t}}]}}
+            )
     else:
         # returns only one unique component for each type (with latest first)
         query["collapse"] = {"field": "type"}
