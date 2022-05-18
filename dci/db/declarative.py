@@ -15,7 +15,7 @@
 # under the License.
 
 from dci.common import exceptions as dci_exc
-
+from sqlalchemy import func
 import datetime
 import uuid
 
@@ -118,9 +118,11 @@ def handle_args(query, model_object, args):
             elif m_column.type.python_type == list:
                 query = query.filter(m_column.contains([value]))
             elif value.endswith("*") and value.count("*") == 1:
-                query = query.filter(m_column.contains(value.replace("*", "")))
+                query = query.filter(
+                    func.lower(m_column).contains(value.replace("*", "").lower())
+                )
             else:
-                query = query.filter(m_column == value)
+                query = query.filter(func.lower(m_column) == value.lower())
     if args.get("created_after"):
         query = query.filter(
             getattr(model_object, "created_at") >= args.get("created_after")
