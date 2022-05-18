@@ -98,6 +98,19 @@ def test_get_all_remotecis_with_where(user, team_user_id):
     assert db_r_id == pr_id
 
 
+def test_where_name_case_insensitive(user, team_user_id):
+    remoteci = user.post(
+        "/api/v1/remotecis", data={"name": "My remoteci", "team_id": team_user_id}
+    ).data["remoteci"]
+    remotecis = user.get("/api/v1/remotecis?where=name:My%20remote*").data["remotecis"]
+    assert len(remotecis) == 1
+    assert remotecis[0]["id"] == remoteci["id"]
+
+    remotecis = user.get("/api/v1/remotecis?where=name:my%20remote*").data["remotecis"]
+    assert len(remotecis) == 1
+    assert remotecis[0]["id"] == remoteci["id"]
+
+
 def test_where_invalid(admin):
     err = admin.get("/api/v1/remotecis?where=id")
 
