@@ -16,6 +16,24 @@
       "message": "You need to add boto3 in requirements.txt file no ?",
       "revId": "16fdf3743f5f2597e89a1b662bf1458af64b935b",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20e22feb_1bfc5733",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-05-24T08:44:19Z",
+      "side": 1,
+      "message": "Yes!",
+      "parentUuid": "9736e3c6_7c337a3b",
+      "revId": "16fdf3743f5f2597e89a1b662bf1458af64b935b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
