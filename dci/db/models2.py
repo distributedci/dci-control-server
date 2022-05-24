@@ -23,6 +23,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm as sa_orm
+from sqlalchemy import sql
 import sqlalchemy_utils as sa_utils
 
 Base = declarative_base()
@@ -510,6 +511,11 @@ class Job(dci_declarative.Mixin, Base):
         sa.ForeignKey("products.id", ondelete="CASCADE"),
         nullable=True,
     )
+    pipeline_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("pipelines.id", ondelete="CASCADE"),
+        nullable=True,
+    )
     user_agent = sa.Column(sa.String(255))
     client_version = sa.Column(sa.String(255))
     previous_job_id = sa.Column(
@@ -662,3 +668,35 @@ class Counter(dci_declarative.Mixin, Base):
     etag = sa.Column(
         sa.String(40), nullable=False, default=utils.gen_etag, onupdate=utils.gen_etag
     )
+
+
+class Pipeline(dci_declarative.Mixin, Base):
+    __tablename__ = "pipelines"
+
+    id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
+    created_at = sa.Column(
+        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
+    )
+    updated_at = sa.Column(
+        sa.DateTime(),
+        onupdate=datetime.datetime.utcnow,
+        default=datetime.datetime.utcnow,
+        nullable=False,
+    )
+    etag = sa.Column(
+        sa.String(40), nullable=False, default=utils.gen_etag, onupdate=utils.gen_etag
+    )
+    name = sa.Column(sa.String(255), nullable=False)
+    topic_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("topics.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    topic = sa_orm.relationship("Topic")
+    team_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    team = sa_orm.relationship("Team")
+    jobs = sa_orm.relationship("Job", order_by=sql.asc(Job.created_at))

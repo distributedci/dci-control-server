@@ -225,6 +225,8 @@ schedule_job_schema = {
         "configuration": with_default(Properties.string, None),
         "name": with_default(Properties.string, None),
         "url": with_default(Properties.url, None),
+        "pipeline_id": with_default(Properties.uuid, None),
+        "pipeline_name": Properties.string,
     },
     "required": ["topic_id"],
     "additionalProperties": False,
@@ -650,5 +652,24 @@ analytics_tasks_junit = {
         "tags_2",
         "test_name",
     ],
+    "additionalProperties": False,
+}
+
+###############################################################################
+#                                                                             #
+#                                  Pipelines schema                           #
+#                                                                             #
+###############################################################################
+
+create_pipeline_properties = {
+    "name": Properties.string,
+    "topic_id": Properties.uuid,
+    "team_id": Properties.uuid,
+    "state": with_default(Properties.enum(valid_resource_states), "active"),
+}
+create_pipeline_schema = {
+    "type": "object",
+    "properties": create_pipeline_properties,
+    "required": ["name", "topic_id"],
     "additionalProperties": False,
 }
