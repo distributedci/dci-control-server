@@ -59,19 +59,22 @@ def empty_db(engine):
 
 
 @pytest.fixture
+def engine_schemaless_db():
+    utils.rm_upload_folder()
+    db_uri = utils.conf["SQLALCHEMY_DATABASE_URI"]
+
+    sqlalchemy_utils.functions.drop_database(db_uri)
+    sqlalchemy_utils.functions.create_database(db_uri)
+    return dci_config.get_engine()
+
+
+@pytest.fixture
 def reset_job_event(engine):
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         con.execute("ALTER SEQUENCE jobs_events_id_seq RESTART WITH 1")
         trans.commit()
     return True
-
-
-@pytest.fixture
-def delete_db(request, engine, teardown_db_clean):
-    models2.Base.metadata.reflect(engine)
-    models2.Base.metadata.drop_all(engine)
-    engine.execute("DROP TABLE IF EXISTS alembic_version")
 
 
 @pytest.fixture(scope="session", autouse=True)

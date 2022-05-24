@@ -43,7 +43,8 @@ def test_cors_headers(admin):
     assert resp.headers["Access-Control-Allow-Origin"] == "*"
 
 
-def test_db_migration(engine, delete_db):
+def test_db_migration(engine_schemaless_db):
+    engine = engine_schemaless_db
     config = dci.alembic.utils.generate_conf()
     context = alembic.context
     script = alembic.script.ScriptDirectory.from_config(config)

@@ -50,8 +50,6 @@ JOB_STATUSES = [
 ]
 STATUSES = sa.Enum(*JOB_STATUSES, name="statuses")
 
-RESOURCE_STATES = ["active", "inactive", "archived"]
-STATES = sa.Enum(*RESOURCE_STATES, name="states")
 
 FILES_CREATE = "create"
 FILES_DELETE = "delete"
@@ -59,6 +57,8 @@ FILES_ACTIONS = sa.Enum(FILES_CREATE, FILES_DELETE, name="files_actions")
 
 
 def upgrade():
+    STATES = pg.ENUM("active", "inactive", "archived", name="states", create_type=False)
+    STATES.create(op.get_bind())
 
     op.create_table(
         "teams",
