@@ -67,13 +67,6 @@ def reset_job_event(engine):
     return True
 
 
-@pytest.fixture
-def delete_db(request, engine, teardown_db_clean):
-    models2.Base.metadata.reflect(engine)
-    models2.Base.metadata.drop_all(engine)
-    engine.execute("DROP TABLE IF EXISTS alembic_version")
-
-
 @pytest.fixture(scope="session", autouse=True)
 def memoize_password_hash():
     def memoize(func):
