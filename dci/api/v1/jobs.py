@@ -171,9 +171,9 @@ def schedule_jobs(user):
     running jobs that were associated with the remoteci. This is because they
     will never be finished.
     """
-    values = flask.request.json
-    check_json_is_valid(schedule_job_schema, values)
-    values.update(
+    inputs = flask.request.json
+    check_json_is_valid(schedule_job_schema, inputs)
+    inputs.update(
         {
             "id": utils.gen_uuid(),
             "created_at": get_utc_now().isoformat(),
@@ -186,8 +186,8 @@ def schedule_jobs(user):
             "client_version": flask.request.environ.get("HTTP_CLIENT_VERSION"),
         }
     )
-    topic_id = values.pop("topic_id")
-    dry_run = values.pop("dry_run")
+    topic_id = inputs.pop("topic_id")
+    dry_run = inputs.pop("dry_run")
     if dry_run:
         component_types = components.get_component_types_from_topic(topic_id)
         _components = components.get_last_components_by_type(component_types, topic_id)
@@ -199,7 +199,7 @@ def schedule_jobs(user):
             content_type="application/json",
         )
 
-    previous_job_id = values["previous_job_id"]
+    previous_job_id = inputs["previous_job_id"]
     if previous_job_id:
         base.get_resource_orm(models2.Job, previous_job_id)
 
@@ -219,8 +219,8 @@ def schedule_jobs(user):
 
     kill_existing_jobs(remoteci.id)
 
-    components_ids = values.pop("components_ids")
-    values = _build_job(product_id, topic_id, remoteci, components_ids, values)
+    components_ids = inputs.pop("components_ids")
+    values = _build_job(product_id, topic_id, remoteci, components_ids, inputs)
 
     return flask.Response(
         json.dumps({"job": values}),
