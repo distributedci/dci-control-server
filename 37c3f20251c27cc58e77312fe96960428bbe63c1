@@ -16,6 +16,29 @@
       "message": "recheck",
       "revId": "37c3f20251c27cc58e77312fe96960428bbe63c1",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "930e2919_71a86a0d",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-05-25T12:33:52Z",
+      "side": 1,
+      "message": "In the current state, when column type is array, we won\u0027t have:\n- case-insensitive search\n- search with wildcards (it will return nothing if there\u0027s a wildcard)\n\nIt would be preferable to have case-insensitive search everywhere (or nowhere)\nWildcards implemented also for arrays (or explicitly noted in CLI \u0026 UI on the limitations)",
+      "range": {
+        "startLine": 137,
+        "startChar": 16,
+        "endLine": 137,
+        "endChar": 64
+      },
+      "revId": "37c3f20251c27cc58e77312fe96960428bbe63c1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
