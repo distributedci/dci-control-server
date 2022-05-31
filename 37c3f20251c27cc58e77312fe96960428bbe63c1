@@ -91,6 +91,30 @@
       },
       "revId": "37c3f20251c27cc58e77312fe96960428bbe63c1",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "872b8fcb_16e56f6c",
+        "filename": "dci/db/declarative.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-05-31T13:11:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "930e2919_71a86a0d",
+      "range": {
+        "startLine": 137,
+        "startChar": 16,
+        "endLine": 137,
+        "endChar": 64
+      },
+      "revId": "37c3f20251c27cc58e77312fe96960428bbe63c1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
