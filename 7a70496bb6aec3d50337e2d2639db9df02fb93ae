@@ -41,6 +41,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ab8636d_6e8f7c81",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6459ae79_d4de95b4",
+      "range": {
+        "startLine": 85,
+        "startChar": 0,
+        "endLine": 89,
+        "endChar": 58
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f2df13ea_7bb5a9f6",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-06-03T08:29:10Z",
       "side": 1,
       "message": "same here\n\nnotifications.dispatch(\u0027COMPONENT_UPDATED\u0027, {...previous_component}, {...new_component})\n\nMaybe we can add a todo for now in the code",
+      "range": {
+        "startLine": 116,
+        "startChar": 0,
+        "endLine": 120,
+        "endChar": 58
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d3049fbd_1c4c36ed",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2df13ea_7bb5a9f6",
       "range": {
         "startLine": 116,
         "startChar": 0,
@@ -87,6 +135,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "39a205de_b2aea268",
+        "filename": "dci/api/v1/notifications.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8ed72b5d_fa50e2b1",
+      "range": {
+        "startLine": 176,
+        "startChar": 26,
+        "endLine": 176,
+        "endChar": 48
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ec07f477_3fdf25f7",
@@ -100,6 +172,30 @@
       "writtenOn": "2022-06-03T08:29:10Z",
       "side": 1,
       "message": "already a string",
+      "range": {
+        "startLine": 177,
+        "startChar": 22,
+        "endLine": 177,
+        "endChar": 50
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "afbb205f_e98f8b3e",
+        "filename": "dci/api/v1/notifications.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ec07f477_3fdf25f7",
       "range": {
         "startLine": 177,
         "startChar": 22,
@@ -158,6 +254,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "dae74806_58e1c1f0",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "It\u0027s also for debugging facility",
+      "parentUuid": "82c01d8d_56883c4c",
+      "range": {
+        "startLine": 276,
+        "startChar": 0,
+        "endLine": 290,
+        "endChar": 74
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1b1a6a4d_9bcd6cbc",
         "filename": "dci/api/v1/topics.py",
         "patchSetId": 15
@@ -169,6 +289,30 @@
       "writtenOn": "2022-06-03T08:29:10Z",
       "side": 1,
       "message": "same, can you remove /users here, we want to delete the \u0027notification\u0027 resource",
+      "range": {
+        "startLine": 293,
+        "startChar": 49,
+        "endLine": 293,
+        "endChar": 55
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98f64984_fb0a1d2c",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-03T09:25:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1b1a6a4d_9bcd6cbc",
       "range": {
         "startLine": 293,
         "startChar": 49,
