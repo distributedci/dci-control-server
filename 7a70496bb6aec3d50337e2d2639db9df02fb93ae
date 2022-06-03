@@ -1,0 +1,182 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ec3a6ff_ea15f6de",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "There are a few changes to make before I can put a +2",
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6459ae79_d4de95b4",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "We should move this logic into the event handler, and just send something like (pseudo code)\n\nnotifications.dispatch(\u0027COMPONENT_CREATED\u0027, {...component})\n\nMaybe we can add a todo for now in the code",
+      "range": {
+        "startLine": 85,
+        "startChar": 0,
+        "endLine": 89,
+        "endChar": 58
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2df13ea_7bb5a9f6",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "same here\n\nnotifications.dispatch(\u0027COMPONENT_UPDATED\u0027, {...previous_component}, {...new_component})\n\nMaybe we can add a todo for now in the code",
+      "range": {
+        "startLine": 116,
+        "startChar": 0,
+        "endLine": 120,
+        "endChar": 58
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ed72b5d_fa50e2b1",
+        "filename": "dci/api/v1/notifications.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "already a string",
+      "range": {
+        "startLine": 176,
+        "startChar": 26,
+        "endLine": 176,
+        "endChar": 48
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec07f477_3fdf25f7",
+        "filename": "dci/api/v1/notifications.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "already a string",
+      "range": {
+        "startLine": 177,
+        "startChar": 22,
+        "endLine": 177,
+        "endChar": 50
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "adc1e523_7aa40a4a",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "To be consistent with the REST of the API, creating a \u0027notification\u0027 resource should be \n\nPOST /topics/\u003cuuid:topic_id\u003e/notifications and use the user.id doing the request.\n\nCould you remove the /users at the end ?",
+      "range": {
+        "startLine": 260,
+        "startChar": 49,
+        "endLine": 260,
+        "endChar": 55
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82c01d8d_56883c4c",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "I didn\u0027t understand the purpose of this endpoint. We want admins to be able to list all user that are subscribed to a topic ?\n\nI will not use this on the user interface today",
+      "range": {
+        "startLine": 276,
+        "startChar": 0,
+        "endLine": 290,
+        "endChar": 74
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b1a6a4d_9bcd6cbc",
+        "filename": "dci/api/v1/topics.py",
+        "patchSetId": 15
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-03T08:29:10Z",
+      "side": 1,
+      "message": "same, can you remove /users here, we want to delete the \u0027notification\u0027 resource",
+      "range": {
+        "startLine": 293,
+        "startChar": 49,
+        "endLine": 293,
+        "endChar": 55
+      },
+      "revId": "7a70496bb6aec3d50337e2d2639db9df02fb93ae",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
