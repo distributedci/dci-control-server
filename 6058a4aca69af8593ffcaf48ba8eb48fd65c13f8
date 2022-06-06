@@ -33,6 +33,23 @@
       "message": "dci-integration-tests-el8 is broken due to version bump in EPEL-8\n\nansible-2.9 is not available anymore, instead there\u0027s ansible-core 2.12 (built with python 3.8 apparently)",
       "revId": "6058a4aca69af8593ffcaf48ba8eb48fd65c13f8",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "97ee8eaf_e3ee85c8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-06T09:32:56Z",
+      "side": 1,
+      "message": "recheck",
+      "revId": "6058a4aca69af8593ffcaf48ba8eb48fd65c13f8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
