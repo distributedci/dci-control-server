@@ -178,6 +178,7 @@ create_job_properties = {
     "configuration": with_default(Properties.string, None),
     "name": with_default(Properties.string, None),
     "url": with_default(Properties.url, None),
+    "dry_run": with_default(Properties.boolean, False),
 }
 create_job_schema = {
     "type": "object",
