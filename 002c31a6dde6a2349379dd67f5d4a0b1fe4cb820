@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4934e3db_932b7327",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2022-06-15T21:11:59Z",
+      "side": 1,
+      "message": "why do we pass the pipeline_name here?",
+      "revId": "002c31a6dde6a2349379dd67f5d4a0b1fe4cb820",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
