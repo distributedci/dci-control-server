@@ -16,6 +16,24 @@
       "message": "why do we pass the pipeline_name here?",
       "revId": "002c31a6dde6a2349379dd67f5d4a0b1fe4cb820",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c187699e_82b5e173",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-16T10:26:24Z",
+      "side": 1,
+      "message": "bad rebase, thanks",
+      "parentUuid": "4934e3db_932b7327",
+      "revId": "002c31a6dde6a2349379dd67f5d4a0b1fe4cb820",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
