@@ -13,11 +13,12 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from dci.common import exceptions
 
 
 class Store(object):
     def __init__(self, conf):
-        pass
+        self.containers = conf["containers"]
 
     def delete(self, filename):
         pass
@@ -27,3 +28,11 @@ class Store(object):
 
     def upload(self, filename, iterable, pseudo_folder=None, create_container=True):
         pass
+
+    def _get_container(self, container_name):
+        if container_name not in self.containers:
+            raise exceptions.StoreExceptions(
+                "container name %s not in available containers" % container_name,
+                status_code=400,
+            )
+        return self.containers[container_name]
