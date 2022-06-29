@@ -62,9 +62,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    app_conf = dci_config.CONFIG
-    uri = app_conf["SQLALCHEMY_DATABASE_URI"]
-    connectable = dci_config.get_engine(uri)
+    connectable = dci_config.get_engine()
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
