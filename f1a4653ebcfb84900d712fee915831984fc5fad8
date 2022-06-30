@@ -24,6 +24,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5c846cc_d9594078",
+        "filename": "dci/api/v1/pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-30T07:48:59Z",
+      "side": 1,
+      "message": "hehe debugging stuffs :p, using is_in_team() which do the uuid cast.",
+      "parentUuid": "edde1a69_df77b477",
+      "range": {
+        "startLine": 47,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 76
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4d8ffb6f_353f78ff",
@@ -47,6 +71,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c637a48a_edaa7255",
+        "filename": "dci/api/v1/pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-30T07:48:59Z",
+      "side": 1,
+      "message": "I use the same pattern as /jobs to not overload the database.",
+      "parentUuid": "4d8ffb6f_353f78ff",
+      "range": {
+        "startLine": 87,
+        "startChar": 12,
+        "endLine": 87,
+        "endChar": 29
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "76d754ba_da6cb9be",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-06-30T07:22:57Z",
       "side": 1,
       "message": "can you add a job creation also ?\n\ndci-pipeline is using POST on /jobs",
+      "range": {
+        "startLine": 33,
+        "startChar": 4,
+        "endLine": 33,
+        "endChar": 36
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c5ccffc_95996433",
+        "filename": "tests/api/v1/test_pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-06-30T07:48:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "76d754ba_da6cb9be",
       "range": {
         "startLine": 33,
         "startChar": 4,
