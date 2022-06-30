@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "edde1a69_df77b477",
+        "filename": "dci/api/v1/pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-30T07:20:51Z",
+      "side": 1,
+      "message": "what? Oo",
+      "range": {
+        "startLine": 47,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 76
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d8ffb6f_353f78ff",
+        "filename": "dci/api/v1/pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-30T07:20:51Z",
+      "side": 1,
+      "message": "why did you convert the query into a subquery here ?",
+      "range": {
+        "startLine": 87,
+        "startChar": 12,
+        "endLine": 87,
+        "endChar": 29
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
