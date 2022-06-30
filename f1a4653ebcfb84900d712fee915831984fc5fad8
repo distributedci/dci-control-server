@@ -45,6 +45,29 @@
       },
       "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76d754ba_da6cb9be",
+        "filename": "tests/api/v1/test_pipelines.py",
+        "patchSetId": 10
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-06-30T07:22:57Z",
+      "side": 1,
+      "message": "can you add a job creation also ?\n\ndci-pipeline is using POST on /jobs",
+      "range": {
+        "startLine": 33,
+        "startChar": 4,
+        "endLine": 33,
+        "endChar": 36
+      },
+      "revId": "f1a4653ebcfb84900d712fee915831984fc5fad8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
