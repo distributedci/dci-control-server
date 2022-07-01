@@ -40,7 +40,7 @@ import subprocess
 conf = config.CONFIG
 
 
-def restore_db(engine):
+def create_schema(engine):
     models2.Base.metadata.reflect(engine)
     models2.Base.metadata.drop_all(engine)
     models2.Base.metadata.create_all(engine)

@@ -38,7 +38,7 @@ def engine(request):
 
     if not sqlalchemy_utils.functions.database_exists(db_uri):
         sqlalchemy_utils.functions.create_database(db_uri)
-    utils.restore_db(engine)
+    utils.create_schema(engine)
     return engine
 
 
@@ -67,13 +67,6 @@ def reset_job_event(engine):
     return True
 
 
-@pytest.fixture
-def delete_db(request, engine, teardown_db_clean):
-    models2.Base.metadata.reflect(engine)
-    models2.Base.metadata.drop_all(engine)
-    engine.execute("DROP TABLE IF EXISTS alembic_version")
-
-
 @pytest.fixture(scope="session", autouse=True)
 def memoize_password_hash():
     def memoize(func):
@@ -95,7 +88,7 @@ def memoize_password_hash():
 
 @pytest.fixture
 def teardown_db_clean(request, engine):
-    request.addfinalizer(lambda: utils.restore_db(engine))
+    request.addfinalizer(lambda: utils.create_schema(engine))
 
 
 @pytest.fixture
