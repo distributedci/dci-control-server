@@ -39,7 +39,7 @@ def engine(request):
     if not sqlalchemy_utils.functions.database_exists(db_uri):
         sqlalchemy_utils.functions.create_database(db_uri)
     utils.restore_db(engine)
-    return engine
+    return dci_config.get_engine()
 
 
 @pytest.fixture

@@ -14,6 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+
+
 DEBUG = False
 
 LOG_FILE = "/dev/null"
@@ -36,3 +39,21 @@ CA_KEY = "/tmp/ca.key"
 
 SSO_URL = "http://keycloak:8080"
 SSO_REALM = "redhat-external"
+
+# Database (SQLAlchemy) related parameters
+#
+DB_USER = os.getenv("DB_USER", "dci")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "dci")
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+
+# database uri for specific tests
+SQLALCHEMY_DATABASE_URI_2 = (
+    "postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}".format(
+        db_user=DB_USER,
+        db_password=DB_PASSWORD,
+        db_host=DB_HOST,
+        db_port=DB_PORT,
+        db_name="dci2",
+    )
+)

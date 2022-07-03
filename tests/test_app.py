@@ -17,9 +17,13 @@
 import alembic.autogenerate
 import alembic.environment
 import alembic.script
+import sqlalchemy_utils.functions
 
 import dci.alembic.utils
+import dci.app
+from dci import dci_config
 from dci.db import models2
+import tests.utils as utils
 
 
 def test_cors_preflight(admin):
@@ -43,7 +47,12 @@ def test_cors_headers(admin):
     assert resp.headers["Access-Control-Allow-Origin"] == "*"
 
 
-def test_db_migration(engine, delete_db):
+def test_db_migration():
+    db_uri = utils.conf["SQLALCHEMY_DATABASE_URI_2"]
+    if sqlalchemy_utils.functions.database_exists(db_uri):
+        sqlalchemy_utils.functions.drop_database(db_uri)
+    sqlalchemy_utils.functions.create_database(db_uri)
+    engine = dci_config.get_engine(db_uri)
     config = dci.alembic.utils.generate_conf()
     context = alembic.context
     script = alembic.script.ScriptDirectory.from_config(config)
