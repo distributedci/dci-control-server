@@ -34,7 +34,7 @@ def engine(request):
     utils.rm_upload_folder()
     db_uri = utils.conf["SQLALCHEMY_DATABASE_URI"]
 
-    engine = dci_config.get_engine()
+    engine = dci_config.get_engine(db_uri)
 
     if not sqlalchemy_utils.functions.database_exists(db_uri):
         sqlalchemy_utils.functions.create_database(db_uri)
