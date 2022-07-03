@@ -20,6 +20,7 @@ This module will initialize the database with the admin user and group based
 on DCI environment variable.
 """
 
+from multiprocessing import synchronize
 import os
 
 import sqlalchemy
@@ -46,7 +47,7 @@ def init_db(session):
             resource = model_item(**kwargs)
             session.add(resource)
         else:
-            resource.update(**kwargs)
+            session.query(model_item).filter(model_item.name == kwargs["name"]).update(kwargs)
 
         return resource
 
