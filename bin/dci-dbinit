@@ -45,8 +45,13 @@ def init_db(session):
         if resource is None:
             resource = model_item(**kwargs)
             session.add(resource)
+            session.commit()
         else:
-            resource.update(**kwargs)
+            session.query(model_item).filter(model_item.name == kwargs["name"]).update(kwargs)
+            session.commit()
+        resource = (
+            session.query(model_item).filter(model_item.name == kwargs["name"]).first()
+        )
 
         return resource
 
