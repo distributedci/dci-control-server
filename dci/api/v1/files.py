@@ -29,6 +29,7 @@ from flask import json
 from dci.api.v1 import api
 from dci.api.v1 import base
 from dci.api.v1 import transformations as tsfm
+from dci.api.v1 import junit
 from dci import decorators
 from dci.common import exceptions as dci_exc
 from dci.common.schemas import (
@@ -378,3 +379,21 @@ def purge_archived_files(user):
             raise dci_exc.DCIException(str(e))
 
     return flask.Response(None, 204, content_type="application/json")
+
+
+@api.route("/files/<uuid:file_id>/junit", methods=["GET"])
+@decorators.login_required
+def get_junit_file(user, file_id):
+    file = base.get_resource_orm(models2.File, file_id)
+    if (
+        user.is_not_in_team(file.team_id)
+        and user.is_not_read_only_user()
+        and user.is_not_epm()
+    ):
+        raise dci_exc.Unauthorized()
+    file_descriptor = get_file_descriptor(file)
+    return flask.Response(
+        json.dumps({"testsuites": junit.parse_junit(file_descriptor)}),
+        200,
+        content_type="application/json",
+    )
