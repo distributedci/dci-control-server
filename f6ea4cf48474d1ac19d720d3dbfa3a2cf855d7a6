@@ -39,6 +39,30 @@
       },
       "revId": "f6ea4cf48474d1ac19d720d3dbfa3a2cf855d7a6",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "91d8d67a_ab796c61",
+        "filename": "dci/stores/__init__.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T10:01:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d4cf7029_1be11c6c",
+      "range": {
+        "startLine": 23,
+        "startChar": 0,
+        "endLine": 29,
+        "endChar": 84
+      },
+      "revId": "f6ea4cf48474d1ac19d720d3dbfa3a2cf855d7a6",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
