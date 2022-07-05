@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7a81b84_bc01c1dc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T12:48:42Z",
+      "side": 1,
+      "message": "Nice waiting for CI jobs",
+      "revId": "dd19bbb9e31c1aad9ed7a6e69517694cf71a9c49",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
