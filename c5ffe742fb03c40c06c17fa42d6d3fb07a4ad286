@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dfd2c2fa_5676bfe3",
+        "filename": "dci/alembic/versions/446d2220f8ea_database_initialization.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T07:12:05Z",
+      "side": 1,
+      "message": "Why are you using the pg ENUM instead of the SA one?",
+      "range": {
+        "startLine": 61,
+        "startChar": 0,
+        "endLine": 65,
+        "endChar": 34
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e0e729e_20f58606",
+        "filename": "dci/dci_config.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T07:12:05Z",
+      "side": 1,
+      "message": "I would prefer to make db_uri mandatory\nAn engine always need a SQLALCHEMY_DATABASE_URI, so making it explicit in the function calls are better IMO",
+      "range": {
+        "startLine": 35,
+        "startChar": 0,
+        "endLine": 47,
+        "endChar": 20
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3cc90fdb_ba910f30",
+        "filename": "tests/conftest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T07:12:05Z",
+      "side": 1,
+      "message": "here you need to inject db_uri",
+      "range": {
+        "startLine": 42,
+        "startChar": 11,
+        "endLine": 42,
+        "endChar": 34
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b54c2efc_b822f068",
+        "filename": "tests/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T07:12:05Z",
+      "side": 1,
+      "message": "those are the default value in settings.py no ?\nWhy do you overwrite those?",
+      "range": {
+        "startLine": 43,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 43
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "811befdd_4430e301",
+        "filename": "tests/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 405
+      },
+      "writtenOn": "2022-07-05T07:12:05Z",
+      "side": 1,
+      "message": "i would prefer to inline this directly in the specific test",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 59,
+        "endChar": 1
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
