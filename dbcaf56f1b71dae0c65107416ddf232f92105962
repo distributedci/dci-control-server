@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bd3cac1_305467f8",
+        "filename": "tests/conftest.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-07-05T10:19:12Z",
+      "side": 1,
+      "message": "why not keep `return engine` here ?",
+      "range": {
+        "startLine": 42,
+        "startChar": 11,
+        "endLine": 42,
+        "endChar": 40
+      },
+      "revId": "dbcaf56f1b71dae0c65107416ddf232f92105962",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
