@@ -24,6 +24,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7cb701bb_d4f74af4",
+        "filename": "dci/alembic/versions/446d2220f8ea_database_initialization.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T10:36:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dfd2c2fa_5676bfe3",
+      "range": {
+        "startLine": 61,
+        "startChar": 0,
+        "endLine": 65,
+        "endChar": 34
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8e0e729e_20f58606",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-07-05T07:12:05Z",
       "side": 1,
       "message": "I would prefer to make db_uri mandatory\nAn engine always need a SQLALCHEMY_DATABASE_URI, so making it explicit in the function calls are better IMO",
+      "range": {
+        "startLine": 35,
+        "startChar": 0,
+        "endLine": 47,
+        "endChar": 20
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "90ec44d4_8f128dbe",
+        "filename": "dci/dci_config.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T10:36:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8e0e729e_20f58606",
       "range": {
         "startLine": 35,
         "startChar": 0,
@@ -70,6 +118,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "50bfb91e_232c9292",
+        "filename": "tests/conftest.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T10:36:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3cc90fdb_ba910f30",
+      "range": {
+        "startLine": 42,
+        "startChar": 11,
+        "endLine": 42,
+        "endChar": 34
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b54c2efc_b822f068",
@@ -93,6 +165,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b070ba88_a0d6de63",
+        "filename": "tests/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T10:36:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b54c2efc_b822f068",
+      "range": {
+        "startLine": 43,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 43
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "811befdd_4430e301",
@@ -106,6 +202,30 @@
       "writtenOn": "2022-07-05T07:12:05Z",
       "side": 1,
       "message": "i would prefer to inline this directly in the specific test",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 59,
+        "endChar": 1
+      },
+      "revId": "c5ffe742fb03c40c06c17fa42d6d3fb07a4ad286",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a1379eb_f46b5030",
+        "filename": "tests/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T10:36:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "811befdd_4430e301",
       "range": {
         "startLine": 50,
         "startChar": 0,
