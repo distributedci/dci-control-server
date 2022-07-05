@@ -16,6 +16,29 @@
       "message": "recheck",
       "revId": "f6ea4cf48474d1ac19d720d3dbfa3a2cf855d7a6",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4cf7029_1be11c6c",
+        "filename": "dci/stores/__init__.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-07-05T10:00:09Z",
+      "side": 1,
+      "message": "You did not change the prototypes here (missing `container_name`)",
+      "range": {
+        "startLine": 23,
+        "startChar": 0,
+        "endLine": 29,
+        "endChar": 84
+      },
+      "revId": "f6ea4cf48474d1ac19d720d3dbfa3a2cf855d7a6",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
