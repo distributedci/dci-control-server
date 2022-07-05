@@ -24,6 +24,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7fdd1235_7eecb6ab",
+        "filename": "dci/app.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T12:42:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e16c6649_b11e726c",
+      "range": {
+        "startLine": 41,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 26
+      },
+      "revId": "3c670406e2601456f74ce12d3bd417a993d70b46",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "39bc863a_5ebed282",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-07-05T12:40:36Z",
       "side": 1,
       "message": "self.config",
+      "range": {
+        "startLine": 42,
+        "startChar": 44,
+        "endLine": 42,
+        "endChar": 48
+      },
+      "revId": "3c670406e2601456f74ce12d3bd417a993d70b46",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4af297a3_d8aff6d8",
+        "filename": "dci/app.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T12:42:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39bc863a_5ebed282",
       "range": {
         "startLine": 42,
         "startChar": 44,
@@ -70,6 +118,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d98bc928_1ea20ea1",
+        "filename": "dci/app.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T12:42:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8433f90b_c115652b",
+      "range": {
+        "startLine": 43,
+        "startChar": 43,
+        "endLine": 43,
+        "endChar": 47
+      },
+      "revId": "3c670406e2601456f74ce12d3bd417a993d70b46",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1e414893_1019c30a",
@@ -83,6 +155,30 @@
       "writtenOn": "2022-07-05T12:40:36Z",
       "side": 1,
       "message": "db_uri \u003d \"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}\".format(\n                db_user\u003ddci_config.CONFIG[\"DB_USER\"],\n                db_password\u003ddci_config.CONFIG[\"DB_PASSWORD\"],\n                db_host\u003ddci_config.CONFIG[\"DB_HOST\"],\n                db_port\u003ddci_config.CONFIG[\"DB_PORT\"],\n                db_name\u003d\"test_db_migration\",\n            )\n\nnaming table name with test_db_migration make it explicit",
+      "range": {
+        "startLine": 61,
+        "startChar": 4,
+        "endLine": 61,
+        "endChar": 31
+      },
+      "revId": "3c670406e2601456f74ce12d3bd417a993d70b46",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "320c9d7b_d8a7e1eb",
+        "filename": "tests/test_app.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-05T12:42:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1e414893_1019c30a",
       "range": {
         "startLine": 61,
         "startChar": 4,
