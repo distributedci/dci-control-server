@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b2ea4e8_7ac522c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2022-07-06T09:34:34Z",
+      "side": 1,
+      "message": "Unrelated to this review but stores.Store should be an abstract class. ^^",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26b3527c_91323955",
+        "filename": "dci/settings.py",
+        "patchSetId": 12
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2022-07-06T09:34:34Z",
+      "side": 1,
+      "message": "For consistency, it should be renamed but that can be done later (and avoid introducing breaking changes)",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7da40ed5_1bd3f471",
+        "filename": "dci/stores/s3.py",
+        "patchSetId": 12
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2022-07-06T09:34:34Z",
+      "side": 1,
+      "message": "ack, follow stores.Store interface",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f63e483_7aef2af4",
+        "filename": "dci/stores/s3.py",
+        "patchSetId": 12
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2022-07-06T09:34:34Z",
+      "side": 1,
+      "message": "LGTM",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdcb3c84_be4e629b",
+        "filename": "requirements.txt",
+        "patchSetId": 12
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2022-07-06T09:34:34Z",
+      "side": 1,
+      "message": "ack",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
