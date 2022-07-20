@@ -18,6 +18,23 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce80d5e4_56f9a554",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-20T21:20:01Z",
+      "side": 1,
+      "message": "Tested locally with Minio along with dci-dev-env#25555",
+      "revId": "07528a1b416743e8e13f752258022ebe5419ed5b",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "26b3527c_91323955",
