@@ -33,6 +33,41 @@
       "message": "Do we have those entry in the JUnit.xsd file ?",
       "revId": "00704c8b0c7139b1929607acb6c5f5944b20fde6",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5d4e638_34723021",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-25T10:01:56Z",
+      "side": 1,
+      "message": "recheck",
+      "revId": "00704c8b0c7139b1929607acb6c5f5944b20fde6",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fae2c9b7_b9f72007",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-07-25T10:01:56Z",
+      "side": 1,
+      "message": "Looks like a free form entries:\n\n\u003cxs:documentation xml:lang\u003d\"en\"\u003eContains an aggregation of testsuite results\u003c/xs:documentation\u003e",
+      "parentUuid": "13ac419d_c7689d5f",
+      "revId": "00704c8b0c7139b1929607acb6c5f5944b20fde6",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
