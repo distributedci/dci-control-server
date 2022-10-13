@@ -413,10 +413,11 @@ class Component(dci_declarative.Mixin, Base):
     __tablename__ = "components"
     __table_args__ = (
         sa.Index(
-            "active_components_name_topic_id_team_id_null_key",
+            "active_components_name_topic_id_type_version_team_id_null_key",
             "name",
             "topic_id",
             "type",
+            "version",
             unique=True,
             postgresql_where=sa.sql.text(
                 "components.state = 'active' AND components.team_id is NULL"
@@ -427,7 +428,8 @@ class Component(dci_declarative.Mixin, Base):
             "topic_id",
             "type",
             "team_id",
-            name="name_topic_id_type_team_id_unique",
+            "version",
+            name="name_topic_id_type_team_id_version_unique",
         ),
         sa.Index("components_topic_id_idx", "topic_id"),
     )
@@ -451,6 +453,9 @@ class Component(dci_declarative.Mixin, Base):
     name = sa.Column(sa.String(255), nullable=False)
     type = sa.Column(sa.String(255), nullable=False)
     canonical_project_name = sa.Column(sa.String)
+    display_name = sa.Column(sa.String, nullable=False, server_default="")
+    version = sa.Column(sa.String, nullable=False, server_default="")
+    uid = sa.Column(sa.String, nullable=False, server_default="")
     data = sa.Column(sa_utils.JSONType)
     title = sa.Column(sa.Text)
     message = sa.Column(sa.Text)
