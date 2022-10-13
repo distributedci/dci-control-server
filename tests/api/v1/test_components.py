@@ -29,7 +29,8 @@ from dci.common import exceptions as dci_exc
 @mock.patch("dci.api.v1.notifications.component_dispatcher")
 def test_create_components_active(mock_disp, admin, topic_id):
     data = {
-        "name": "pname",
+        "name": "component version",
+        "canonical_project_name": "component version",
         "type": "gerrit_review",
         "url": "http://example.com/",
         "topic_id": topic_id,
@@ -38,7 +39,59 @@ def test_create_components_active(mock_disp, admin, topic_id):
     pc = admin.post("/api/v1/components", data=data).data
     pc_id = pc["component"]["id"]
     gc = admin.get("/api/v1/components/%s" % pc_id).data
-    assert gc["component"]["name"] == "pname"
+    assert gc["component"]["name"] == "component version"
+    assert gc["component"]["canonical_project_name"] == "component version"
+    assert gc["component"]["display_name"] == "component"
+    assert gc["component"]["version"] == "version"
+    assert gc["component"]["state"] == "active"
+    mock_disp.assert_called()
+
+
+@mock.patch("dci.api.v1.notifications.component_dispatcher")
+def test_create_component_with_version(mock_disp, admin, topic_id):
+    data = {
+        "name": "RHEL-8.6.0-20211205.3",
+        "display_name": "RHEL-8.6.0-20211205.3",
+        "version": "8.6.0-20211205.3",
+        "type": "compose",
+        "url": "http://example.org/RHEL-8.6.0-20211205.3",
+        "topic_id": topic_id,
+        "state": "active",
+    }
+    pc = admin.post("/api/v1/components", data=data).data
+    pc_id = pc["component"]["id"]
+    gc = admin.get("/api/v1/components/%s" % pc_id).data
+    assert gc["component"]["name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["canonical_project_name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["display_name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["version"] == "8.6.0-20211205.3"
+    assert gc["component"]["state"] == "active"
+    mock_disp.assert_called()
+
+
+@mock.patch("dci.api.v1.notifications.component_dispatcher")
+def test_create_component_without_version_nor_display_name(mock_disp, admin, topic_id):
+    data = {
+        "name": "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8",
+        "canonical_project_name": "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8",
+        "type": "git",
+        "url": "http://example.org/doa0.5.0.1",
+        "topic_id": topic_id,
+        "state": "active",
+    }
+    pc = admin.post("/api/v1/components", data=data).data
+    pc_id = pc["component"]["id"]
+    gc = admin.get("/api/v1/components/%s" % pc_id).data
+    assert (
+        gc["component"]["name"]
+        == "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8"
+    )
+    assert (
+        gc["component"]["canonical_project_name"]
+        == "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8"
+    )
+    assert gc["component"]["display_name"] == "dci-openshift-agent"
+    assert gc["component"]["version"] == "0.5.0-1.202209222145git23657e82.el8"
     assert gc["component"]["state"] == "active"
     mock_disp.assert_called()
 
@@ -111,7 +164,7 @@ def test_create_components_with_same_name_on_same_topics(admin, topic_user_id):
     assert pc2.status_code == 409
 
 
-def test_create_components_with_same_name_on_same_topics_same_team(
+def test_name_topic_id_type_team_id_version_uniqueness(
     user, topic_user_id, team_user_id
 ):
     data = {
@@ -120,11 +173,18 @@ def test_create_components_with_same_name_on_same_topics_same_team(
         "topic_id": topic_user_id,
         "team_id": team_user_id,
     }
-    pstatus_code = user.post("/api/v1/components", data=data).status_code
-    assert pstatus_code == 201
+    p = user.post("/api/v1/components", data=data)
+    assert p.status_code == 201
 
-    pstatus_code = user.post("/api/v1/components", data=data).status_code
-    assert pstatus_code == 409
+    p = user.post("/api/v1/components", data=data)
+    assert p.status_code == 409
+
+    data["version"] = "1.2.3"
+    p = user.post("/api/v1/components", data=data)
+    assert p.status_code == 201
+
+    p = user.post("/api/v1/components", data=data)
+    assert p.status_code == 409
 
 
 def test_create_components_with_same_name_on_same_topics_different_team(
