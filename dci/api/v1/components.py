@@ -39,6 +39,7 @@ from dci.common.schemas import (
 from dci.common import utils
 from dci.db import models2
 from dci.db import declarative
+from dci.db import migration_components
 from dci.stores import files_utils
 import sqlalchemy.orm as sa_orm
 
@@ -80,6 +81,14 @@ def create_components(user):
             raise dci_exc.Unauthorized()
 
     values["type"] = values["type"].lower()
+    name = values.get("name")
+    canonical_project_name = values.get("canonical_project_name")
+    values["display_name"] = values.get(
+        "display_name"
+    ) or migration_components.get_component_display_name(name, canonical_project_name)
+    values["version"] = values.get(
+        "version"
+    ) or migration_components.get_component_version(name, canonical_project_name)
 
     c = base.create_resource_orm(models2.Component, values)
 
