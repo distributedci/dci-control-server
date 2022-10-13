@@ -434,6 +434,8 @@ create_component_properties = {
     "title": with_default(Properties.string, None),
     "message": with_default(Properties.string, None),
     "canonical_project_name": with_default(Properties.string, None),
+    "display_name": with_default(Properties.string, None),
+    "version": with_default(Properties.string, None),
     "url": with_default(Properties.url, None),
     "type": Properties.string,
     "topic_id": Properties.uuid,

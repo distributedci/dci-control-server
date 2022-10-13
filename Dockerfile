@@ -27,7 +27,6 @@ COPY sso/RH-IT-Root-CA.crt /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
 RUN update-ca-trust
 
 ENV PYTHONPATH /opt/dci-control-server
-ENV DISABLE_DB_START 1
 
 EXPOSE 5000
 

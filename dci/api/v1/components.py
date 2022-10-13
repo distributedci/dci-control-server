@@ -80,6 +80,12 @@ def create_components(user):
 
     values["type"] = values["type"].lower()
 
+    canonical_project_name = values.get("canonical_project_name")
+    display_name = values.get("display_name")
+    if canonical_project_name and not display_name:
+        values["display_name"] = canonical_project_name
+    if display_name and not canonical_project_name:
+        values["canonical_project_name"] = display_name
     c = base.create_resource_orm(models2.Component, values)
 
     # todo(yassine): move this logic the event handler

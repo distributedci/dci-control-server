@@ -30,6 +30,7 @@ from dci.common import exceptions as dci_exc
 def test_create_components_active(mock_disp, admin, topic_id):
     data = {
         "name": "pname",
+        "canonical_project_name": "canonical project name",
         "type": "gerrit_review",
         "url": "http://example.com/",
         "topic_id": topic_id,
@@ -39,6 +40,31 @@ def test_create_components_active(mock_disp, admin, topic_id):
     pc_id = pc["component"]["id"]
     gc = admin.get("/api/v1/components/%s" % pc_id).data
     assert gc["component"]["name"] == "pname"
+    assert gc["component"]["canonical_project_name"] == "canonical project name"
+    assert gc["component"]["display_name"] == "canonical project name"
+    assert gc["component"]["version"] is None
+    assert gc["component"]["state"] == "active"
+    mock_disp.assert_called()
+
+
+@mock.patch("dci.api.v1.notifications.component_dispatcher")
+def test_create_component_with_version(mock_disp, admin, topic_id):
+    data = {
+        "name": "RHEL-8.6.0-20211205.3",
+        "display_name": "RHEL-8.6.0-20211205.3",
+        "version": "8.6.0-20211205.3",
+        "type": "compose",
+        "url": "http://example.org/RHEL-8.6.0-20211205.3",
+        "topic_id": topic_id,
+        "state": "active",
+    }
+    pc = admin.post("/api/v1/components", data=data).data
+    pc_id = pc["component"]["id"]
+    gc = admin.get("/api/v1/components/%s" % pc_id).data
+    assert gc["component"]["name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["canonical_project_name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["display_name"] == "RHEL-8.6.0-20211205.3"
+    assert gc["component"]["version"] ==  "8.6.0-20211205.3"
     assert gc["component"]["state"] == "active"
     mock_disp.assert_called()
 

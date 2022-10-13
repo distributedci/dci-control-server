@@ -422,13 +422,6 @@ class Component(dci_declarative.Mixin, Base):
                 "components.state = 'active' AND components.team_id is NULL"
             ),
         ),
-        sa.UniqueConstraint(
-            "name",
-            "topic_id",
-            "type",
-            "team_id",
-            name="name_topic_id_type_team_id_unique",
-        ),
         sa.Index("components_topic_id_idx", "topic_id"),
     )
 
@@ -451,6 +444,8 @@ class Component(dci_declarative.Mixin, Base):
     name = sa.Column(sa.String(255), nullable=False)
     type = sa.Column(sa.String(255), nullable=False)
     canonical_project_name = sa.Column(sa.String)
+    display_name = sa.Column(sa.String)
+    version = sa.Column(sa.String) 
     data = sa.Column(sa_utils.JSONType)
     title = sa.Column(sa.Text)
     message = sa.Column(sa.Text)
