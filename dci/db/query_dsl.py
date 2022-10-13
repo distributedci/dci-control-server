@@ -21,7 +21,7 @@ from sqlalchemy import sql
 
 
 _field = pp.Word(pp.alphanums + "_")
-_value = pp.Word(pp.alphanums + "_" + "-")
+_value = pp.Word(pp.alphanums + "_" + "-") | pp.Literal('""') | pp.Literal("''")
 _comma = pp.Suppress(pp.Literal(","))
 _lp = pp.Suppress(pp.Literal("("))
 _rp = pp.Suppress(pp.Literal(")"))
@@ -90,6 +90,8 @@ def _build(sa_query, parsed_query, model_object):
         raise dci_exc.DCIException("Invalid field: %s" % field)
     m_column = getattr(model_object, field)
 
+    if value == "''" or value == '""':
+        value = ""
     res = None
     if op == "eq":
         res = m_column == value
