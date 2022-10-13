@@ -65,6 +65,29 @@ def _verify_component_access_and_role(user, component):
         raise dci_exc.Unauthorized()
 
 
+def _get_component_name_version_separator(component_name):
+    separator = None
+    for sep in [" ", ":"]:
+        if sep in component_name:
+            separator = sep
+            break
+    return separator
+
+
+def get_component_version(component_name):
+    separator = _get_component_name_version_separator(component_name)
+    if separator is None:
+        return ""
+    return component_name.split(separator, 1)[1]
+
+
+def get_component_display_name(component_name):
+    separator = _get_component_name_version_separator(component_name)
+    if separator is None:
+        return component_name
+    return component_name.split(separator, 1)[0]
+
+
 @api.route("/components", methods=["POST"])
 @decorators.login_required
 def create_components(user):
@@ -80,6 +103,11 @@ def create_components(user):
             raise dci_exc.Unauthorized()
 
     values["type"] = values["type"].lower()
+    name = values.get("canonical_project_name") or values["name"]
+    values["display_name"] = values.get("display_name") or get_component_display_name(
+        name
+    )
+    values["version"] = values.get("version") or get_component_version(name)
 
     c = base.create_resource_orm(models2.Component, values)
 
