@@ -807,10 +807,10 @@ def test_purge(admin, components_user_ids, topic_user_id):
     c_purged = admin.post("/api/v1/components/purge")
     assert c_purged.status_code == 204
 
-    with pytest.raises(dci_exc.StoreExceptions):
+    with pytest.raises(dci_exc.StoreException):
         store.get("components", path1)
 
-    with pytest.raises(dci_exc.StoreExceptions):
+    with pytest.raises(dci_exc.StoreException):
         store.get("components", path2)
 
     to_purge = admin.get("/api/v1/components/purge").data
@@ -835,11 +835,11 @@ def test_purge_failure(admin, components_user_ids, topic_user_id):
     to_purge = admin.get("/api/v1/components/purge").data
     assert len(to_purge["components"]) == 1
     # purge will fail
-    with mock.patch("dci.stores.filesystem.FileSystem.delete") as mock_delete:
+    with mock.patch("dci.stores.s3.S3.delete") as mock_delete:
         path1 = files_utils.build_file_path(
             topic_user_id, component_id, c_file1.data["component_file"]["id"]
         )
-        mock_delete.side_effect = dci_exc.StoreExceptions("error")
+        mock_delete.side_effect = dci_exc.StoreException("error")
         purge_res = admin.post("/api/v1/components/purge")
         assert purge_res.status_code == 400
         store = dci_config.get_store()
@@ -1041,3 +1041,140 @@ def test_teams_components_isolation(
     )
     assert components.status_code == 200
     assert components.data["components"][0]["team_id"] == team_user_id2
+
+
+# S3 components related tests
+
+
+def test_get_component_file_from_s3_user_team_in_RHEL_export_control_true(
+    admin,
+    remoteci_context,
+    remoteci_user,
+    RHELProduct,
+    RHEL80Component,
+):
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL80Component["id"]
+    )
+    assert r.status_code == 401
+
+    r = remoteci_context.head(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL80Component["id"]
+    )
+    assert r.status_code == 401
+
+    r = admin.post(
+        "/api/v1/products/%s/teams" % RHELProduct["id"],
+        data={"team_id": remoteci_user["team_id"]},
+    )
+    assert r.status_code == 201
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL80Component["id"]
+    )
+    assert r.status_code == 302
+
+    s3_endpoint_url = dci_config.CONFIG["STORE_S3_ENDPOINT_URL"]
+    bucket = dci_config.CONFIG["STORE_COMPONENTS_CONTAINER"]
+    abs_filepath = files_utils.build_file_path(
+        RHEL80Component["topic_id"], RHEL80Component["id"], "archibonlolol"
+    )
+    assert r.headers["Location"].startswith(
+        f"{s3_endpoint_url}/{bucket}/{abs_filepath}"
+    )
+
+    r = remoteci_context.head(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL80Component["id"]
+    )
+    assert r.status_code == 302
+    assert r.headers["Location"].startswith(
+        f"{s3_endpoint_url}/{bucket}/{abs_filepath}"
+    )
+
+
+def test_get_component_file_from_s3_user_team_in_RHEL_export_control_false(
+    admin,
+    remoteci_context,
+    remoteci_user,
+    RHELProduct,
+    RHEL81Topic,
+    RHEL81Component,
+):
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL81Component["id"]
+    )
+    assert r.status_code == 401
+
+    r = admin.post(
+        "/api/v1/products/%s/teams" % RHELProduct["id"],
+        data={"team_id": remoteci_user["team_id"]},
+    )
+    assert r.status_code == 201
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL81Component["id"]
+    )
+    assert r.status_code == 401
+
+    r = admin.post(
+        "/api/v1/topics/%s/teams" % RHEL81Topic["id"],
+        data={"team_id": remoteci_user["team_id"]},
+    )
+    assert r.status_code == 201
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL81Component["id"]
+    )
+    assert r.status_code == 302
+
+    s3_endpoint_url = dci_config.CONFIG["STORE_S3_ENDPOINT_URL"]
+    bucket = dci_config.CONFIG["STORE_COMPONENTS_CONTAINER"]
+    abs_filepath = files_utils.build_file_path(
+        RHEL81Component["topic_id"], RHEL81Component["id"], "archibonlolol"
+    )
+    assert r.headers["Location"].startswith(
+        f"{s3_endpoint_url}/{bucket}/{abs_filepath}"
+    )
+
+
+def test_get_component_file_from_s3_user_team_in_RHEL81(
+    admin,
+    remoteci_context,
+    remoteci_user,
+    RHELProduct,
+    RHEL81Topic,
+    RHEL81Component,
+):
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL81Component["id"]
+    )
+    assert r.status_code == 401
+
+    r = admin.post(
+        "/api/v1/products/%s/teams" % RHELProduct["id"],
+        data={"team_id": remoteci_user["team_id"]},
+    )
+    assert r.status_code == 201
+
+    r = admin.post(
+        "/api/v1/topics/%s/teams" % RHEL81Topic["id"],
+        data={"team_id": remoteci_user["team_id"]},
+    )
+    assert r.status_code == 201
+
+    r = remoteci_context.get(
+        "/api/v1/components/%s/files/archibonlolol" % RHEL81Component["id"]
+    )
+    assert r.status_code == 302
+
+    s3_endpoint_url = dci_config.CONFIG["STORE_S3_ENDPOINT_URL"]
+    bucket = dci_config.CONFIG["STORE_COMPONENTS_CONTAINER"]
+    abs_filepath = files_utils.build_file_path(
+        RHEL81Component["topic_id"], RHEL81Component["id"], "archibonlolol"
+    )
+    assert r.headers["Location"].startswith(
+        f"{s3_endpoint_url}/{bucket}/{abs_filepath}"
+    )
