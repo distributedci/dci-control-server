@@ -218,6 +218,25 @@ def list_components_files(user, c_id):
     )
 
 
+@api.route("/components/<uuid:c_id>/files/<path:filepath>", methods=["GET", "HEAD"])
+@decorators.login_required
+def get_component_file_from_s3(user, c_id, filepath):
+    component = base.get_resource_orm(models2.Component, c_id)
+    _verify_component_and_topic_access(user, component)
+
+    abs_filepath = files_utils.build_file_path(component.topic_id, c_id, filepath)
+    presign_url_method = "get_object"
+    if flask.request.method == "HEAD":
+        presigned_url = "head_object"
+    presigned_url = flask.g.store.get_presigned_url(
+        presign_url_method, "components", abs_filepath
+    )
+
+    return flask.Response(
+        None, 302, content_type="application/json", headers={"Location": presigned_url}
+    )
+
+
 @api.route("/components/<uuid:c_id>/files/<uuid:f_id>", methods=["GET"])
 @decorators.login_required
 def get_component_file_by_id(user, c_id, f_id):
