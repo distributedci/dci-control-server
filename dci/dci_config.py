@@ -50,6 +50,7 @@ def get_store():
             "components": CONFIG["STORE_COMPONENTS_CONTAINER"],
         }
     }
+
     if CONFIG["STORE_ENGINE"] == CONFIG["S3_STORE"]:
         configuration["aws_access_key_id"] = CONFIG["STORE_S3_AWS_ACCESS_KEY_ID"]
         configuration["aws_secret_access_key"] = CONFIG[
