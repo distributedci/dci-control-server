@@ -54,32 +54,15 @@ SQLALCHEMY_MAX_OVERFLOW = 25
 
 # Stores configuration, to store files and components
 # STORE
-FILE_STORE = "file"
 SWIFT_STORE = "swift"
 S3_STORE = "s3"
 
-STORE_ENGINE = os.getenv("STORE_ENGINE", FILE_STORE)
+STORE_ENGINE = os.getenv("STORE_ENGINE", S3_STORE)
 
 # Generic store
 STORE_FILES_CONTAINER = os.getenv("STORE_FILES_CONTAINER", "dci_files")
 STORE_COMPONENTS_CONTAINER = os.getenv("STORE_COMPONENTS_CONTAINER", "dci_components")
 
-
-# File Store
-STORE_FILE_PATH = os.getenv("STORE_FILE_PATH", "/tmp/")
-
-
-# Swift Store
-STORE_USERNAME = os.getenv("STORE_USERNAME", "dci")
-STORE_PASSWORD = os.getenv("STORE_PASSWORD", "dci")
-STORE_TENANT_NAME = os.getenv("STORE_TENANT_NAME", "dci")
-STORE_HOST = os.getenv("STORE_HOST", "swift")
-STORE_PORT = int(os.getenv("STORE_PORT", "5001"))
-DEFAULT_STORE_AUTH_URL = "http://{store_host}:{store_port}/v3".format(
-    store_host=STORE_HOST, store_port=STORE_PORT
-)
-STORE_AUTH_URL = os.getenv("STORE_AUTH_URL", DEFAULT_STORE_AUTH_URL)
-STORE_REGION = os.getenv("STORE_REGION", "regionOne")
 
 # S3/minio Store
 STORE_S3_AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
