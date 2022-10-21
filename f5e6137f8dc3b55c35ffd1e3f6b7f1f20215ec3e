@@ -24,6 +24,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "385299a1_6e67066c",
+        "filename": "dci/stores/s3.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-10-21T00:14:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ddf167a4_046d658d",
+      "range": {
+        "startLine": 66,
+        "startChar": 43,
+        "endLine": 66,
+        "endChar": 44
+      },
+      "revId": "f5e6137f8dc3b55c35ffd1e3f6b7f1f20215ec3e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0c0b76b2_9efcb246",
@@ -47,6 +71,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "67b31263_1b35b13e",
+        "filename": "dci/stores/s3.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-10-21T00:14:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0c0b76b2_9efcb246",
+      "range": {
+        "startLine": 119,
+        "startChar": 37,
+        "endLine": 119,
+        "endChar": 52
+      },
+      "revId": "f5e6137f8dc3b55c35ffd1e3f6b7f1f20215ec3e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4b266410_71650c25",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-10-20T15:24:39Z",
       "side": 1,
       "message": "StoreException",
+      "range": {
+        "startLine": 125,
+        "startChar": 47,
+        "endLine": 125,
+        "endChar": 48
+      },
+      "revId": "f5e6137f8dc3b55c35ffd1e3f6b7f1f20215ec3e",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a94e844_a0ea9543",
+        "filename": "dci/stores/s3.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2022-10-21T00:14:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4b266410_71650c25",
       "range": {
         "startLine": 125,
         "startChar": 47,
