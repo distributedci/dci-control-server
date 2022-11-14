@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2018 Red Hat, Inc.
+# Copyright 2018-2022 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -66,7 +66,6 @@ def _is_key_value_csv(validator, value, instance, schema):
 
 
 all_validators = dict(Draft4Validator.VALIDATORS)
-all_validators["is_key_value_csv"] = _is_key_value_csv
 
 
 def extend_with_default(validator_class):
