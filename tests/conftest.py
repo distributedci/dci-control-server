@@ -131,6 +131,11 @@ def user2(app):
 
 
 @pytest.fixture
+def epm(app):
+    return utils.generate_client(app, ("epm", "epm"))
+
+
+@pytest.fixture
 def rh_employee(app):
     return utils.generate_client(app, ("rh_employee", "rh_employee"))
 
@@ -144,21 +149,14 @@ def user_sso(app, access_token):
 
 
 @pytest.fixture
-def user_id(admin):
-    user = admin.get("/api/v1/users?where=name:user")
-    user = admin.get("/api/v1/users/%s" % user.data["users"][0]["id"]).data
-    return str(user["user"]["id"])
+def user_id(user):
+    return user.get("/api/v1/users/me").data["user"]["id"]
 
 
 @pytest.fixture
 def user_no_team(admin):
     r = admin.get("/api/v1/users?where=name:user_no_team")
     return dict(r.data["users"][0])
-
-
-@pytest.fixture
-def epm(app):
-    return utils.generate_client(app, ("epm", "epm"))
 
 
 @pytest.fixture
