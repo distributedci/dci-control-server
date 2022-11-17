@@ -131,12 +131,10 @@ def test_new_component_created(mocked_disp, admin, topic_user_id):
     mocked_disp.assert_called_once_with(_arg)
 
 
-def test_delete_a_remoteci_delete_the_associated_subscriptions(
-    user, user_id, team_user_id
-):
+def test_delete_a_remoteci_delete_the_associated_subscriptions(user, user_id, team1_id):
     remoteci = user.post(
         "/api/v1/remotecis",
-        data={"name": "My remoteci", "team_id": team_user_id},
+        data={"name": "My remoteci", "team_id": team1_id},
     ).data["remoteci"]
 
     r = user.post("/api/v1/remotecis/%s/users" % remoteci["id"])

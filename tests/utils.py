@@ -157,7 +157,7 @@ def provision(session):
     session.add(admin_user)
 
     # Create user
-    user_team = models2.Team(name="user")
+    user_team = models2.Team(name="Team 1")
     user = models2.User(
         name="user",
         sso_username="user",
@@ -169,7 +169,7 @@ def provision(session):
     session.add(user)
 
     # Create user 2
-    user2_team = models2.Team(name="user2")
+    user2_team = models2.Team(name="Team 2")
     user2 = models2.User(
         name="user2",
         sso_username="user2",
@@ -179,6 +179,10 @@ def provision(session):
     )
     user2.team.append(user2_team)
     session.add(user2)
+
+    # Team without any user
+    team_no_user = models2.Team(name="Team no user")
+    session.add(team_no_user)
 
     # Create user no team
     user_no_team = models2.User(

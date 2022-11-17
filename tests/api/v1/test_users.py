@@ -27,7 +27,7 @@ from dci.common.schemas import (
 )
 
 
-def test_create_users(admin, team_id):
+def test_create_users(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -63,7 +63,7 @@ def test_create_user_withouta_team(admin):
     assert gu["user"]["timezone"] == "UTC"
 
 
-def test_create_users_already_exist(admin, team_id):
+def test_create_users_already_exist(admin):
     pstatus_code = admin.post(
         "/api/v1/users",
         data={
@@ -87,21 +87,21 @@ def test_create_users_already_exist(admin, team_id):
     assert pstatus_code == 409
 
 
-def test_get_teams_of_user(admin, user_id, team_id, team_user_id):
-    res = admin.post("/api/v1/teams/%s/users/%s" % (team_id, user_id))
+def test_get_teams_of_user(admin, user_id, team_no_user_id, team1_id):
+    res = admin.post("/api/v1/teams/%s/users/%s" % (team_no_user_id, user_id))
     assert res.status_code == 201
 
-    res = admin.post("/api/v1/teams/%s/users/%s" % (team_user_id, user_id))
+    res = admin.post("/api/v1/teams/%s/users/%s" % (team1_id, user_id))
     assert res.status_code == 201
 
     uteams = admin.get("/api/v1/users/%s/teams" % user_id)
     assert uteams.status_code == 200
     assert len(uteams.data["teams"]) == 2
     team_ids = {t["id"] for t in uteams.data["teams"]}
-    assert team_ids == set([team_id, team_user_id])
+    assert team_ids == set([team_no_user_id, team1_id])
 
 
-def test_get_all_users(admin, team_id):
+def test_get_all_users(admin):
     # TODO(yassine): Currently there is already 3 users created in the DB,
     # this will be fixed later.
     db_users = admin.get("/api/v1/users?sort=created_at").data
@@ -152,7 +152,7 @@ def test_get_all_users_with_team(admin):
     assert "team" in db_users[0]
 
 
-def test_get_all_users_with_where(admin, team_id):
+def test_get_all_users_with_where(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -173,7 +173,7 @@ def test_get_all_users_with_where(admin, team_id):
     assert db_u_id == pu_id
 
 
-def test_get_all_users_with_pagination(admin, team_id):
+def test_get_all_users_with_pagination(admin):
     users = admin.get("/api/v1/users").data
     current_users = users["_meta"]["count"]
     admin.post(
@@ -228,7 +228,7 @@ def test_get_all_users_with_pagination(admin, team_id):
     assert users.data["users"] == []
 
 
-def test_get_all_users_with_sort(admin, team_id):
+def test_get_all_users_with_sort(admin):
     # TODO(yassine): Currently there is already 3 users created in the DB,
     # this will be fixed later.
     db_users = admin.get("/api/v1/users?sort=created_at").data
@@ -267,7 +267,7 @@ def test_get_all_users_with_sort(admin, team_id):
     assert gusers["users"][1]["id"] == db_users[1]["id"]
 
 
-def test_get_user_by_id(admin, team_id):
+def test_get_user_by_id(admin):
     puser = admin.post(
         "/api/v1/users",
         data={
@@ -292,7 +292,7 @@ def test_get_user_not_found(admin):
     assert result.status_code == 404
 
 
-def test_put_users(admin, team_id):
+def test_put_users(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -320,7 +320,7 @@ def test_put_users(admin, team_id):
     assert ppu.data["user"]["name"] == "nname"
 
 
-def test_change_user_state(admin, team_id):
+def test_change_user_state(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -346,7 +346,7 @@ def test_change_user_state(admin, team_id):
     assert ppu.data["user"]["state"] == "inactive"
 
 
-def test_change_user_to_invalid_state(admin, team_id):
+def test_change_user_to_invalid_state(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -375,7 +375,7 @@ def test_change_user_to_invalid_state(admin, team_id):
     assert gu.data["user"]["state"] == "active"
 
 
-def test_delete_user_by_id(admin, team_id):
+def test_delete_user_by_id(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -499,7 +499,7 @@ def test_delete_as_user_epm(user, epm, admin):
     assert user_delete.status_code == 204
 
 
-def test_success_update_field_by_field(admin, team_id):
+def test_success_update_field_by_field(admin):
     user = admin.post(
         "/api/v1/users",
         data={
@@ -510,29 +510,29 @@ def test_success_update_field_by_field(admin, team_id):
         },
     ).data["user"]
 
-    t = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
+    u = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
 
     admin.put(
         "/api/v1/users/%s" % user["id"],
         data={"state": "inactive"},
-        headers={"If-match": t["etag"]},
+        headers={"If-match": u["etag"]},
     )
 
-    t = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
+    u = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
 
-    assert t["name"] == "pname"
-    assert t["state"] == "inactive"
+    assert u["name"] == "pname"
+    assert u["state"] == "inactive"
 
     admin.put(
         "/api/v1/users/%s" % user["id"],
         data={"name": "newuser"},
-        headers={"If-match": t["etag"]},
+        headers={"If-match": u["etag"]},
     )
 
-    t = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
+    u = admin.get("/api/v1/users/%s" % user["id"]).data["user"]
 
-    assert t["name"] == "newuser"
-    assert t["state"] == "inactive"
+    assert u["name"] == "newuser"
+    assert u["state"] == "inactive"
 
 
 def test_get_current_user(user):
@@ -645,7 +645,7 @@ def test_update_current_user_sso(rh_employee, app, admin):
     assert me.data["user"]["timezone"] == "Europe/Paris"
 
 
-def test_get_embed_remotecis(user, remoteci_user_id, user_id):
+def test_get_embed_remotecis(user, remoteci_user_id):
     r = user.post("/api/v1/remotecis/%s/users" % remoteci_user_id)
 
     assert r.status_code == 201
@@ -669,7 +669,7 @@ def test_success_ensure_put_me_api_secret_is_not_leaked(admin, user):
     assert "password" not in res.data["user"]
 
 
-def test_success_ensure_put_api_secret_is_not_leaked(admin, team_id):
+def test_success_ensure_put_api_secret_is_not_leaked(admin):
     pu = admin.post(
         "/api/v1/users",
         data={
@@ -759,7 +759,7 @@ def test_update_user_schema():
         pytest.fail("update_user_schema is invalid")
 
 
-def test_get_user_then_update_user_doesnt_raise_error_500(admin, team_id):
+def test_get_user_then_update_user_doesnt_raise_error_500(admin, team_no_user_id):
     request = admin.post(
         "/api/v1/users",
         data={
@@ -770,7 +770,7 @@ def test_get_user_then_update_user_doesnt_raise_error_500(admin, team_id):
         },
     )
     user = request.data["user"]
-    admin.post("/api/v1/teams/%s/users/%s" % (team_id, user["id"]))
+    admin.post("/api/v1/teams/%s/users/%s" % (team_no_user_id, user["id"]))
     user = admin.get("/api/v1/users/%s" % request.data["user"]["id"]).data["user"]
     user["fullname"] = "Mr User 1"
     request = admin.put(

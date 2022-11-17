@@ -13,28 +13,28 @@
 # under the License.
 
 
-def test_add_get_users_from_to_team(admin, team_id, user_id):
+def test_add_get_users_from_to_team(admin, team_no_user_id, user_id):
     # adding two users to the same team
-    users = admin.get("/api/v1/teams/%s/users" % team_id)
+    users = admin.get("/api/v1/teams/%s/users" % team_no_user_id)
     current_len = len(users.data["users"])
 
-    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_id, user_id), data={})
+    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_no_user_id, user_id), data={})
     assert pu.status_code == 201
 
-    users = admin.get("/api/v1/teams/%s/users" % team_id)
+    users = admin.get("/api/v1/teams/%s/users" % team_no_user_id)
     assert users.status_code == 200
     assert len(users.data["users"]) == (current_len + 1)
 
 
-def test_add_user_to_different_teams(admin, user_id, team_id, team_user_id, user):
-    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_id, user_id), data={})
+def test_add_user_to_different_teams(admin, user_id, team_no_user_id, team1_id, user):
+    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_no_user_id, user_id), data={})
     assert pu.status_code == 201
 
-    users = admin.get("/api/v1/teams/%s/users" % team_id)
+    users = admin.get("/api/v1/teams/%s/users" % team_no_user_id)
     assert users.status_code == 200
     assert users.data["users"][0]["id"] == user_id
 
-    users = admin.get("/api/v1/teams/%s/users" % team_user_id)
+    users = admin.get("/api/v1/teams/%s/users" % team1_id)
     assert users.status_code == 200
     assert (
         users.data["users"][0]["id"] == user_id
@@ -42,16 +42,16 @@ def test_add_user_to_different_teams(admin, user_id, team_id, team_user_id, user
     )
 
 
-def test_delete_user_from_team(admin, user_id, team_id):
-    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_id, user_id), data={})
+def test_delete_user_from_team(admin, user_id, team_no_user_id):
+    pu = admin.post("/api/v1/teams/%s/users/%s" % (team_no_user_id, user_id), data={})
     assert pu.status_code == 201
 
-    gu = admin.get("/api/v1/teams/%s/users" % team_id)
+    gu = admin.get("/api/v1/teams/%s/users" % team_no_user_id)
     assert gu.data["users"][0]["id"] == user_id
 
-    du = admin.delete("/api/v1/teams/%s/users/%s" % (team_id, user_id))
+    du = admin.delete("/api/v1/teams/%s/users/%s" % (team_no_user_id, user_id))
     assert du.status_code == 204
 
-    users = admin.get("/api/v1/teams/%s/users" % team_id)
+    users = admin.get("/api/v1/teams/%s/users" % team_no_user_id)
     assert users.status_code == 200
     assert users.data["users"] == []

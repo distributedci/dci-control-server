@@ -15,10 +15,10 @@
 # under the License.
 
 
-def test_create_and_get_pipeline(user, team_user_id):
+def test_create_and_get_pipeline(user, team1_id):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     assert pipeline.status_code == 201
     pipeline_id = pipeline.data["pipeline"]["id"]
@@ -30,12 +30,10 @@ def test_create_and_get_pipeline(user, team_user_id):
     assert get_pipeline["name"] == "pipeline1"
 
 
-def test_jobs_schedule_with_pipeline(
-    remoteci_context, user, team_user_id, topic_user_id
-):
+def test_jobs_schedule_with_pipeline(remoteci_context, user, team1_id, topic_user_id):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     pipeline_id = pipeline.data["pipeline"]["id"]
     job_1 = remoteci_context.post(
@@ -61,11 +59,11 @@ def test_jobs_schedule_with_pipeline(
 
 
 def test_jobs_create_with_pipeline(
-    remoteci_context, user, team_user_id, topic_user_id, components_ids
+    remoteci_context, user, team1_id, topic_user_id, components_ids
 ):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     pipeline_id = pipeline.data["pipeline"]["id"]
     job_1 = remoteci_context.post(
@@ -98,13 +96,13 @@ def test_jobs_create_with_pipeline(
     assert jobs_pipeline[1]["id"] == job_2["id"]
 
 
-def test_get_pipelines(remoteci_context, team_user_id):
+def test_get_pipelines(remoteci_context, team1_id):
     for _ in range(3):
         pipeline = remoteci_context.post(
             "/api/v1/pipelines",
             data={
                 "name": "pipeline1",
-                "team_id": team_user_id,
+                "team_id": team1_id,
             },
         )
         assert pipeline.status_code == 201
@@ -113,10 +111,10 @@ def test_get_pipelines(remoteci_context, team_user_id):
     assert len(pipelines.data["pipelines"]) == 3
 
 
-def test_update_pipeline(user, remoteci_context, team_user_id):
+def test_update_pipeline(user, remoteci_context, team1_id):
     pipeline = remoteci_context.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     pipeline_id = pipeline.data["pipeline"]["id"]
     pipeline_etag = pipeline.data["pipeline"]["etag"]
@@ -136,10 +134,10 @@ def test_update_pipeline(user, remoteci_context, team_user_id):
     assert get_pipeline["name"] == "pipeline2"
 
 
-def test_delete_pipeline(remoteci_context, team_user_id):
+def test_delete_pipeline(remoteci_context, team1_id):
     pipeline = remoteci_context.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     pipeline_id = pipeline.data["pipeline"]["id"]
     pipeline_etag = pipeline.data["pipeline"]["etag"]
@@ -160,11 +158,11 @@ def test_delete_pipeline(remoteci_context, team_user_id):
 def test_get_pipeline_not_authorized(
     user,
     user2,
-    team_user_id,
+    team1_id,
 ):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     assert pipeline.status_code == 201
     pipeline_id = pipeline.data["pipeline"]["id"]
@@ -177,11 +175,11 @@ def test_get_pipeline_not_authorized(
 
 
 def test_jobs_from_pipeline_not_authorized(
-    remoteci_context, user, team_user_id, topic_user_id, user2
+    remoteci_context, user, team1_id, topic_user_id, user2
 ):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     pipeline_id = pipeline.data["pipeline"]["id"]
     job = remoteci_context.post(
@@ -193,9 +191,9 @@ def test_jobs_from_pipeline_not_authorized(
     assert get_pipeline.status_code == 401
 
 
-def test_create_pipeline_for_another_team_not_authorized(user, team_user_id2):
+def test_create_pipeline_for_another_team_not_authorized(user, team2_id):
     pipeline = user.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id2},
+        data={"name": "pipeline1", "team_id": team2_id},
     )
     assert pipeline.status_code == 401

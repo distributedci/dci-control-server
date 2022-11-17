@@ -165,7 +165,7 @@ def epm_id(epm):
 
 
 @pytest.fixture
-def topic_id(admin, team_id, product):
+def topic_id(admin, team_no_user_id, product):
     data = {
         "name": "topic_name",
         "product_id": product["id"],
@@ -173,12 +173,12 @@ def topic_id(admin, team_id, product):
     }
     topic = admin.post("/api/v1/topics", data=data).data
     t_id = topic["topic"]["id"]
-    admin.post("/api/v1/topics/%s/teams" % t_id, data={"team_id": team_id})
+    admin.post("/api/v1/topics/%s/teams" % t_id, data={"team_id": team_no_user_id})
     return str(t_id)
 
 
 @pytest.fixture
-def topic(admin, team_user_id, product):
+def topic(admin, team1_id, product):
     topic = admin.post(
         "/api/v1/topics",
         data={
@@ -195,14 +195,8 @@ def topic(admin, team_user_id, product):
             "type": "puddle_osp",
         },
     )
-    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team_user_id})
+    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team1_id})
     return topic
-
-
-@pytest.fixture
-def team_id(admin, team_user_id):
-    team = admin.post("/api/v1/teams", data={"name": "pname"})
-    return str(team.data["team"]["id"])
 
 
 @pytest.fixture
@@ -213,14 +207,20 @@ def team_product_id(admin):
 
 
 @pytest.fixture
-def team_user_id(admin):
-    team = admin.get("/api/v1/teams?where=name:user").data["teams"][0]
+def team1_id(admin):
+    team = admin.get("/api/v1/teams?where=name:Team%201").data["teams"][0]
     return str(team["id"])
 
 
 @pytest.fixture
-def team_user_id2(admin):
-    team = admin.get("/api/v1/teams?where=name:user2").data["teams"][0]
+def team2_id(admin):
+    team = admin.get("/api/v1/teams?where=name:Team%202").data["teams"][0]
+    return str(team["id"])
+
+
+@pytest.fixture
+def team_no_user_id(admin):
+    team = admin.get("/api/v1/teams?where=name:Team%20no%20user").data["teams"][0]
     return str(team["id"])
 
 
@@ -232,7 +232,7 @@ def team_admin_id(admin):
 
 @pytest.fixture
 def team_redhat_id(admin):
-    team = admin.get("/api/v1/teams?where=name:Red Hat").data["teams"][0]
+    team = admin.get("/api/v1/teams?where=name:Red%20Hat").data["teams"][0]
     return str(team["id"])
 
 
@@ -243,15 +243,15 @@ def team_epm_id(admin):
 
 
 @pytest.fixture
-def topic_user(admin, user, team_user_id, team_user_id2, product):
+def topic_user(admin, team1_id, team2_id, product):
     data = {
         "name": "topic_user_name",
         "product_id": product["id"],
         "component_types": ["type_1", "type_2", "type_3"],
     }
     topic = admin.post("/api/v1/topics", data=data).data["topic"]
-    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team_user_id})
-    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team_user_id2})
+    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team1_id})
+    admin.post("/api/v1/topics/%s/teams" % topic["id"], data={"team_id": team2_id})
     for i in range(1, 4):
         admin.post(
             "/api/v1/components",
@@ -266,8 +266,8 @@ def topic_user_id(topic_user):
 
 
 @pytest.fixture
-def remoteci_id(admin, team_id):
-    data = {"name": "pname", "team_id": team_id}
+def remoteci_id(admin, team_no_user_id):
+    data = {"name": "pname", "team_id": team_no_user_id}
     remoteci = admin.post("/api/v1/remotecis", data=data).data
     return str(remoteci["remoteci"]["id"])
 
@@ -279,8 +279,8 @@ def remoteci_user_api_secret(user, remoteci_user_id):
 
 
 @pytest.fixture
-def remoteci_user(user, admin, team_user_id, topic_user_id):
-    data = {"name": "user remoteci", "team_id": team_user_id}
+def remoteci_user(user, team1_id):
+    data = {"name": "user remoteci", "team_id": team1_id}
     remoteci = user.post("/api/v1/remotecis", data=data).data
 
     return remoteci["remoteci"]
@@ -292,8 +292,8 @@ def remoteci_user_id(remoteci_user):
 
 
 @pytest.fixture
-def remoteci(admin, team_id):
-    data = {"name": "remoteci", "team_id": team_id}
+def remoteci(admin, team_no_user_id):
+    data = {"name": "remoteci", "team_id": team_no_user_id}
     return admin.post("/api/v1/remotecis", data=data).data["remoteci"]
 
 
@@ -337,8 +337,8 @@ def remoteci_configuration_user_id(user, remoteci_user_id, topic_user_id):
 
 
 @pytest.fixture
-def feeder_id(epm, team_user_id):
-    data = {"name": "feeder_osp", "team_id": team_user_id}
+def feeder_id(epm, team1_id):
+    data = {"name": "feeder_osp", "team_id": team1_id}
     feeder = epm.post("/api/v1/feeders", data=data).data
     return str(feeder["feeder"]["id"])
 
@@ -407,19 +407,19 @@ def jobstate_user_id(user, job_user_id):
 
 
 @pytest.fixture
-def file_user_id(user, jobstate_user_id, team_user_id):
+def file_user_id(user, jobstate_user_id, team1_id):
     headers = {"DCI-JOBSTATE-ID": jobstate_user_id, "DCI-NAME": "name"}
     file = user.post("/api/v1/files", headers=headers, data="kikoolol").data
-    headers["team_id"] = team_user_id
+    headers["team_id"] = team1_id
     headers["id"] = file["file"]["id"]
     return file["file"]["id"]
 
 
 @pytest.fixture
-def file_job_user_id(user, job_user_id, team_user_id):
+def file_job_user_id(user, job_user_id, team1_id):
     headers = {"DCI-JOB-ID": job_user_id, "DCI-NAME": "name"}
     file = user.post("/api/v1/files", headers=headers, data="foobar").data
-    headers["team_id"] = team_user_id
+    headers["team_id"] = team1_id
     headers["id"] = file["file"]["id"]
     return file["file"]["id"]
 

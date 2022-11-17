@@ -181,10 +181,10 @@ def test_get_all_topics_by_admin(admin, product):
 
 
 def test_get_all_topics_by_user_and_remoteci(
-    admin, user, remoteci_context, team_user_id, product
+    admin, user, remoteci_context, team1_id, product
 ):
     pat = admin.post(
-        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert pat.status_code == 201
 
@@ -207,16 +207,14 @@ def test_get_all_topics_by_user_and_remoteci(
         assert len(my_topic.data["topics"]) == 0
 
         # associate the user's team to the topic
-        admin.post(
-            "/api/v1/topics/%s/teams" % my_topic_id, data={"team_id": team_user_id}
-        )
+        admin.post("/api/v1/topics/%s/teams" % my_topic_id, data={"team_id": team1_id})
 
         # user should see the topic now
         my_topic = caller.get("/api/v1/topics?where=name:%s" % topic_name)
         assert my_topic.data["topics"][0]["name"] == topic_name
 
         # remove user'team from topic
-        admin.delete("/api/v1/topics/%s/teams/%s" % (my_topic_id, team_user_id))
+        admin.delete("/api/v1/topics/%s/teams/%s" % (my_topic_id, team1_id))
 
         # user should not find it
         my_topic = caller.get("/api/v1/topics?where=name:%s" % topic_name)
@@ -286,9 +284,9 @@ def test_get_all_topics_with_where(admin, product):
         assert r["topics"][0]["id"] == t_id
 
 
-def test_get_topics_of_user(admin, user, team_user_id, product):
+def test_get_topics_of_user(admin, user, team1_id, product):
     pat = admin.post(
-        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert pat.status_code == 201
     data = {
@@ -298,7 +296,7 @@ def test_get_topics_of_user(admin, user, team_user_id, product):
     }
     topic = admin.post("/api/v1/topics", data=data).data["topic"]
     topic_id = topic["id"]
-    admin.post("/api/v1/topics/%s/teams" % topic_id, data={"team_id": team_user_id})
+    admin.post("/api/v1/topics/%s/teams" % topic_id, data={"team_id": team1_id})
     for i in range(5):
         admin.post(
             "/api/v1/topics",
@@ -331,7 +329,7 @@ def test_get_topics_by_with_embed_authorization(admin, user, epm):
         assert t["teams"] == []
 
 
-def test_get_topic_by_id(admin, user, team_user_id, product):
+def test_get_topic_by_id(admin, user, team1_id, product):
     data = {
         "name": "tname",
         "product_id": product["id"],
@@ -340,7 +338,7 @@ def test_get_topic_by_id(admin, user, team_user_id, product):
     pt = admin.post("/api/v1/topics", data=data).data
     pt_id = pt["topic"]["id"]
 
-    admin.post("/api/v1/topics/%s/teams" % pt_id, data={"team_id": team_user_id})
+    admin.post("/api/v1/topics/%s/teams" % pt_id, data={"team_id": team1_id})
 
     # get by uuid
     created_ct = user.get("/api/v1/topics/%s" % pt_id)
@@ -728,10 +726,10 @@ def test_add_multiple_topic_and_get(admin, user, product, product2):
 
 
 def test_get_topic_by_id_export_control_true(
-    admin, user, team_user_id, RHELProduct, RHEL80Topic
+    admin, user, team1_id, RHELProduct, RHEL80Topic
 ):
     request = admin.post(
-        "/api/v1/products/%s/teams" % RHELProduct["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % RHELProduct["id"], data={"team_id": team1_id}
     )
     assert request.status_code == 201
     request = user.get("/api/v1/topics/%s" % RHEL80Topic["id"])

@@ -263,12 +263,12 @@ def test_get_previous_job_in_topic(
     user,
     remoteci_context,
     components_user_ids,
-    team_user_id,
+    team1_id,
     session,
     topic_user_id,
 ):
     def get_new_remoteci_context():
-        data = {"name": "rname_new", "team_id": team_user_id}
+        data = {"name": "rname_new", "team_id": team1_id}
         remoteci = user.post("/api/v1/remotecis", data=data).data
         remoteci_id = str(remoteci["remoteci"]["id"])
         api_secret = user.get("/api/v1/remotecis/%s" % remoteci_id).data
@@ -281,7 +281,7 @@ def test_get_previous_job_in_topic(
     data = {
         "comment": "kikoolol",
         "components": components_user_ids,
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "name": "ocp-vanilla",
         "configuration": "cluster-8-nodes-sriov",
@@ -313,7 +313,7 @@ def test_get_previous_job_in_topic(
         assert prev_job_id == test_prev_job_id
 
 
-def test_purge(app, admin, user, jobstate_user_id, team_user_id, job_user_id):
+def test_purge(app, admin, user, jobstate_user_id, team1_id, job_user_id):
     # create two files and archive them
     file_id1 = t_utils.post_file(
         user, jobstate_user_id, FileDesc("kikoolol", "content")
@@ -327,19 +327,19 @@ def test_purge(app, admin, user, jobstate_user_id, team_user_id, job_user_id):
     to_purge = admin.get("/api/v1/files/purge").data
     assert len(to_purge["files"]) == 2
     admin.post("/api/v1/files/purge")
-    path1 = files_utils.build_file_path(team_user_id, job_user_id, file_id1)
+    path1 = files_utils.build_file_path(team1_id, job_user_id, file_id1)
     store = dci_config.get_store()
     # the purge removed the file from the backend, get() must raise exception
     with pytest.raises(dci_exc.StoreExceptions):
         store.get("files", path1)
-    path2 = files_utils.build_file_path(team_user_id, job_user_id, file_id2)
+    path2 = files_utils.build_file_path(team1_id, job_user_id, file_id2)
     with pytest.raises(dci_exc.StoreExceptions):
         store.get("files", path2)
     to_purge = admin.get("/api/v1/files/purge").data
     assert len(to_purge["files"]) == 0
 
 
-def test_purge_failure(app, admin, user, jobstate_user_id, job_user_id, team_user_id):
+def test_purge_failure(app, admin, user, jobstate_user_id, job_user_id, team1_id):
     # create two files and archive them
     file_id1 = t_utils.post_file(
         user, jobstate_user_id, FileDesc("kikoolol", "content")
@@ -358,8 +358,8 @@ def test_purge_failure(app, admin, user, jobstate_user_id, job_user_id, team_use
         mock_delete.side_effect = dci_exc.StoreExceptions("error")
         purge_res = admin.post("/api/v1/files/purge")
         assert purge_res.status_code == 400
-        path1 = files_utils.build_file_path(team_user_id, job_user_id, file_id1)
-        path2 = files_utils.build_file_path(team_user_id, job_user_id, file_id2)
+        path1 = files_utils.build_file_path(team1_id, job_user_id, file_id1)
+        path2 = files_utils.build_file_path(team1_id, job_user_id, file_id2)
         store = dci_config.get_store()
         store.get("files", path1)
         store.get("files", path2)

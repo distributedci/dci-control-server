@@ -30,14 +30,14 @@ def test_get_identity_unauthorized(unauthorized):
     assert response.status_code == 401
 
 
-def test_get_identity_user(user, team_user_id):
+def test_get_identity_user(user, team1_id):
     response = user.get("/api/v1/identity")
     assert response.status_code == 200
     assert "identity" in response.data
     identity = response.data["identity"]
     assert identity["name"] == "user"
-    assert identity["teams"][team_user_id]["name"] == "user"
-    assert identity["teams"][team_user_id]["id"] == team_user_id
+    assert identity["teams"][team1_id]["name"] == "Team 1"
+    assert identity["teams"][team1_id]["id"] == team1_id
 
 
 def get_user(flask_user, name):

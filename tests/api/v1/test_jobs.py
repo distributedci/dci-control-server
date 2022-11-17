@@ -37,7 +37,7 @@ AWSS3 = "dci.stores.s3.S3"
 
 
 def test_create_jobs(
-    remoteci_context, components_user_ids, job_user_id, team_user_id, topic_user_id
+    remoteci_context, components_user_ids, job_user_id, team1_id, topic_user_id
 ):
     data = {
         "comment": "kikoolol",
@@ -58,7 +58,7 @@ def test_create_jobs(
     job = remoteci_context.get("/api/v1/jobs/%s" % job_id).data["job"]
     assert job["comment"] == "kikoolol"
     assert job["previous_job_id"] == job_user_id
-    assert job["team_id"] == team_user_id
+    assert job["team_id"] == team1_id
     assert job["data"] == {"config": "config"}
     assert job["name"] == "my-job-name"
     assert job["configuration"] == "my-configuration"
@@ -70,7 +70,7 @@ def test_create_jobs_with_team_components(
     remoteci_context,
     components_user_ids,
     job_user_id,
-    team_user_id,
+    team1_id,
     topic_user_id,
 ):
 
@@ -78,7 +78,7 @@ def test_create_jobs_with_team_components(
         "name": "pname",
         "type": "mytest",
         "topic_id": topic_user_id,
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "tags": ["tag1", "common"],
     }
     team_component = user.post("/api/v1/components", data=data).data["component"]
@@ -97,7 +97,7 @@ def test_create_jobs_with_team_components(
 
     job = remoteci_context.get("/api/v1/jobs/%s" % job_id)
     assert job.status_code == 200
-    assert job.data["job"]["team_id"] == team_user_id
+    assert job.data["job"]["team_id"] == team1_id
 
     job_components = remoteci_context.get("/api/v1/jobs/%s/components" % job_id).data
     job_components_ids = [cmpt["id"] for cmpt in job_components["components"]]
@@ -109,12 +109,12 @@ def test_create_jobs_with_team_components(
     assert set(job_components_ids) == set(components_user_ids)
 
 
-def test_add_component_to_job(user, team_user_id, topic_user_id, job_user_id):
+def test_add_component_to_job(user, team1_id, topic_user_id, job_user_id):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "url": "http://example.com/",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "state": "active",
     }
@@ -131,7 +131,7 @@ def test_add_component_to_job(user, team_user_id, topic_user_id, job_user_id):
 
 
 def test_add_component_with_no_team_to_job(
-    user, admin, team_user_id, topic_user_id, job_user_id
+    user, admin, team1_id, topic_user_id, job_user_id
 ):
     data = {
         "name": "pname",
@@ -177,7 +177,7 @@ def test_create_jobs_empty_comment(
 
 
 def test_get_all_jobs(
-    user, remoteci_context, topic_user_id, components_user_ids, team_user_id
+    user, remoteci_context, topic_user_id, components_user_ids, team1_id
 ):
     data = {"components_ids": components_user_ids, "topic_id": topic_user_id}
     job_1 = remoteci_context.post("/api/v1/jobs/schedule", data=data)
@@ -224,7 +224,7 @@ def test_get_all_jobs_with_pagination(
 def test_get_all_jobs_with_subresources(
     admin,
     remoteci_context,
-    team_user_id,
+    team1_id,
     remoteci_user_id,
     components_user_ids,
     topic_user_id,
@@ -238,7 +238,7 @@ def test_get_all_jobs_with_subresources(
 
     for job in jobs["jobs"]:
         assert "team" in job
-        assert job["team"]["id"] == team_user_id
+        assert job["team"]["id"] == team1_id
         assert job["team_id"] == job["team"]["id"]
         assert "remoteci" in job
         assert job["remoteci"]["id"] == remoteci_user_id
@@ -302,7 +302,7 @@ def test_get_all_jobs_with_duplicated_embed(
 
 
 def test_get_all_jobs_with_embed_and_limit(
-    remoteci_context, components_user_ids, team_user_id, topic_user_id
+    remoteci_context, components_user_ids, team1_id, topic_user_id
 ):
     # create 2 jobs and check meta data count
     data = {"components": components_user_ids, "topic_id": topic_user_id}
@@ -399,16 +399,16 @@ def test_first_job_duration(admin, job_user_id, topic, remoteci_context):
     assert job["duration"] == 0
 
 
-def test_get_all_jobs_with_where(admin, team_user_id, job_user_id):
+def test_get_all_jobs_with_where(admin, team1_id, job_user_id):
     db_job = admin.get("/api/v1/jobs?where=id:%s" % job_user_id).data
     db_job_id = db_job["jobs"][0]["id"]
     assert db_job_id == job_user_id
 
-    db_job = admin.get("/api/v1/jobs?where=team_id:%s" % team_user_id).data
+    db_job = admin.get("/api/v1/jobs?where=team_id:%s" % team1_id).data
     db_job_id = db_job["jobs"][0]["id"]
     assert db_job_id == job_user_id
 
-    db_job = admin.get("/api/v1/jobs?where=url:,team_id:%s" % team_user_id).data
+    db_job = admin.get("/api/v1/jobs?where=url:,team_id:%s" % team1_id).data
     db_job_id = db_job["jobs"][0]["id"]
     assert db_job_id == job_user_id
 
@@ -453,9 +453,7 @@ def test_get_jobs_by_product(user, product):
         assert job["product_id"] == product["id"]
 
 
-def test_get_job_by_id(
-    remoteci_context, components_user_ids, team_user_id, topic_user_id
-):
+def test_get_job_by_id(remoteci_context, components_user_ids, team1_id, topic_user_id):
     job = remoteci_context.post(
         "/api/v1/jobs",
         data={"components": components_user_ids, "topic_id": topic_user_id},
@@ -654,20 +652,20 @@ def test_delete_job_archive_dependencies(admin, job_user_id):
 # Tests for the isolation
 
 
-def test_get_all_jobs_as_user(user, team_user_id, job_user_id):
+def test_get_all_jobs_as_user(user, team1_id, job_user_id):
     jobs = user.get("/api/v1/jobs")
     assert jobs.status_code == 200
     assert jobs.data["_meta"]["count"] == 1
     for job in jobs.data["jobs"]:
-        assert job["team_id"] == team_user_id
+        assert job["team_id"] == team1_id
 
 
-def test_get_all_jobs_as_epm(epm, team_user_id, job_user_id):
+def test_get_all_jobs_as_epm(epm, team1_id, job_user_id):
     jobs = epm.get("/api/v1/jobs")
     assert jobs.status_code == 200
     assert jobs.data["_meta"]["count"] == 1
     for job in jobs.data["jobs"]:
-        assert job["team_id"] == team_user_id
+        assert job["team_id"] == team1_id
 
 
 def test_get_job_as_user(user, remoteci_context, components_user_ids, topic_user_id):
@@ -801,7 +799,7 @@ def test_get_results_by_job_id(user, job_user_id):
         assert file_from_job.data["results"][0]["total"] == 6
 
 
-def test_purge(user, admin, job_user_id, jobstate_user_id, team_user_id):
+def test_purge(user, admin, job_user_id, jobstate_user_id, team1_id):
     # create a file
     file_id1 = t_utils.post_file(
         user, jobstate_user_id, FileDesc("kikoolol", "content")
@@ -818,7 +816,7 @@ def test_purge(user, admin, job_user_id, jobstate_user_id, team_user_id):
     assert len(to_purge_files["files"]) == 1
 
     admin.post("/api/v1/jobs/purge")
-    path1 = files_utils.build_file_path(team_user_id, job_user_id, file_id1)
+    path1 = files_utils.build_file_path(team1_id, job_user_id, file_id1)
     store = dci_config.get_store()
     # the purge removed the file from the backend, get() must raise exception
     with pytest.raises(dci_exc.StoreExceptions):
@@ -831,7 +829,7 @@ def test_purge(user, admin, job_user_id, jobstate_user_id, team_user_id):
     assert len(to_purge_files["files"]) == 0
 
 
-def test_purge_failure(user, admin, job_user_id, jobstate_user_id, team_user_id):
+def test_purge_failure(user, admin, job_user_id, jobstate_user_id, team1_id):
     # create a file
     file_id1 = t_utils.post_file(
         user, jobstate_user_id, FileDesc("kikoolol", "content")
@@ -852,7 +850,7 @@ def test_purge_failure(user, admin, job_user_id, jobstate_user_id, team_user_id)
         mock_delete.side_effect = dci_exc.StoreExceptions("error")
         purge_res = admin.post("/api/v1/jobs/purge")
         assert purge_res.status_code == 400
-        path1 = files_utils.build_file_path(team_user_id, job_user_id, file_id1)
+        path1 = files_utils.build_file_path(team1_id, job_user_id, file_id1)
         store = dci_config.get_store()
         # because the delete fail the backend didn't remove the files and the
         # files are still in the database

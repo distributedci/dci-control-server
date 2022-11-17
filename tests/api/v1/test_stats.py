@@ -34,7 +34,7 @@ def test_get_stats(n, admin, job_admin, user, job_user, topic_user_id, product):
                     "remoteci_name": "user remoteci",
                     "created_at": job_user["created_at"],
                     "status": "success",
-                    "team_name": "user",
+                    "team_name": "Team 1",
                 },
                 {
                     "id": job_admin["id"],
@@ -59,7 +59,7 @@ def test_get_stats(n, admin, job_admin, user, job_user, topic_user_id, product):
                     "remoteci_name": "user remoteci",
                     "created_at": job_user["created_at"],
                     "status": "success",
-                    "team_name": "user",
+                    "team_name": "Team 1",
                 }
             ],
             "topic": {"id": topic_user_id, "name": "topic_user_name"},

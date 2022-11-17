@@ -22,14 +22,14 @@ from dci.stores.s3 import S3
 
 AWSS3 = "dci.stores.s3.S3"
 
-# team_user_id is subscribing to topic_user_id
+# team1_id is subscribing to topic_user_id
 
 
-def test_topics_export_control_true(user, epm, team_user_id, topic_user_id):
+def test_topics_export_control_true(user, epm, team1_id, topic_user_id):
     topic = epm.get("/api/v1/topics/%s" % topic_user_id).data["topic"]
     res = epm.post(
         "/api/v1/products/%s/teams" % topic["product_id"],
-        data={"team_id": team_user_id},
+        data={"team_id": team1_id},
     )
     assert res.status_code == 201
 
@@ -40,29 +40,29 @@ def test_topics_export_control_true(user, epm, team_user_id, topic_user_id):
     )
     topic = epm.get("/api/v1/topics/%s" % topic_user_id).data["topic"]
     assert topic["export_control"] is True
-    # team_user_id is associated to the product and the topic is exported
+    # team1_id is associated to the product and the topic is exported
     # then it should have access to the topic's components
     assert user.get("/api/v1/topics/%s/components" % topic_user_id).status_code == 200
 
 
-def test_topics_export_control_false(user, admin, team_user_id, topic_user_id):
+def test_topics_export_control_false(user, admin, team1_id, topic_user_id):
     topic = admin.get("/api/v1/topics/%s" % topic_user_id).data["topic"]
 
     assert topic["export_control"] is False
     assert user.get("/api/v1/topics/%s/components" % topic_user_id).status_code == 200
 
-    # team_user_id is no associated to the product nor to the topic
-    admin.delete("/api/v1/topics/%s/teams/%s" % (topic_user_id, team_user_id))
+    # team1_id is no associated to the product nor to the topic
+    admin.delete("/api/v1/topics/%s/teams/%s" % (topic_user_id, team1_id))
     assert user.get("/api/v1/topics/%s/components" % topic_user_id).status_code == 401
 
 
 def test_components_export_control_true(
-    user, epm, team_user_id, topic_user_id, components_user_ids
+    user, epm, team1_id, topic_user_id, components_user_ids
 ):
     topic = epm.get("/api/v1/topics/%s" % topic_user_id).data["topic"]
     res = epm.post(
         "/api/v1/products/%s/teams" % topic["product_id"],
-        data={"team_id": team_user_id},
+        data={"team_id": team1_id},
     )
     assert res.status_code == 201
     epm.put(
@@ -88,7 +88,7 @@ def test_components_export_control_true(
         url = "/api/v1/components/%s/files" % components_user_ids[0]
         c_file = epm.post(url, data="lol")
         c_file_1_id = c_file.data["component_file"]["id"]
-        # team_user_id is not subscribing to topic_user_id but it's
+        # team1_id is not subscribing to topic_user_id but it's
         # associated to the product thus it can access the topic's components
         assert (
             user.get("/api/v1/components/%s" % components_user_ids[0]).status_code
@@ -114,12 +114,12 @@ def test_components_export_control_true(
 
 
 def test_components_export_control_false(
-    user, epm, team_user_id, topic_user_id, components_user_ids
+    user, epm, team1_id, topic_user_id, components_user_ids
 ):
     topic = epm.get("/api/v1/topics/%s" % topic_user_id).data["topic"]
     res = epm.post(
         "/api/v1/products/%s/teams" % topic["product_id"],
-        data={"team_id": team_user_id},
+        data={"team_id": team1_id},
     )
     assert res.status_code == 201
 
@@ -162,9 +162,9 @@ def test_components_export_control_false(
             == 200
         )
 
-        # team_user_id is associated to the product but not to the topic,
+        # team1_id is associated to the product but not to the topic,
         # since the topic is not exported the user doesn't have the access
-        epm.delete("/api/v1/topics/%s/teams/%s" % (topic_user_id, team_user_id))
+        epm.delete("/api/v1/topics/%s/teams/%s" % (topic_user_id, team1_id))
         assert (
             user.get("/api/v1/components/%s" % components_user_ids[0]).status_code
             == 401

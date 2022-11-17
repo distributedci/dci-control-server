@@ -102,14 +102,14 @@ def test_success_get_all_products_admin(admin, product, product_openstack):
     assert ["AWSM", "BEST", "OPENSTACK"] == sorted(products)
 
 
-def test_success_get_all_products_user(admin, user, product, product2, team_user_id):
+def test_success_get_all_products_user(admin, user, product, product2, team1_id):
     result = user.get("/api/v1/products")
     assert result.status_code == 200
     products = [r["label"] for r in result.data["products"]]
     assert [] == sorted(products)
 
     respos = admin.post(
-        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert respos.status_code == 201
 
@@ -144,7 +144,7 @@ def test_fail_delete_product_user(user, product):
     assert result.status_code == 401
 
 
-def test_success_get_products_embed(admin, user, team_user_id, product):
+def test_success_get_products_embed(admin, user, team1_id, product):
     result = admin.get("/api/v1/products/%s?embed=topics" % product["id"])
 
     assert result.status_code == 200
@@ -153,7 +153,7 @@ def test_success_get_products_embed(admin, user, team_user_id, product):
     result = user.get("/api/v1/products/%s?embed=topics" % product["id"])
     assert result.status_code == 404
     result = admin.post(
-        "api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert result.status_code == 201
 
@@ -173,13 +173,13 @@ def test_success_get_only_po_product(admin, epm, product_openstack):
     assert len(products_po["products"]) == 3
 
 
-def add_get_delete_team_to_product(caller, product, team_user_id):
+def add_get_delete_team_to_product(caller, product, team1_id):
     # create
     product_teams = caller.get("/api/v1/products/%s/teams" % product["id"])
     assert product_teams.status_code == 200
     nb_product_teams = len(product_teams.data["teams"])
     res = caller.post(
-        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert res.status_code == 201
     product_teams = caller.get("/api/v1/products/%s/teams" % product["id"])
@@ -187,32 +187,32 @@ def add_get_delete_team_to_product(caller, product, team_user_id):
     assert product_teams.status_code == 200
     assert new_nb_product_teams == (nb_product_teams + 1)
     teams_ids = {t["id"] for t in product_teams.data["teams"]}
-    assert team_user_id in teams_ids
+    assert team1_id in teams_ids
 
     # delete
     delete_team = caller.delete(
-        "/api/v1/products/%s/teams/%s" % (product["id"], team_user_id)
+        "/api/v1/products/%s/teams/%s" % (product["id"], team1_id)
     )
     assert delete_team.status_code == 204
     product_teams = caller.get("/api/v1/products/%s/teams" % product["id"])
     assert product_teams.status_code == 200
     teams_ids = {t["id"] for t in product_teams.data["teams"]}
-    assert team_user_id not in teams_ids
+    assert team1_id not in teams_ids
 
 
-def test_add_get_delete_team_to_product(admin, epm, product, team_user_id):
+def test_add_get_delete_team_to_product(admin, epm, product, team1_id):
     # as admin
-    add_get_delete_team_to_product(admin, product, team_user_id)
+    add_get_delete_team_to_product(admin, product, team1_id)
     # as product owner
-    add_get_delete_team_to_product(epm, product, team_user_id)
+    add_get_delete_team_to_product(epm, product, team1_id)
 
 
-def test_add_get_delete_team_to_product_as_user(user, product, team_user_id):
+def test_add_get_delete_team_to_product_as_user(user, product, team1_id):
     # create
     product_teams = user.get("/api/v1/products/%s/teams" % product["id"])
     assert product_teams.status_code == 401
     res = user.post(
-        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team_user_id}
+        "/api/v1/products/%s/teams" % product["id"], data={"team_id": team1_id}
     )
     assert res.status_code == 401
     product_teams = user.get("/api/v1/products/%s/teams" % product["id"])
@@ -220,6 +220,6 @@ def test_add_get_delete_team_to_product_as_user(user, product, team_user_id):
 
     # delete
     delete_team = user.delete(
-        "/api/v1/products/%s/teams/%s" % (product["id"], team_user_id)
+        "/api/v1/products/%s/teams/%s" % (product["id"], team1_id)
     )
     assert delete_team.status_code == 401

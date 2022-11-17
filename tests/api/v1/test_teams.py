@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 import uuid
 
 
-def test_create_teams(admin, team_admin_id):
+def test_create_teams(admin):
     pt = admin.post("/api/v1/teams", data={"name": "pname"}).data
     pt_id = pt["team"]["id"]
     gt = admin.get("/api/v1/teams/%s" % pt_id).data
@@ -124,7 +124,7 @@ def test_get_all_teams_with_sort(admin):
 
 
 def test_get_all_teams_with_embed(admin, topic_user_id):
-    db_teams = admin.get("/api/v1/teams?embed=topics&where=name:user").data
+    db_teams = admin.get("/api/v1/teams?embed=topics&where=name:Team%201").data
     assert db_teams["teams"][0]["topics"][0]["id"] == topic_user_id
 
 
@@ -211,9 +211,9 @@ def test_delete_team_not_found(admin):
 
 
 def test_delete_team_archive_dependencies(
-    admin, remoteci_context, product, team_user_id, topic_user_id
+    admin, remoteci_context, product, team1_id, topic_user_id
 ):
-    team_user = admin.get("/api/v1/teams/%s" % team_user_id).data["team"]
+    team_user = admin.get("/api/v1/teams/%s" % team1_id).data["team"]
     team_user_etag = team_user["etag"]
 
     user = admin.post(
@@ -228,7 +228,7 @@ def test_delete_team_archive_dependencies(
     assert user.status_code == 201
 
     remoteci = admin.post(
-        "/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname", "team_id": team1_id}
     )
     remoteci_id = remoteci.data["remoteci"]["id"]
     assert remoteci.status_code == 201
@@ -256,7 +256,7 @@ def test_delete_team_archive_dependencies(
     assert component.status_code == 201
 
     data = {
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "comment": "kikoolol",
         "components": [component_id],
         "topic_id": topic_user_id,
@@ -266,7 +266,7 @@ def test_delete_team_archive_dependencies(
     assert job.status_code == 201
 
     deleted_team = admin.delete(
-        "/api/v1/teams/%s" % team_user_id, headers={"If-match": team_user_etag}
+        "/api/v1/teams/%s" % team1_id, headers={"If-match": team_user_etag}
     )
     assert deleted_team.status_code == 204
 
@@ -285,85 +285,98 @@ def test_create_team_as_user(user):
     assert team.status_code == 401
 
 
-def test_get_all_teams_as_user(user):
-    teams = user.get("/api/v1/teams")
-    assert teams.status_code == 200
+def test_get_teams_as_user(user, team1_id):
+    get_teams = user.get("/api/v1/teams")
+    assert get_teams.status_code == 200
+    teams = get_teams.data["teams"]
+    assert len(teams) == 1
+    assert teams[0]["id"] == team1_id
 
 
-def test_get_teams_as_user(user, team_user_id, team_admin_id):
-    team = user.get("/api/v1/teams/%s" % team_admin_id)
-    assert team.status_code == 401
+def test_get_team_as_user(user, team1_id, team_admin_id):
+    get_admin_team = user.get("/api/v1/teams/%s" % team_admin_id)
+    assert get_admin_team.status_code == 401
 
-    team = user.get("/api/v1/teams/%s" % team_user_id)
+    get_my_team = user.get("/api/v1/teams/%s" % team1_id)
+    assert get_my_team.status_code == 200
+
+    team = user.get("/api/v1/teams/%s" % team1_id)
     assert team.status_code == 200
 
-    teams = user.get("/api/v1/teams")
-    assert teams.status_code == 200
-    assert len(teams.data["teams"]) == 1
+
+def test_edit_team_as_a_user(user, team1_id):
+    get_my_team = user.get("/api/v1/teams/%s" % team1_id)
+    assert get_my_team.status_code == 200
+    edit_my_team = user.put(
+        "/api/v1/teams/%s" % team1_id,
+        data={"name": "new name"},
+        headers={"If-match": get_my_team.data["team"]["etag"]},
+    )
+    assert edit_my_team.status_code == 401
 
 
-def test_change_team_state(admin, team_id):
-    t = admin.get("/api/v1/teams/" + team_id).data["team"]
+def test_change_team_state(admin, team_no_user_id):
+    t = admin.get("/api/v1/teams/" + team_no_user_id).data["team"]
     data = {"state": "inactive"}
     r = admin.put(
-        "/api/v1/teams/" + team_id, data=data, headers={"If-match": t["etag"]}
+        "/api/v1/teams/" + team_no_user_id, data=data, headers={"If-match": t["etag"]}
     )
     assert r.status_code == 200
     assert r.data["team"]["state"] == "inactive"
 
 
-def test_change_team_to_invalid_state(admin, team_id):
-    t = admin.get("/api/v1/teams/" + team_id).data["team"]
+def test_change_team_to_invalid_state(admin, team_no_user_id):
+    t = admin.get("/api/v1/teams/" + team_no_user_id).data["team"]
     data = {"state": "kikoolol"}
     r = admin.put(
-        "/api/v1/teams/" + team_id, data=data, headers={"If-match": t["etag"]}
+        "/api/v1/teams/" + team_no_user_id, data=data, headers={"If-match": t["etag"]}
     )
     assert r.status_code == 400
-    current_team = admin.get("/api/v1/teams/" + team_id)
+    current_team = admin.get("/api/v1/teams/" + team_no_user_id)
     assert current_team.status_code == 200
     assert current_team.data["team"]["state"] == "active"
 
 
 # Only super admin can delete a team
-def test_delete_as_admin(user, team_user_id, admin):
-    team = user.get("/api/v1/teams/%s" % team_user_id)
+def test_delete_as_admin(user, team1_id, admin):
+    team = user.get("/api/v1/teams/%s" % team1_id)
     team_etag = team.headers.get("ETag")
 
     team_delete = user.delete(
-        "/api/v1/teams/%s" % team_user_id, headers={"If-match": team_etag}
+        "/api/v1/teams/%s" % team1_id, headers={"If-match": team_etag}
     )
     assert team_delete.status_code == 401
 
     team_delete = admin.delete(
-        "/api/v1/teams/%s" % team_user_id, headers={"If-match": team_etag}
+        "/api/v1/teams/%s" % team1_id, headers={"If-match": team_etag}
     )
     assert team_delete.status_code == 204
 
 
-def test_success_update_field_by_field(admin, team_id):
-    t = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+def test_success_update_field_by_field(admin, team_no_user_id):
+    t = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
 
     admin.put(
-        "/api/v1/teams/%s" % team_id,
+        "/api/v1/teams/%s" % team_no_user_id,
         data={"state": "inactive"},
         headers={"If-match": t["etag"]},
     )
 
-    t = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+    t = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
 
-    assert t["name"] == "pname"
+    assert t["name"] == "Team no user"
     assert t["state"] == "inactive"
     assert t["country"] is None
 
     admin.put(
-        "/api/v1/teams/%s" % team_id,
+        "/api/v1/teams/%s" % team_no_user_id,
         data={"country": "FR"},
         headers={"If-match": t["etag"]},
     )
 
-    t = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+    t = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
 
-    assert t["name"] == "pname"
+    assert t["name"] == "Team no user"
     assert t["state"] == "inactive"
     assert t["country"] == "FR"
 
@@ -388,16 +401,16 @@ def test_get_all_teams_allowed_for_rh_employee(epm, rh_employee):
     assert len(teams) == nb_teams + 1
 
 
-def test_nrt_update_team_after_get(admin, team_id):
-    team = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+def test_nrt_update_team_after_get(admin, team_no_user_id):
+    team = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
     new_team_name = "new team name"
     assert team["name"] != new_team_name
     team["name"] = new_team_name
     r = admin.put(
-        "/api/v1/teams/%s" % team_id,
+        "/api/v1/teams/%s" % team_no_user_id,
         data=team,
         headers={"If-match": team["etag"]},
     )
     assert r.status_code == 200
-    team = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+    team = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
     assert team["name"] == "new team name"

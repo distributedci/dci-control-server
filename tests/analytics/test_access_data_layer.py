@@ -28,7 +28,7 @@ def test_get_jobs(
     remoteci_context,
     components_user_ids,
     topic_user_id,
-    team_user_id,
+    team1_id,
 ):
     m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
         hours=2
@@ -36,7 +36,7 @@ def test_get_jobs(
 
     pipeline = remoteci_context.post(
         "/api/v1/pipelines",
-        data={"name": "pipeline1", "team_id": team_user_id},
+        data={"name": "pipeline1", "team_id": team1_id},
     )
     assert pipeline.status_code == 201
     pipeline_id = pipeline.data["pipeline"]["id"]

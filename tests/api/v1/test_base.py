@@ -60,9 +60,9 @@ def test_purge_resource_ORM(admin, team_admin_id):
     assert len(feeders_to_purge) == 0
 
 
-def test_where_name_case_insensitive(user, team_user_id):
+def test_where_name_case_insensitive(user, team1_id):
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "My remoteci", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "My remoteci", "team_id": team1_id}
     ).data["remoteci"]
     remoteci_id = remoteci["id"]
 

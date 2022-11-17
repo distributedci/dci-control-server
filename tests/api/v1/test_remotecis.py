@@ -20,7 +20,7 @@ import uuid
 from OpenSSL import crypto
 
 
-def test_generate_keys(user, team_user_id, remoteci_user_id, cakeys):
+def test_generate_keys(user, team1_id, remoteci_user_id, cakeys):
     ctype = crypto.FILETYPE_PEM
     rci = user.get("/api/v1/remotecis/%s" % remoteci_user_id).data
     keys = user.put(
@@ -35,29 +35,29 @@ def test_generate_keys(user, team_user_id, remoteci_user_id, cakeys):
     assert tmp_cert.decode("utf-8") == keys["keys"]["cert"]
 
 
-def test_create_remotecis(user, team_user_id):
+def test_create_remotecis(user, team1_id):
     pr = user.post(
-        "/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname", "team_id": team1_id}
     ).data
     pr_id = pr["remoteci"]["id"]
     gr = user.get("/api/v1/remotecis/%s" % pr_id).data
     assert gr["remoteci"]["name"] == "pname"
 
 
-def test_create_remotecis_already_exist(user, team_user_id):
+def test_create_remotecis_already_exist(user, team1_id):
     pstatus_code = user.post(
-        "/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname", "team_id": team1_id}
     ).status_code
     assert pstatus_code == 201
 
     pstatus_code = user.post(
-        "/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname", "team_id": team1_id}
     ).status_code
     assert pstatus_code == 409
 
 
-def test_create_unique_remoteci_against_teams(user, team_user_id):
-    data = {"name": "foo", "team_id": team_user_id}
+def test_create_unique_remoteci_against_teams(user, team1_id):
+    data = {"name": "foo", "team_id": team1_id}
     res = user.post("/api/v1/remotecis", data=data)
     assert res.status_code == 201
 
@@ -65,12 +65,12 @@ def test_create_unique_remoteci_against_teams(user, team_user_id):
     assert res.status_code == 409
 
 
-def test_get_all_remotecis(user, team_user_id):
+def test_get_all_remotecis(user, team1_id):
     remoteci_1 = user.post(
-        "/api/v1/remotecis", data={"name": "pname1", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id}
     ).data
     remoteci_2 = user.post(
-        "/api/v1/remotecis", data={"name": "pname2", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname2", "team_id": team1_id}
     ).data
 
     db_all_remotecis = user.get("/api/v1/remotecis?sort=created_at").data
@@ -83,9 +83,9 @@ def test_get_all_remotecis(user, team_user_id):
     ]
 
 
-def test_get_all_remotecis_with_where(user, team_user_id):
+def test_get_all_remotecis_with_where(user, team1_id):
     pr = user.post(
-        "/api/v1/remotecis", data={"name": "pname1", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id}
     ).data
     pr_id = pr["remoteci"]["id"]
 
@@ -106,12 +106,12 @@ def test_where_invalid(admin):
     assert err.data["payload"]["error"] == "where: 'id' is not a 'key value csv'"
 
 
-def test_get_all_remotecis_with_pagination(user, team_user_id):
+def test_get_all_remotecis_with_pagination(user, team1_id):
     # create 4 remotecis and check meta data count
-    user.post("/api/v1/remotecis", data={"name": "pname1", "team_id": team_user_id})
-    user.post("/api/v1/remotecis", data={"name": "pname2", "team_id": team_user_id})
-    user.post("/api/v1/remotecis", data={"name": "pname3", "team_id": team_user_id})
-    user.post("/api/v1/remotecis", data={"name": "pname4", "team_id": team_user_id})
+    user.post("/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id})
+    user.post("/api/v1/remotecis", data={"name": "pname2", "team_id": team1_id})
+    user.post("/api/v1/remotecis", data={"name": "pname3", "team_id": team1_id})
+    user.post("/api/v1/remotecis", data={"name": "pname4", "team_id": team1_id})
     remotecis = user.get("/api/v1/remotecis").data
     assert remotecis["_meta"]["count"] == 4
 
@@ -128,13 +128,13 @@ def test_get_all_remotecis_with_pagination(user, team_user_id):
     assert remotecis.data["remotecis"] == []
 
 
-def test_get_all_remotecis_with_sort(user, team_user_id):
+def test_get_all_remotecis_with_sort(user, team1_id):
     # create 2 remotecis ordered by created time
     r_1 = user.post(
-        "/api/v1/remotecis", data={"name": "pname1", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id}
     ).data["remoteci"]
     r_2 = user.post(
-        "/api/v1/remotecis", data={"name": "pname2", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname2", "team_id": team1_id}
     ).data["remoteci"]
 
     grs = user.get("/api/v1/remotecis?sort=created_at").data
@@ -147,11 +147,11 @@ def test_get_all_remotecis_with_sort(user, team_user_id):
     assert grs_ids == [r_2["id"], r_1["id"]]
 
 
-def test_get_all_remotecis_embed(admin, team_id):
-    team = admin.get("/api/v1/teams/%s" % team_id).data["team"]
+def test_get_all_remotecis_embed(admin, team_no_user_id):
+    team = admin.get("/api/v1/teams/%s" % team_no_user_id).data["team"]
     # create 2 remotecis
-    admin.post("/api/v1/remotecis", data={"name": "pname1", "team_id": team_id})
-    admin.post("/api/v1/remotecis", data={"name": "pname2", "team_id": team_id})
+    admin.post("/api/v1/remotecis", data={"name": "pname1", "team_id": team_no_user_id})
+    admin.post("/api/v1/remotecis", data={"name": "pname2", "team_id": team_no_user_id})
 
     # verify embed
     remotecis = admin.get("/api/v1/remotecis?embed=team").data
@@ -160,9 +160,9 @@ def test_get_all_remotecis_embed(admin, team_id):
         assert remoteci["team"]["id"] == team["id"]
 
 
-def test_get_remoteci_by_id(user, team_user_id):
+def test_get_remoteci_by_id(user, team1_id):
     pr = user.post(
-        "/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname", "team_id": team1_id}
     ).data
     pr_id = pr["remoteci"]["id"]
 
@@ -174,10 +174,10 @@ def test_get_remoteci_by_id(user, team_user_id):
     assert created_r["remoteci"]["id"] == pr_id
 
 
-def test_get_remoteci_with_embed(user, team_user_id):
-    team = user.get("/api/v1/teams/%s" % team_user_id).data["team"]
+def test_get_remoteci_with_embed(user, team1_id):
+    team = user.get("/api/v1/teams/%s" % team1_id).data["team"]
     premoteci = user.post(
-        "/api/v1/remotecis", data={"name": "pname1", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id}
     ).data
     r_id = premoteci["remoteci"]["id"]
 
@@ -191,9 +191,9 @@ def test_get_remoteci_not_found(user):
     assert result.status_code == 404
 
 
-def test_get_remoteci_data(user, team_user_id):
+def test_get_remoteci_data(user, team1_id):
     data_data = {"key": "value"}
-    data = {"name": "pname1", "team_id": team_user_id, "data": data_data}
+    data = {"name": "pname1", "team_id": team1_id, "data": data_data}
 
     premoteci = user.post("/api/v1/remotecis", data=data).data
 
@@ -203,14 +203,14 @@ def test_get_remoteci_data(user, team_user_id):
     assert r_data == data_data
 
 
-def test_get_remoteci_data_specific_keys(user, team_user_id):
+def test_get_remoteci_data_specific_keys(user, team1_id):
     data_key = {"key": "value"}
     data_key1 = {"key1": "value1"}
 
     final_data = {}
     final_data.update(data_key)
     final_data.update(data_key1)
-    data = {"name": "pname1", "team_id": team_user_id, "data": final_data}
+    data = {"name": "pname1", "team_id": team1_id, "data": final_data}
 
     premoteci = user.post("/api/v1/remotecis", data=data).data
 
@@ -229,10 +229,10 @@ def test_get_remoteci_data_specific_keys(user, team_user_id):
     assert r_data == final_data
 
 
-def test_put_remotecis(user, team_user_id):
+def test_put_remotecis(user, team1_id):
     pr = user.post(
         "/api/v1/remotecis",
-        data={"name": "pname", "data": {"a": 1, "b": 2}, "team_id": team_user_id},
+        data={"name": "pname", "data": {"a": 1, "b": 2}, "team_id": team1_id},
     )
     assert pr.status_code == 201
     assert pr.data["remoteci"]["public"] is False
@@ -253,8 +253,8 @@ def test_put_remotecis(user, team_user_id):
     assert set(ppr.data["remoteci"]["data"]) == set(["c"])
 
 
-def test_delete_remoteci_by_id(user, team_user_id):
-    pr = user.post("/api/v1/remotecis", data={"name": "pname", "team_id": team_user_id})
+def test_delete_remoteci_by_id(user, team1_id):
+    pr = user.post("/api/v1/remotecis", data={"name": "pname", "team_id": team1_id})
     pr_etag = pr.headers.get("ETag")
     pr_id = pr.data["remoteci"]["id"]
     assert pr.status_code == 201
@@ -309,41 +309,41 @@ def test_delete_remoteci_archive_dependencies(
 # Tests for the isolation
 
 
-def test_create_remoteci_as_user(user, team_user_id, team_id):
+def test_create_remoteci_as_user(user, team1_id, team_no_user_id):
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "rname", "team_id": team_id}
+        "/api/v1/remotecis", data={"name": "rname", "team_id": team_no_user_id}
     )
     assert remoteci.status_code == 401
 
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "rname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "rname", "team_id": team1_id}
     )
     assert remoteci.status_code == 201
 
 
 @pytest.mark.usefixtures("remoteci_id", "remoteci_user_id")
-def test_get_all_remotecis_as_user(user, team_user_id):
+def test_get_all_remotecis_as_user(user, team1_id):
     remotecis = user.get("/api/v1/remotecis")
     assert remotecis.status_code == 200
     assert remotecis.data["_meta"]["count"] == 1
     for remoteci in remotecis.data["remotecis"]:
-        assert remoteci["team_id"] == team_user_id
+        assert remoteci["team_id"] == team1_id
 
 
-def test_get_remoteci_as_user(user, team_user_id, remoteci_id):
+def test_get_remoteci_as_user(user, team1_id, remoteci_id):
     remoteci = user.get("/api/v1/remotecis/%s" % remoteci_id)
     assert remoteci.status_code == 401
 
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "rname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "rname", "team_id": team1_id}
     )
     remoteci = user.get("/api/v1/remotecis/%s" % remoteci.data["remoteci"]["id"])
     assert remoteci.status_code == 200
 
 
-def test_put_remoteci_as_user(user, team_user_id, remoteci_id, admin):
+def test_put_remoteci_as_user(user, team1_id, remoteci_id, admin):
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "rname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "rname", "team_id": team1_id}
     )
     remoteci = user.get("/api/v1/remotecis/%s" % remoteci.data["remoteci"]["id"])
     remoteci_etag = remoteci.headers.get("ETag")
@@ -370,9 +370,9 @@ def test_put_remoteci_as_user(user, team_user_id, remoteci_id, admin):
     assert remoteci_put.status_code == 401
 
 
-def test_delete_remoteci_as_user(user, team_user_id, admin, remoteci_id):
+def test_delete_remoteci_as_user(user, team1_id, admin, remoteci_id):
     remoteci = user.post(
-        "/api/v1/remotecis", data={"name": "rname", "team_id": team_user_id}
+        "/api/v1/remotecis", data={"name": "rname", "team_id": team1_id}
     )
     remoteci = user.get("/api/v1/remotecis/%s" % remoteci.data["remoteci"]["id"])
     remoteci_etag = remoteci.headers.get("ETag")
@@ -464,12 +464,12 @@ def test_get_subscribed_remotecis(remoteci_user_id, user, user_id):
     assert response.data["remotecis"][0]["id"] == remoteci_user_id
 
 
-def test_success_ensure_put_api_secret_is_not_leaked(user, team_user_id):
+def test_success_ensure_put_api_secret_is_not_leaked(user, team1_id):
     """Test to ensure API secret is not leaked during update."""
 
     pr = user.post(
         "/api/v1/remotecis",
-        data={"name": "pname", "data": {"a": 1, "b": 2}, "team_id": team_user_id},
+        data={"name": "pname", "data": {"a": 1, "b": 2}, "team_id": team1_id},
     )
     pr_etag = pr.headers.get("ETag")
     ppr = user.put(

@@ -112,13 +112,13 @@ def test_create_components_with_same_name_on_same_topics(admin, topic_user_id):
 
 
 def test_create_components_with_same_name_on_same_topics_same_team(
-    user, topic_user_id, team_user_id
+    user, topic_user_id, team1_id
 ):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "topic_id": topic_user_id,
-        "team_id": team_user_id,
+        "team_id": team1_id,
     }
     pstatus_code = user.post("/api/v1/components", data=data).status_code
     assert pstatus_code == 201
@@ -128,13 +128,13 @@ def test_create_components_with_same_name_on_same_topics_same_team(
 
 
 def test_create_components_with_same_name_on_same_topics_different_team(
-    user, user2, topic_user_id, team_user_id, team_user_id2
+    user, user2, topic_user_id, team1_id, team2_id
 ):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "topic_id": topic_user_id,
-        "team_id": team_user_id,
+        "team_id": team1_id,
     }
     pstatus_code = user.post("/api/v1/components", data=data).status_code
     assert pstatus_code == 201
@@ -143,7 +143,7 @@ def test_create_components_with_same_name_on_same_topics_different_team(
         "name": "pname",
         "type": "gerrit_review",
         "topic_id": topic_user_id,
-        "team_id": team_user_id2,
+        "team_id": team2_id,
     }
     pstatus_code = user2.post("/api/v1/components", data=data).status_code
     assert pstatus_code == 201
@@ -895,12 +895,12 @@ def test_create_component_not_allowed_for_user_and_remoteci(
 # ######### tests teams components
 
 
-def test_create_teams_components(user, team_user_id, topic_user_id):
+def test_create_teams_components(user, team1_id, topic_user_id):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "url": "http://example.com/",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "state": "active",
     }
@@ -912,29 +912,29 @@ def test_create_teams_components(user, team_user_id, topic_user_id):
     assert gc["component"]["state"] == "active"
 
 
-def test_get_all_teams_components(user, team_user_id, topic_user_id):
+def test_get_all_teams_components(user, team1_id, topic_user_id):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "url": "http://example.com/",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "state": "active",
     }
     pc = user.post("/api/v1/components", data=data).data
     pc_id = pc["component"]["id"]
     cmpts = user.get(
-        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team1_id)
     ).data
     assert cmpts["components"][0]["id"] == pc_id
 
 
-def test_update_teams_components(user, team_user_id, topic_user_id):
+def test_update_teams_components(user, team1_id, topic_user_id):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "url": "http://example.com/",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "state": "active",
     }
@@ -950,12 +950,12 @@ def test_update_teams_components(user, team_user_id, topic_user_id):
     assert gc["component"]["name"] == "pname2"
 
 
-def test_delete_teams_components(user, team_user_id, topic_user_id):
+def test_delete_teams_components(user, team1_id, topic_user_id):
     data = {
         "name": "pname",
         "type": "gerrit_review",
         "url": "http://example.com/",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "state": "active",
     }
@@ -974,12 +974,12 @@ def test_delete_teams_components(user, team_user_id, topic_user_id):
     assert gc.status_code == 404
 
 
-def test_filter_teams_components_by_tag(user, team_user_id, topic_user_id):
+def test_filter_teams_components_by_tag(user, team1_id, topic_user_id):
 
     data = {
         "name": "pname",
         "type": "mytest",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "tags": ["tag1", "common"],
     }
@@ -988,7 +988,7 @@ def test_filter_teams_components_by_tag(user, team_user_id, topic_user_id):
     data = {
         "name": "pname",
         "type": "mylib",
-        "team_id": team_user_id,
+        "team_id": team1_id,
         "topic_id": topic_user_id,
         "tags": ["tag2", "common"],
     }
@@ -996,7 +996,7 @@ def test_filter_teams_components_by_tag(user, team_user_id, topic_user_id):
 
     res = user.get(
         "/api/v1/topics/%s/components?where=tags:tag1,team_id:%s"
-        % (topic_user_id, team_user_id)
+        % (topic_user_id, team1_id)
     )
     assert len(res.data["components"]) == 1
     assert "tag1" in res.data["components"][0]["tags"]
@@ -1004,35 +1004,33 @@ def test_filter_teams_components_by_tag(user, team_user_id, topic_user_id):
 
     res = user.get(
         "/api/v1/topics/%s/components?where=tags:common,team_id:%s"
-        % (topic_user_id, team_user_id)
+        % (topic_user_id, team1_id)
     )
     assert len(res.data["components"]) == 2
     assert "common" in res.data["components"][0]["tags"]
     assert "common" in res.data["components"][1]["tags"]
 
 
-def test_teams_components_isolation(
-    user, user2, topic_user_id, team_user_id, team_user_id2
-):
+def test_teams_components_isolation(user, user2, topic_user_id, team1_id, team2_id):
     data = {
         "name": "pname",
         "type": "mytest",
         "topic_id": topic_user_id,
-        "team_id": team_user_id,
+        "team_id": team1_id,
     }
     pc = user.post("/api/v1/components", data=data)
     assert pc.status_code == 201
 
     components = user.get(
-        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team1_id)
     ).data
-    assert components["components"][0]["team_id"] == team_user_id
+    assert components["components"][0]["team_id"] == team1_id
 
     data = {
         "name": "pname",
         "type": "mytest",
         "topic_id": topic_user_id,
-        "team_id": team_user_id2,
+        "team_id": team2_id,
     }
     pc = user.post("/api/v1/components", data=data)
     assert pc.status_code == 401
@@ -1040,12 +1038,12 @@ def test_teams_components_isolation(
     assert pc.status_code == 201
 
     components = user2.get(
-        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team1_id)
     )
     assert components.status_code == 200
     assert components.data["components"] == []
     components = user2.get(
-        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id2)
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team2_id)
     )
     assert components.status_code == 200
-    assert components.data["components"][0]["team_id"] == team_user_id2
+    assert components.data["components"][0]["team_id"] == team2_id
