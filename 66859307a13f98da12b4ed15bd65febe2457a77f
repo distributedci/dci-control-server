@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a318c7e7_e4911245",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-11-18T08:28:43Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 9,
+        "startChar": 37,
+        "endLine": 9,
+        "endChar": 43
+      },
+      "revId": "66859307a13f98da12b4ed15bd65febe2457a77f",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06a729bb_17225c59",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-11-18T08:28:43Z",
+      "side": 1,
+      "message": "\"this patch fixes the issue by discarding tabs and newlines from the query string\"",
+      "range": {
+        "startLine": 10,
+        "startChar": 22,
+        "endLine": 10,
+        "endChar": 27
+      },
+      "revId": "66859307a13f98da12b4ed15bd65febe2457a77f",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "71d8bde4_1380ac89",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2022-11-18T08:28:43Z",
+      "side": 1,
+      "message": "lgtm",
+      "revId": "66859307a13f98da12b4ed15bd65febe2457a77f",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
