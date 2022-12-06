@@ -40,14 +40,28 @@ def get_url(endpoint, subresource=None):
     return "%s/api/v1/%s" % (DCI_CS_URL, endpoint)
 
 
-def get(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,), params={}):
+def get(
+    endpoint,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+    params={},
+):
     url = get_url(endpoint)
     print("-------------")
     print("GET %s" % url)
     return requests.get(url, auth=user, params=params)
 
 
-def post(endpoint, data, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def post(
+    endpoint,
+    data,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = get_url(endpoint)
     print("-------------")
     print("POST %s" % url)
@@ -55,14 +69,27 @@ def post(endpoint, data, user=(DCI_LOGIN, DCI_PASSWORD,)):
     return requests.post(url, json=data, auth=user)
 
 
-def associate_user_to_team(team_id, user_id, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def associate_user_to_team(
+    team_id,
+    user_id,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = "%s/api/v1/teams/%s/users/%s" % (DCI_CS_URL, team_id, user_id)
     print("-------------")
     print("POST %s" % url)
     return requests.post(url, json={}, auth=user)
 
 
-def delete(endpoint, user=(DCI_LOGIN, DCI_PASSWORD,)):
+def delete(
+    endpoint,
+    user=(
+        DCI_LOGIN,
+        DCI_PASSWORD,
+    ),
+):
     url = get_url(endpoint)
     print("DELETE %s" % url)
     return requests.delete(url, auth=user)
@@ -155,25 +182,13 @@ def create_topics(products):
     openstack = products["OpenStack"]
     rhel = products["RHEL"]
     ocp = products["OCP"]
-
-    osp16 = get_or_create_topic("OSP16", ["puddle"], openstack)
-    osp13 = get_or_create_topic("OSP13", ["puddle"], openstack)
-
-    rhel8milestone = get_or_create_topic("RHEL-8-milestone", ["Compose"], rhel)
-    rhel8nightly = get_or_create_topic("RHEL-8-nightly", ["Compose"], rhel)
-    rhel82milestone = get_or_create_topic("RHEL-8.2-milestone", ["Compose"], rhel)
-
-    ocp43 = get_or_create_topic("OCP-4.3", ["puddle_ocp"], ocp)
-    ocp44 = get_or_create_topic("OCP-4.4", ["puddle_ocp"], ocp)
-
+    osp17 = get_or_create_topic("OSP17", ["puddle"], openstack)
+    rhel87 = get_or_create_topic("RHEL-8.7", ["compose"], rhel)
+    ocp412 = get_or_create_topic("OCP-4.12", ["ocp"], ocp)
     return {
-        "OSP16": osp16,
-        "OSP13": osp13,
-        "RHEL-8-milestone": rhel8milestone,
-        "RHEL-8-nightly": rhel8nightly,
-        "RHEL-8.2-milestone": rhel82milestone,
-        "OCP-4.3": ocp43,
-        "OCP-4.4": ocp44,
+        "OSP17": osp17,
+        "RHEL-8.7": rhel87,
+        "OCP-4.12": ocp412,
     }
 
 
@@ -185,10 +200,16 @@ def associate_products_to_teams(products, teams):
             )
 
 
-def get_or_create_component(name, topic):
+def get_or_create_component(name, topic, tags):
     r = post(
         "components",
-        {"name": name, "type": topic["component_types"][0], "topic_id": topic["id"]},
+        {
+            "name": name,
+            "canonical_project_name": name,
+            "type": topic["component_types"][0],
+            "topic_id": topic["id"],
+            "tags": tags,
+        },
     )
     if r.status_code == 409:
         return get(
@@ -198,14 +219,13 @@ def get_or_create_component(name, topic):
 
 
 def add_components_to_topics(topics):
-    for component in [
-        {"name": "RHEL-8.4.0-20201013.n.1", "topic_name": "RHEL-8-nightly"},
-        {"name": "RHEL-8.2.0-20200404.0", "topic_name": "RHEL-8-milestone"},
-        {"name": "RHEL-8.2.0-20200404.0", "topic_name": "RHEL-8.2-milestone"},
-    ]:
-        topic_name = component["topic_name"]
-        c = get_or_create_component(component["name"], topics[topic_name])
-        topics[topic_name]["components_ids"] = [c["id"]]
+    c = get_or_create_component(
+        "RHEL-8.7.0-20221013.1",
+        topics["RHEL-8.7"],
+        tags=["candidate", "kernel:4.18.0-425.3.1.el8"],
+    )
+    topics["RHEL-8.7"]["components_ids"] = [c["id"]]
+
     return topics
 
 
@@ -229,16 +249,14 @@ def create_jobs(topics, remotecis, teams):
     jobs = [
         {
             "team_id": teams["partner"]["id"],
-            "topic_id": topics["RHEL-8.2-milestone"]["id"],
-            "components": topics["RHEL-8.2-milestone"]["components_ids"],
-            "tags": ["releng", "rhel"],
+            "topic_id": topics["RHEL-8.7"]["id"],
+            "components": topics["RHEL-8.7"]["components_ids"],
             "comment": "releng job comment",
         },
         {
             "team_id": teams["partner"]["id"],
-            "topic_id": topics["RHEL-8-nightly"]["id"],
-            "components": topics["RHEL-8-nightly"]["components_ids"],
-            "tags": ["nightly", "rhel"],
+            "topic_id": topics["RHEL-8.7"]["id"],
+            "components": topics["RHEL-8.7"]["components_ids"],
         },
     ]
     client_id = remotecis["partner"]["id"]
@@ -288,7 +306,10 @@ def create_files(jobs):
     create_file(jobs[0]["id"], "Tempest", "tests/data/tempest-results.xml", PARTNER)
     create_file(jobs[0]["id"], "Rally", "tests/data/rally-results.xml", PARTNER)
     create_file(
-        jobs[0]["id"], "Multiple testsuite", "tests/data/junit_with_multiple_testsuite.xml", PARTNER
+        jobs[0]["id"],
+        "Multiple testsuite",
+        "tests/data/junit_with_multiple_testsuite.xml",
+        PARTNER,
     )
     create_file(
         jobs[0]["id"],
