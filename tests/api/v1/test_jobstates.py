@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Red Hat, Inc
+# Copyright (C) 2015-2023 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -42,7 +42,7 @@ def test_create_jobstates_failure(mocked_disp, user, job_user_id):
     user.post("/api/v1/jobstates", data=data)
     # Notification should be sent just one time
     user.post("/api/v1/jobstates", data=data)
-    assert mocked_disp.called_once()
+    assert mocked_disp.assert_called_once()
 
     job = user.get("/api/v1/jobs/%s" % job_user_id).data
     assert job["job"]["status"] == "failure"
