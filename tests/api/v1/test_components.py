@@ -375,6 +375,13 @@ def test_get_all_components_with_where(admin, topic_id):
     assert db_c_id == pc_id
     assert db_c["_meta"]["count"] == 1
 
+    db_c = admin.get(
+        "/api/v1/topics/%s/components?query=eq(name,pname1)" % topic_id
+    ).data
+    db_c_id = db_c["components"][0]["id"]
+    assert db_c_id == pc_id
+    assert db_c["_meta"]["count"] == 1
+
 
 def test_nrt_get_all_components_with_new_line_in_where(admin, topic_id):
     response = admin.get(
@@ -996,6 +1003,14 @@ def test_filter_teams_components_by_tag(user, team_user_id, topic_user_id):
 
     res = user.get(
         "/api/v1/topics/%s/components?where=tags:tag1,team_id:%s"
+        % (topic_user_id, team_user_id)
+    )
+    assert len(res.data["components"]) == 1
+    assert "tag1" in res.data["components"][0]["tags"]
+    assert "tag2" not in res.data["components"][0]["tags"]
+
+    res = user.get(
+        "/api/v1/topics/%s/components?query=and(contains(tags,tag1),eq(team_id,%s))"
         % (topic_user_id, team_user_id)
     )
     assert len(res.data["components"]) == 1
