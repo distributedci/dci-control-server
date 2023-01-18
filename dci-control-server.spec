@@ -67,6 +67,7 @@ BuildRequires:  python3-dciauth
 BuildRequires:  python3-pytest
 BuildRequires:  python3-rpm-macros
 BuildRequires:  python3-jsonschema
+BuildRequires:  python3-pyparsing
 %endif
 BuildRequires:  systemd
 BuildRequires:  zeromq
@@ -107,6 +108,7 @@ Requires:       python3-dciauth
 Requires:       python3-jsonschema
 Requires:       python3-pytz
 Requires:       python3-boto3
+Requires:  python3-pyparsing
 %endif
 Requires:       zeromq
 %{?systemd_requires}

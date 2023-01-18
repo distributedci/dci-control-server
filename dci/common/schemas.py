@@ -142,6 +142,7 @@ args_schema = {
         "sort": Properties.string,
         "where": Properties.key_value_csv,
         "embed": Properties.string,
+        "query": Properties.string,
         "created_after": Properties.isoformat_date,
         "updated_after": Properties.isoformat_date,
     },
