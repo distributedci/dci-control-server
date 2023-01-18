@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2023 Red Hat, Inc
+# Copyright (C) Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,7 +15,10 @@
 # under the License.
 
 from dci.common import exceptions as dci_exc
+from dci.db import query_dsl
 from dci.db import query as ql
+
+import pyparsing as pp
 from sqlalchemy import func, String
 from sqlalchemy.types import ARRAY
 from sqlalchemy.sql.expression import cast
@@ -154,6 +157,12 @@ def handle_args(query, model_object, args):
                     query = query.filter(m_column.contains([value]))
                 else:
                     query = query.filter(m_column == value)
+    elif args.get("query"):
+        try:
+            parsed_query = query_dsl.parse(args.get("query"))
+            query = query_dsl.build(query, parsed_query, model_object)
+        except pp.ParseException as pe:
+            raise dci_exc.DCIException("error while parsing the query %s" % str(pe))
     if args.get("created_after"):
         query = query.filter(
             getattr(model_object, "created_at") >= args.get("created_after")
