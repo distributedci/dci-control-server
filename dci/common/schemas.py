@@ -248,6 +248,21 @@ add_component_schema = {
     "additionalProperties": False,
 }
 
+
+create_job_kv_schema = {
+    "type": "object",
+    "properties": {"key": Properties.string, "value": Properties.string},
+    "required": ["key", "value"],
+    "additionalProperties": False,
+}
+
+delete_job_kv_schema = {
+    "type": "object",
+    "properties": {"key": Properties.string},
+    "required": ["key"],
+    "additionalProperties": False,
+}
+
 ###############################################################################
 #                                                                             #
 #                                 Tag schema                                  #
