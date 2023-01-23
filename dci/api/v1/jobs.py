@@ -347,6 +347,7 @@ def get_all_jobs(user, topic_id=None):
         .options(sa_orm.joinedload("topic", innerjoin=True))
         .options(sa_orm.joinedload("team", innerjoin=True))
         .options(sa_orm.joinedload("pipeline", innerjoin=False))
+        .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
     nb_jobs = query.count()
@@ -437,7 +438,12 @@ def get_job_by_id(user, job_id):
         .options(sa_orm.selectinload("results"))
         .options(sa_orm.selectinload("components"))
         .options(sa_orm.selectinload("jobstates"))
+<<<<<<< HEAD
         .options(sa_orm.joinedload("pipeline", innerjoin=False))
+=======
+        .options(sa_orm.selectinload("files"))
+        .options(sa_orm.joinedload("keys_values", innerjoin=False))
+>>>>>>> 9fbf0c1 (jobs: add keys values)
     )
     try:
         job = query.one()
