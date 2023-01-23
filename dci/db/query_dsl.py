@@ -51,8 +51,8 @@ def parse(q):
 
 def build(sa_query, parsed_query, model_object, do_filter=True):
     columns = model_object.__mapper__.columns.keys()
-    print(parsed_query)
     op, field, value = parsed_query[0], parsed_query[1], parsed_query[2]
+
     if op == "and":
         return sa_query.filter(
             sql.and_(

@@ -41,6 +41,7 @@ from dci.common.schemas import (
 from dci.common import utils
 from dci.db import declarative
 from dci.db import models2
+from dci.db import query_dsl
 
 from dci.api.v1 import files
 from dci.api.v1 import export_control
@@ -345,6 +346,7 @@ def get_all_jobs(user, topic_id=None):
         .options(sa_orm.joinedload("topic", innerjoin=True))
         .options(sa_orm.joinedload("team", innerjoin=True))
         .options(sa_orm.joinedload("pipeline", innerjoin=False))
+        .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
     nb_jobs = query.count()
@@ -436,6 +438,7 @@ def get_job_by_id(user, job_id):
         .options(sa_orm.selectinload("components"))
         .options(sa_orm.selectinload("jobstates"))
         .options(sa_orm.selectinload("files"))
+        .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
     try:
         job = query.one()
