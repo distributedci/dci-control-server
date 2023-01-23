@@ -554,6 +554,24 @@ class Job(dci_declarative.Mixin, Base):
         "File", primaryjoin="and_(File.job_id == Job.id, File.jobstate_id == None)"
     )
     pipeline = sa_orm.relationship("Pipeline")
+    keys_values = sa_orm.relationship("JobKeyValue")
+
+
+class JobKeyValue(dci_declarative.Mixin, Base):
+    __tablename__ = "jobs_keys_values"
+    __table_args__ = (
+        sa.Index("jobs_keys_values_key_idx", "key"),
+        sa.Index("jobs_keys_values_job_id_idx", "job_id"),
+        sa.UniqueConstraint("job_id", "key", "value", name="jobs_keys_values_jkv"),
+    )
+    job_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("jobs.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    )
+    key = sa.Column(sa.String(255), nullable=False, primary_key=True)
+    value = sa.Column(sa.String(255), nullable=False, primary_key=True)
 
 
 class Jobstate(dci_declarative.Mixin, Base):
