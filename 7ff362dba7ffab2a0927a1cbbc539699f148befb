@@ -1,0 +1,136 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cc3271f6_b6e09f7a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "Some concerns about the whole transaction management in the data migration",
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7cb37143_5a566c52",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "Working with offset/limit, the query should be sorted to guarantee the order of the results.",
+      "range": {
+        "startLine": 41,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 44
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a9a3aa7_41038f24",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "limit doesn\u0027t have to be changed",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 38
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9aa0870a_e31fb816",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "the exception block and database BEGIN/COMMIT/ROLLBACK should be wrapping around the \"while True:\" loop to not leave the database migration in an unknown state.",
+      "range": {
+        "startLine": 58,
+        "startChar": 0,
+        "endLine": 65,
+        "endChar": 17
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f28ecfc4_745b4db4",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "commit/rollback should wrap around the whole data migration",
+      "range": {
+        "startLine": 67,
+        "startChar": 8,
+        "endLine": 67,
+        "endChar": 24
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b232ca58_8a0161f8",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-25T17:59:22Z",
+      "side": 1,
+      "message": "Session should not be closed \u0026 recreated in the while loop, the query above is mapped to the first session object.",
+      "range": {
+        "startLine": 68,
+        "startChar": 8,
+        "endLine": 69,
+        "endChar": 40
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
