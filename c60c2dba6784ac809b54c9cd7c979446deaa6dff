@@ -41,6 +41,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b214db1_128e202d",
+        "filename": "dci/alembic/versions/66680dcf2c88_add_display_name_and_version_to_.py",
+        "patchSetId": 9
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "This one is done through an index (cf to models2.Component class), I droped/recreated it L43/44 in this migration.",
+      "parentUuid": "6a5b3328_a0cce707",
+      "range": {
+        "startLine": 37,
+        "startChar": 3,
+        "endLine": 37,
+        "endChar": 73
+      },
+      "revId": "c60c2dba6784ac809b54c9cd7c979446deaa6dff",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "62bed077_9d31371a",
@@ -54,6 +78,24 @@
       "writtenOn": "2023-01-23T15:16:18Z",
       "side": 1,
       "message": "You need to add the \"version\" field here too",
+      "revId": "c60c2dba6784ac809b54c9cd7c979446deaa6dff",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b365d86_b0bfc818",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 9
+      },
+      "lineNbr": 419,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "L420 ?",
+      "parentUuid": "62bed077_9d31371a",
       "revId": "c60c2dba6784ac809b54c9cd7c979446deaa6dff",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }

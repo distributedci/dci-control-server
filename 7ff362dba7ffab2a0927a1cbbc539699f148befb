@@ -43,6 +43,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0774f16d_96478e8f",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "Why do we care about this order ?",
+      "parentUuid": "7cb37143_5a566c52",
+      "range": {
+        "startLine": 41,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 44
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2a9a3aa7_41038f24",
         "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
         "patchSetId": 13
@@ -54,6 +78,30 @@
       "writtenOn": "2023-01-25T17:59:22Z",
       "side": 1,
       "message": "limit doesn\u0027t have to be changed",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 38
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d06f0035_d4e51ab4",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a9a3aa7_41038f24",
       "range": {
         "startLine": 48,
         "startChar": 0,
@@ -87,6 +135,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f3164de1_8758e559",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9aa0870a_e31fb816",
+      "range": {
+        "startLine": 58,
+        "startChar": 0,
+        "endLine": 65,
+        "endChar": 17
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f28ecfc4_745b4db4",
@@ -110,6 +182,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9dfbbe34_bb547639",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f28ecfc4_745b4db4",
+      "range": {
+        "startLine": 67,
+        "startChar": 8,
+        "endLine": 67,
+        "endChar": 24
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b232ca58_8a0161f8",
@@ -123,6 +219,30 @@
       "writtenOn": "2023-01-25T17:59:22Z",
       "side": 1,
       "message": "Session should not be closed \u0026 recreated in the while loop, the query above is mapped to the first session object.",
+      "range": {
+        "startLine": 68,
+        "startChar": 8,
+        "endLine": 69,
+        "endChar": 40
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c660e08_93e6d9ce",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-01-26T13:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b232ca58_8a0161f8",
       "range": {
         "startLine": 68,
         "startChar": 8,
