@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbccf569_cb702b23",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-26T13:27:11Z",
+      "side": 1,
+      "message": "Also, can you explain more in detail what\u0027s the goal of the patch ?\n(current state, what changes, expected state, maybe a quick example)",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 47
+      },
+      "revId": "7ecc46e0d132dd2581a0051438128e452101b619",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69c9c50b_660041d2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-26T13:27:11Z",
+      "side": 1,
+      "message": "Migration looks good.\n\nAnother question regarding the goal of the patch in the commit msg comments",
+      "revId": "7ecc46e0d132dd2581a0051438128e452101b619",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
