@@ -67,6 +67,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f43a7a84_08305b6a",
+        "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
+        "patchSetId": 13
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-26T13:32:02Z",
+      "side": 1,
+      "message": "You ask for components #0 to #99, then #100 to #199\n\nBut there\u0027s no guarantee that the order will be the same between the two requests, you could have some components from the first batch in the 2nd batch.",
+      "parentUuid": "0774f16d_96478e8f",
+      "range": {
+        "startLine": 41,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 44
+      },
+      "revId": "7ff362dba7ffab2a0927a1cbbc539699f148befb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2a9a3aa7_41038f24",
         "filename": "dci/alembic/versions/46dff7ed04c2_migrate_new_components_fields.py",
         "patchSetId": 13
