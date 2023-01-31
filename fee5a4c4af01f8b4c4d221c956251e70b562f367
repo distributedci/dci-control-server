@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c67ac26_5e0be3ff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 25
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-31T17:09:26Z",
+      "side": 1,
+      "message": "See comment in models2.py just to be sure",
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4b5355b_d1bc59eb",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 25
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-31T17:09:26Z",
+      "side": 1,
+      "message": "Should the index \u0026 constraint rely on display_name + version instead of the name + version ?",
+      "range": {
+        "startLine": 415,
+        "startChar": 0,
+        "endLine": 432,
+        "endChar": 61
+      },
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "100a54cb_dca8da2a",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 25
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-31T17:09:26Z",
+      "side": 1,
+      "message": "Does anyone know what \"title\" is used for ?",
+      "range": {
+        "startLine": 459,
+        "startChar": 0,
+        "endLine": 459,
+        "endChar": 30
+      },
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49aa6a2e_4bf26c3b",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 25
+      },
+      "lineNbr": 460,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-01-31T17:09:26Z",
+      "side": 1,
+      "message": "Does anyone know what \"message\" is used for ?\n\ndci\u003d# select name, title, message from components where title is not null or message is not null limit 10;\n    name     | title |                     message                      \n-------------+-------+--------------------------------------------------\n versionlock |       | Dummy component used to validate the versionlock\n(1 row)\n\nMaybe we can drop these columns someday ?",
+      "range": {
+        "startLine": 460,
+        "startChar": 4,
+        "endLine": 460,
+        "endChar": 32
+      },
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
