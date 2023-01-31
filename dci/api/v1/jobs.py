@@ -572,6 +572,72 @@ def delete_job_by_id(user, j_id):
     return flask.Response(None, 204, content_type="application/json")
 
 
+@api.route("/jobs/<uuid:j_id>/keys_values", methods=["POST"])
+@decorators.login_required
+@decorators.log
+def add_keys_values(user, j_id):
+
+    values = flask.request.json
+    if not isinstance(values, dict):
+        raise dci_exc.DCIException("Invalid keys_values: %s" % str(values))
+
+    job = base.get_resource_orm(models2.Job, j_id, None)  # if_match_etag)
+
+    if user.is_not_in_team(job.team_id):
+        raise dci_exc.Unauthorized()
+
+    try:
+        job.keys_values = values
+        flask.g.session.add(job)
+        flask.g.session.commit()
+    except Exception as e:
+        flask.g.session.rollback()
+        msg = "unable to add keys_values %s to job %s: %s" % (str(values), j_id, str(e))
+        logging.error(msg)
+        raise dci_exc.DCIException(msg)
+
+    return flask.Response(
+        json.dumps({"job": job.serialize()}),
+        201,
+        headers={"ETag": job.etag},
+        content_type="application/json",
+    )
+
+
+@api.route("/jobs/<uuid:j_id>/keys_values", methods=["PUT"])
+@decorators.login_required
+@decorators.log
+def update_keys_values(user, j_id):
+
+    values = flask.request.json
+    if not isinstance(values, dict):
+        raise dci_exc.DCIException("Invalid keys_values: %s" % str(values))
+
+    job = base.get_resource_orm(models2.Job, j_id, None)
+
+    if user.is_not_in_team(job.team_id):
+        raise dci_exc.Unauthorized()
+
+    try:
+        keys_values = dict(job.keys_values)
+        keys_values.update(values)
+        job.keys_values = keys_values
+        flask.g.session.add(job)
+        flask.g.session.commit()
+    except Exception as e:
+        flask.g.session.rollback()
+        msg = "unable to add keys_values %s to job %s: %s" % (str(values), j_id, str(e))
+        logging.error(msg)
+        raise dci_exc.DCIException(msg)
+
+    return flask.Response(
+        None,
+        204,
+        headers={"ETag": job.etag},
+        content_type="application/json",
+    )
+
+
 @api.route("/jobs/purge", methods=["GET"])
 @decorators.login_required
 def get_to_purge_archived_jobs(user):

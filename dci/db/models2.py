@@ -542,6 +542,7 @@ class Job(dci_declarative.Mixin, Base):
     state = sa.Column(STATES, default="active")
     tags = sa.Column(pg.ARRAY(sa.Text), default=[])
     data = sa.Column(sa_utils.JSONType, default={})
+    keys_values = sa.Column(sa_utils.JSONType, default={})
     components = sa_orm.relationship(
         "Component", secondary=JOIN_JOBS_COMPONENTS, back_populates="jobs"
     )
