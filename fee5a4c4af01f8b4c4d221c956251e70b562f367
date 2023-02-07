@@ -66,6 +66,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1a1564bd_7cee2856",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 25
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-02-07T10:09:50Z",
+      "side": 1,
+      "message": "it\u0027s not used",
+      "parentUuid": "100a54cb_dca8da2a",
+      "range": {
+        "startLine": 459,
+        "startChar": 0,
+        "endLine": 459,
+        "endChar": 30
+      },
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "49aa6a2e_4bf26c3b",
         "filename": "dci/db/models2.py",
         "patchSetId": 25
@@ -77,6 +101,30 @@
       "writtenOn": "2023-01-31T17:09:26Z",
       "side": 1,
       "message": "Does anyone know what \"message\" is used for ?\n\ndci\u003d# select name, title, message from components where title is not null or message is not null limit 10;\n    name     | title |                     message                      \n-------------+-------+--------------------------------------------------\n versionlock |       | Dummy component used to validate the versionlock\n(1 row)\n\nMaybe we can drop these columns someday ?",
+      "range": {
+        "startLine": 460,
+        "startChar": 4,
+        "endLine": 460,
+        "endChar": 32
+      },
+      "revId": "fee5a4c4af01f8b4c4d221c956251e70b562f367",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a15005f_a408b236",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 25
+      },
+      "lineNbr": 460,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-02-07T10:09:50Z",
+      "side": 1,
+      "message": "it\u0027s not used",
+      "parentUuid": "49aa6a2e_4bf26c3b",
       "range": {
         "startLine": 460,
         "startChar": 4,
