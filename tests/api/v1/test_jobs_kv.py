@@ -82,3 +82,65 @@ def test_delete_from_job(remoteci_context, components_user_ids, topic_user_id):
     job = remoteci_context.get("/api/v1/jobs/%s" % job_id)
     job = job.data["job"]
     assert job["keys_values"] == []
+
+
+def test_get_lookup_jobs_by_kv(remoteci_context, components_user_ids, topic_user_id):
+    data = {
+        "components": components_user_ids,
+        "topic_id": topic_user_id,
+        "name": "my-job-name_1",
+    }
+    job_1 = remoteci_context.post("/api/v1/jobs", data=data)
+    job_id_1 = job_1.data["job"]["id"]
+
+    r = remoteci_context.post(
+        "/api/v1/jobs/%s/kv" % job_id_1,
+        data={"key": "key_1", "value": "value_1"},
+    )
+    r.status_code == 201
+
+    r = remoteci_context.post(
+        "/api/v1/jobs/%s/kv" % job_id_1,
+        data={"key": "key_2", "value": "value_2"},
+    )
+    r.status_code == 201
+
+    data["name"] = "my-job-name_2"
+    job_2 = remoteci_context.post("/api/v1/jobs", data=data)
+    job_id_2 = job_2.data["job"]["id"]
+
+    r = remoteci_context.post(
+        "/api/v1/jobs/%s/kv" % job_id_2,
+        data={"key": "key_1", "value": "value_1"},
+    )
+    r.status_code == 201
+
+    r = remoteci_context.post(
+        "/api/v1/jobs/%s/kv" % job_id_2,
+        data={"key": "key_3", "value": "value_3"},
+    )
+    r.status_code == 201
+
+    jobs = remoteci_context.get("/api/v1/jobs?query=eq(key,key_1)").data["jobs"]
+    assert len(jobs) == 2
+
+    jobs = remoteci_context.get("/api/v1/jobs?query=eq(key,key_3)").data["jobs"]
+    assert len(jobs) == 1
+
+    jobs = remoteci_context.get(
+        "/api/v1/jobs?query=and(eq(key,key_1),eq(value,value_1))"
+    ).data["jobs"]
+    assert len(jobs) == 2
+
+    jobs = remoteci_context.get(
+        "/api/v1/jobs?query=and(eq(key,key_3),eq(value,value_3))"
+    ).data["jobs"]
+    assert len(jobs) == 1
+
+    jobs = remoteci_context.get("/api/v1/jobs?query=eq(key,foo)").data["jobs"]
+    assert len(jobs) == 0
+
+    jobs = remoteci_context.get(
+        "/api/v1/jobs?query=and(eq(key,key_3),eq(value,bar))"
+    ).data["jobs"]
+    assert len(jobs) == 0
