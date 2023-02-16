@@ -337,9 +337,10 @@ def get_all_jobs(user, topic_id=None):
     # Get only the non archived jobs
     query = query.filter(models2.Job.state != "archived")
     query = query.from_self()
-    query = declarative.handle_args(query, models2.Job, args)
+    query = declarative.handle_args(query, models2.Job, args, models2.JobKeyValue)
 
     # Load associated ressources
+    query = query.outerjoin(models2.JobKeyValue)
     query = (
         query.options(sa_orm.selectinload("results"))
         .options(sa_orm.joinedload("remoteci", innerjoin=True))
@@ -347,7 +348,6 @@ def get_all_jobs(user, topic_id=None):
         .options(sa_orm.joinedload("topic", innerjoin=True))
         .options(sa_orm.joinedload("team", innerjoin=True))
         .options(sa_orm.joinedload("pipeline", innerjoin=False))
-        .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
     nb_jobs = query.count()
