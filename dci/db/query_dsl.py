@@ -14,6 +14,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+""" Query language for the query clause of the API.
+
+Exemple: query=or(like(name,openshift%),contains(tags,stage:ocp))
+"""
+
 from dci.common import exceptions as dci_exc
 
 import pyparsing as pp
@@ -63,11 +68,17 @@ query << (
 
 
 def parse(q):
-    return query.parseString(q).asList()
+    r = query.parseString(q).asList()
+    if isinstance(r[0], list):
+        return r[0]
+    return r
 
 
-def _build(sa_query, parsed_query, model_object):
+def _build(sa_query, parsed_query, model_object, secondary_model_object):
     columns = model_object.__mapper__.columns.keys()
+    secondary_columns = []
+    if secondary_model_object:
+        secondary_columns = secondary_model_object.__mapper__.columns.keys()
     op = parsed_query[0]
     operands = parsed_query[1:]
 
@@ -75,7 +86,7 @@ def _build(sa_query, parsed_query, model_object):
         sql_op = getattr(sql, op + "_")
         res = []
         for operand in operands:
-            res.append(_build(sa_query, operand, model_object))
+            res.append(_build(sa_query, operand, model_object, secondary_model_object))
         return sql_op(*res)
 
     value = None
@@ -84,9 +95,12 @@ def _build(sa_query, parsed_query, model_object):
     else:
         field = operands[0]
 
-    if field not in columns:
+    if field in columns:
+        m_column = getattr(model_object, field)
+    elif field in secondary_columns:
+        m_column = getattr(secondary_model_object, field)
+    else:
         raise dci_exc.DCIException("Invalid field: %s" % field)
-    m_column = getattr(model_object, field)
 
     res = None
     if op == "eq":
@@ -116,5 +130,7 @@ def _build(sa_query, parsed_query, model_object):
     return res
 
 
-def build(sa_query, parsed_query, model_object):
-    return sa_query.filter(_build(sa_query, parsed_query, model_object))
+def build(sa_query, parsed_query, model_object, secondary_model_object):
+    return sa_query.filter(
+        _build(sa_query, parsed_query, model_object, secondary_model_object)
+    )

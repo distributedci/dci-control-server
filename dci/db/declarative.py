@@ -82,7 +82,7 @@ def handle_pagination(query, args):
     return query
 
 
-def handle_args(query, model_object, args):
+def handle_args(query, model_object, args, secondary_model_object=None):
     if args.get("sort"):
         columns = model_object.__mapper__.columns.keys()
         for s in args.get("sort"):
@@ -160,7 +160,9 @@ def handle_args(query, model_object, args):
     elif args.get("query"):
         try:
             parsed_query = query_dsl.parse(args.get("query"))
-            query = query_dsl.build(query, parsed_query, model_object)
+            query = query_dsl.build(
+                query, parsed_query, model_object, secondary_model_object
+            )
         except pp.ParseException as pe:
             raise dci_exc.DCIException("error while parsing the query %s" % str(pe))
     if args.get("created_after"):
