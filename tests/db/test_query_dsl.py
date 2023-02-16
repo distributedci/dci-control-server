@@ -27,11 +27,11 @@ def test_query_invalid():
 
 def test_query_valid():
     ret = query_dsl.parse("eq(name,openshift-vanilla)")
-    assert ret == [["eq", "name", "openshift-vanilla"]]
+    assert ret == ["eq", "name", "openshift-vanilla"]
 
 
 def test_query_complex_1():
-    ret = query_dsl.parse("and(eq(name,openshift-vanilla),not_contains(tags,debug)))")
+    ret = query_dsl.parse("and(eq(name,openshift-vanilla),not_contains(tags,debug))")
     assert ret == [
         "and",
         ["eq", "name", "openshift-vanilla"],
@@ -48,4 +48,16 @@ def test_query_complex_2():
         ["eq", "name", "openshift-vanilla"],
         ["not_contains", "tags", "debug"],
         ["not", ["null", "url"]],
+    ]
+
+
+def test_query_with_field_op():
+    ret = query_dsl.parse("eq(key(foo),bar)")
+    assert ret == ["eq", ["key", "foo"], "bar"]
+
+    ret = query_dsl.parse("and(eq(key(foo),bar),eq(status_reason,not found))")
+    assert ret == [
+        "and",
+        ["eq", ["key", "foo"], "bar"],
+        ["eq", "status_reason", "not found"],
     ]
