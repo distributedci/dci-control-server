@@ -14,17 +14,25 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+""" Query language for the query clause of the API.
+
+Exemple: query=or(like(name,openshift%),contains(tags,stage:ocp))
+"""
+
 from dci.common import exceptions as dci_exc
 
 import pyparsing as pp
 from sqlalchemy import sql
 
-
-_field = pp.Word(pp.alphanums + "_")
-_value = pp.Word(pp.alphanums + "_" + "-" + " " + "%")
+_value = pp.Word(pp.alphanums + "_" + "-" + " " + "%" + ".")
 _comma = pp.Suppress(pp.Literal(","))
 _lp = pp.Suppress(pp.Literal("("))
 _rp = pp.Suppress(pp.Literal(")"))
+
+_string_field = pp.Word(pp.alphanums + "_")
+_op_fields_values = {"key"}
+_op_field = pp.oneOf(" ".join(_op_fields_values)) + _lp + _string_field + _rp
+_field = pp.Group(_op_field) | _string_field
 
 _operations = {
     "contains",
@@ -61,15 +69,23 @@ query << (
     + _rp
 )
 
+_fields_op_links = {"key": "value"}
+
 
 def parse(q):
-    return query.parseString(q).asList()
+    r = query.parseString(q).asList()
+    if isinstance(r[0], list):
+        return r[0]
+    return r
 
 
-def _build(sa_query, parsed_query, model_object):
+def _build(sa_query, parsed_query, model_object, secondary_model_object):
     columns = model_object.__mapper__.columns.keys()
     if isinstance(parsed_query[0], list):
         parsed_query = parsed_query[0]
+    secondary_columns = []
+    if secondary_model_object:
+        secondary_columns = secondary_model_object.__mapper__.columns.keys()
     op = parsed_query[0]
     operands = parsed_query[1:]
 
@@ -77,7 +93,7 @@ def _build(sa_query, parsed_query, model_object):
         sql_op = getattr(sql, op + "_")
         res = []
         for operand in operands:
-            res.append(_build(sa_query, operand, model_object))
+            res.append(_build(sa_query, operand, model_object, secondary_model_object))
         return sql_op(*res)
 
     value = None
@@ -86,9 +102,24 @@ def _build(sa_query, parsed_query, model_object):
     else:
         field = operands[0]
 
-    if field not in columns:
+    field_op_query = None
+    if isinstance(field, list):
+        field_op, field_value = field
+        if field_op in columns:
+            mfo_column = getattr(model_object, field_op)
+        elif field_op in secondary_columns:
+            mfo_column = getattr(secondary_model_object, field_op)
+        else:
+            raise dci_exc.DCIException("Invalid field operator: %s" % field_op)
+        field_op_query = mfo_column == field_value
+        field = _fields_op_links[field_op]
+
+    if field in columns:
+        m_column = getattr(model_object, field)
+    elif field in secondary_columns:
+        m_column = getattr(secondary_model_object, field)
+    else:
         raise dci_exc.DCIException("Invalid field: %s" % field)
-    m_column = getattr(model_object, field)
 
     res = None
     if op == "eq":
@@ -115,8 +146,13 @@ def _build(sa_query, parsed_query, model_object):
         res = m_column.ilike(value)
     else:
         raise dci_exc.DCIException("Invalid operation: %s" % op)
+
+    if field_op_query:
+        return sql.and_(field_op_query, res)
     return res
 
 
-def build(sa_query, parsed_query, model_object):
-    return sa_query.filter(_build(sa_query, parsed_query, model_object))
+def build(sa_query, parsed_query, model_object, secondary_model_object):
+    return sa_query.filter(
+        _build(sa_query, parsed_query, model_object, secondary_model_object)
+    )
