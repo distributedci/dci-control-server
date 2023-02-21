@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b33e2100_7522093f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-02-21T08:07:25Z",
+      "side": 1,
+      "message": "It looks good but I would prefer to fix this before submitting:\n\n- remove the previous code in dci/db/query.py\n- as you added a new parameter for the api, we need to add changes in all the client codes: python-dciclient, dci-ansible and analyze_jobs at least.",
+      "revId": "aef6fd9c060487b1697dafe9ea58b03d1fec4789",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d46b855_f7eb1064",
+        "filename": "dci-control-server.spec",
+        "patchSetId": 6
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-02-21T08:07:25Z",
+      "side": 1,
+      "message": "we should bump the version of the package as we modify the packaging.",
+      "revId": "aef6fd9c060487b1697dafe9ea58b03d1fec4789",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72d402a3_f161ac4a",
+        "filename": "dci/db/query_dsl.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-02-21T08:07:25Z",
+      "side": 1,
+      "message": "need the year here",
+      "revId": "aef6fd9c060487b1697dafe9ea58b03d1fec4789",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63aabaa9_b715e378",
+        "filename": "tests/db/test_query_dsl.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-02-21T08:07:25Z",
+      "side": 1,
+      "message": "Need to be:\n\nCopyright (C) 2023 Red Hat, Inc.",
+      "revId": "aef6fd9c060487b1697dafe9ea58b03d1fec4789",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
