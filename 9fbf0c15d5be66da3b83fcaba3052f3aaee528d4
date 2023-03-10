@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a5b7b84_01f99abd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-03-10T13:26:22Z",
+      "side": 1,
+      "message": "impossible to merge on top of a85645ab65e5265b307839b4fd67426899abdf67",
+      "revId": "9fbf0c15d5be66da3b83fcaba3052f3aaee528d4",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
