@@ -41,6 +41,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "400382b2_25d3eaa7",
+        "filename": "dci/alembic/versions/1c16157d0b73_add_jobkeyvalue.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-03-14T13:27:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c2faddde_92d0a93d",
+      "range": {
+        "startLine": 47,
+        "startChar": 8,
+        "endLine": 47,
+        "endChar": 83
+      },
+      "revId": "27bd2db2d363757f4265f8670576751d3bcc08e1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0a5b0318_612d73f9",
@@ -66,6 +90,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3884424a_4407be6e",
+        "filename": "dci/api/v1/jobs.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-03-14T13:27:28Z",
+      "side": 1,
+      "message": "merge mistake :p",
+      "parentUuid": "0a5b0318_612d73f9",
+      "range": {
+        "startLine": 442,
+        "startChar": 7,
+        "endLine": 442,
+        "endChar": 46
+      },
+      "revId": "27bd2db2d363757f4265f8670576751d3bcc08e1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e9e16b7d_bb80508e",
         "filename": "dci/db/models2.py",
         "patchSetId": 7
@@ -77,6 +125,30 @@
       "writtenOn": "2023-03-14T10:25:44Z",
       "side": 1,
       "message": "This is redundant with the primary key definition which includes these 3 same columns.",
+      "range": {
+        "startLine": 565,
+        "startChar": 0,
+        "endLine": 565,
+        "endChar": 83
+      },
+      "revId": "27bd2db2d363757f4265f8670576751d3bcc08e1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b44d5438_0564b72b",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-03-14T13:27:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e9e16b7d_bb80508e",
       "range": {
         "startLine": 565,
         "startChar": 0,
