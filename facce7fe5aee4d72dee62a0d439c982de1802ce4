@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b97444fd_55d7e163",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 8
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-03-14T13:44:19Z",
+      "side": 1,
+      "message": "should we go with Float instead to have numerical values?",
+      "revId": "facce7fe5aee4d72dee62a0d439c982de1802ce4",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
