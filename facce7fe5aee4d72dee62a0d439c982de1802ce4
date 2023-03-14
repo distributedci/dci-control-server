@@ -16,6 +16,24 @@
       "message": "should we go with Float instead to have numerical values?",
       "revId": "facce7fe5aee4d72dee62a0d439c982de1802ce4",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "825f46ca_90ea7448",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 8
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-03-14T14:39:06Z",
+      "side": 1,
+      "message": "If only numerical values are the target, sa.Numeric might be better avoid Float precision issues.",
+      "parentUuid": "b97444fd_55d7e163",
+      "revId": "facce7fe5aee4d72dee62a0d439c982de1802ce4",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
