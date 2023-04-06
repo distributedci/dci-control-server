@@ -112,6 +112,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "55204519_119f892e",
+        "filename": "dci/api/v1/jobs.py",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-04-06T13:21:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3884424a_4407be6e",
+      "range": {
+        "startLine": 442,
+        "startChar": 7,
+        "endLine": 442,
+        "endChar": 46
+      },
+      "revId": "27bd2db2d363757f4265f8670576751d3bcc08e1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e9e16b7d_bb80508e",
