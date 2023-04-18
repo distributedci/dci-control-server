@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "23a3f120_2049d63b",
+        "filename": "dci/db/query_dsl.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2023-04-18T06:47:42Z",
+      "side": 1,
+      "message": "can we also add \"%\" as like and ilike will not work without it?",
+      "revId": "8e455c3c9e5f6497f99a60693264fd40b2cab9a1",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
