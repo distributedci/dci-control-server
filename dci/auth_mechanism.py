@@ -253,10 +253,20 @@ class OpenIDCAuth(BaseMechanism):
         }
 
     def _get_or_create_user(self, user_info, team_id=None):
-        constraint = sql.or_(
-            models2.User.sso_username == user_info["sso_username"],
-            models2.User.email == user_info["sso_username"],
-            models2.User.email == user_info["email"],
+        sso_username = user_info["sso_username"]
+        email = user_info["email"]
+
+        if not sso_username and not email:
+            raise Exception("username or email in JWT for OIDC are required.")
+
+        constraint = (
+            sql.or_(
+                models2.User.sso_username == sso_username,
+                models2.User.email == sso_username,
+                models2.User.email == email,
+            )
+            if sso_username
+            else models2.User.email == email
         )
         identity = self.identity_from_db(constraint)
         if identity is None:
