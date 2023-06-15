@@ -119,3 +119,9 @@ def common_values_dict():
     }
 
     return values
+
+
+def with_common_value(values):
+    common_values = common_values_dict()
+    common_values.update(values)
+    return common_values

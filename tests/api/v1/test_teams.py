@@ -401,3 +401,39 @@ def test_nrt_update_team_after_get(admin, team_id):
     assert r.status_code == 200
     team = admin.get("/api/v1/teams/%s" % team_id).data["team"]
     assert team["name"] == "new team name"
+
+
+def test_create_a_list_of_users_and_attach_them_to_the_team(epm, team_id):
+    nb_users = len(epm.get("/api/v1/users").data["users"])
+    assert len(epm.get("/api/v1/teams/%s/users" % team_id).data["users"]) == 0
+    request = epm.post(
+        "/api/v1/teams/%s/users" % team_id,
+        data=[
+            "email0@example.org",
+            "email1@example.org",
+        ],
+    )
+    assert request.status_code == 200
+    assert request.data["users"][0]["email"] == "email0@example.org"
+    assert request.data["users"][1]["email"] == "email1@example.org"
+    assert len(epm.get("/api/v1/users").data["users"]) == nb_users + 2
+    assert len(epm.get("/api/v1/teams/%s/users" % team_id).data["users"]) == 2
+
+
+def test_create_a_list_of_users_and_attach_them_to_the_team_with_existing_user(
+    epm, team_id, user_no_team
+):
+    nb_users = len(epm.get("/api/v1/users").data["users"])
+    assert len(epm.get("/api/v1/teams/%s/users" % team_id).data["users"]) == 0
+    request = epm.post(
+        "/api/v1/teams/%s/users" % team_id,
+        data=[
+            user_no_team["email"],
+            "email1@example.org",
+        ],
+    )
+    assert request.status_code == 200
+    assert request.data["users"][0]["email"] == user_no_team["email"]
+    assert request.data["users"][1]["email"] == "email1@example.org"
+    assert len(epm.get("/api/v1/users").data["users"]) == nb_users + 1
+    assert len(epm.get("/api/v1/teams/%s/users" % team_id).data["users"]) == 2

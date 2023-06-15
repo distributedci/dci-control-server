@@ -681,6 +681,7 @@ analytics_tasks_pipelines_status = {
     "additionalProperties": False,
 }
 
+# TODO (gvincent): remove unused
 ###############################################################################
 #                                                                             #
 #                                  Pipelines schema                           #
@@ -707,3 +708,12 @@ update_pipeline_schema = {
     "type": "object",
     "properties": update_pipeline_properties,
 }
+# END OF TODO
+
+###############################################################################
+#                                                                             #
+#                                  Team_Users schema                          #
+#                                                                             #
+###############################################################################
+
+team_users_create_schema = {"type": "array", "items": Properties.email}

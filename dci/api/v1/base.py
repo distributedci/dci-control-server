@@ -83,6 +83,17 @@ def create_resource_orm(table, data):
         raise dci_exc.DCIException(message=str(e))
 
 
+def get_or_create_resource_orm(table, data, filters=list()):
+    resources = get_resources_orm(table, filters)
+    if len(resources) > 1:
+        resource_name = table.__tablename__[0:-1]
+        raise dci_exc.DCIException(
+            message="Conflict when trying to create %s resource" % resource_name,
+            status_code=409,
+        )
+    return resources[0].serialize() if resources else create_resource_orm(table, data)
+
+
 def get_archived_resources_query(table):
     return flask.g.session.query(table).filter(table.state == "archived")
 

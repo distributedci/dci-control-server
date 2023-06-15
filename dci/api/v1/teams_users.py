@@ -13,13 +13,31 @@
 # under the License.
 
 import flask
+import logging
 from sqlalchemy import exc as sa_exc
 
-from dci.api.v1 import api
-from dci.api.v1 import base
+from dci.api.v1 import api, base, utils
 from dci import decorators
 from dci.common import exceptions as dci_exc
+from dci.common.signature import gen_secret
 from dci.db import models2
+from dci.common.schemas import check_json_is_valid, team_users_create_schema
+
+
+logger = logging.getLogger()
+
+
+def _add_user_to_team(user_id, team_id):
+    team = base.get_resource_orm(models2.Team, team_id)
+    user = base.get_resource_orm(models2.User, user_id)
+
+    try:
+        team.users.append(user)
+        flask.g.session.add(team)
+        flask.g.session.commit()
+    except sa_exc.IntegrityError:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message="conflict when adding team", status_code=409)
 
 
 @api.route("/teams/<uuid:team_id>/users/<uuid:user_id>", methods=["POST"])
@@ -35,18 +53,14 @@ def add_user_to_team(user, team_id, user_id):
     if user.is_not_epm():
         raise dci_exc.Unauthorized()
 
-    team = base.get_resource_orm(models2.Team, team_id)
-    user = base.get_resource_orm(models2.User, user_id)
-
-    try:
-        team.users.append(user)
-        flask.g.session.add(team)
-        flask.g.session.commit()
-    except sa_exc.IntegrityError:
-        flask.g.session.rollback()
-        raise dci_exc.DCIException(message="conflict when adding team", status_code=409)
+    _add_user_to_team(user_id, team_id)
 
     return flask.Response(None, 201, content_type="application/json")
+
+
+def _get_users_from_team(team_id):
+    team = base.get_resource_orm(models2.Team, team_id)
+    return [u.serialize() for u in team.users]
 
 
 @api.route("/teams/<uuid:team_id>/users", methods=["GET"])
@@ -54,8 +68,43 @@ def add_user_to_team(user, team_id, user_id):
 def get_users_from_team(user, team_id):
     if user.is_not_epm() and user.is_not_in_team(team_id):
         raise dci_exc.Unauthorized()
-    team = base.get_resource_orm(models2.Team, team_id)
-    team_users = [u.serialize() for u in team.users]
+
+    team_users = _get_users_from_team(team_id)
+
+    return flask.jsonify({"users": team_users, "_meta": {"count": len(team_users)}})
+
+
+@api.route("/teams/<uuid:team_id>/users", methods=["POST"])
+@decorators.login_required
+def get_or_create_users_to_team(user, team_id):
+    if user.is_not_super_admin() and user.is_not_epm():
+        raise dci_exc.Unauthorized()
+
+    emails = flask.request.json
+    check_json_is_valid(team_users_create_schema, emails)
+
+    for email in emails:
+        try:
+            values = utils.with_common_value(
+                {
+                    "name": email,
+                    "fullname": email,
+                    "sso_username": email,
+                    "email": email,
+                    "password": gen_secret(),
+                }
+            )
+            filters = [models2.User.email == email]
+            partner = base.get_or_create_resource_orm(models2.User, values, filters)
+            _add_user_to_team(partner["id"], team_id)
+        except sa_exc.DBAPIError as e:
+            logger.error(
+                "Error while creating user with email %s: %s" % (email, str(e))
+            )
+            flask.g.session.rollback()
+            raise dci_exc.DCIException(str(e))
+
+    team_users = _get_users_from_team(team_id)
 
     return flask.jsonify({"users": team_users, "_meta": {"count": len(team_users)}})
 
