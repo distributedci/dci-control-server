@@ -16,6 +16,23 @@
       "message": "It solves the immediate problem.\n\nI wonder however if we could remove the checks against the email (which I would guess were here to transition from email+password auth to SSO auth) and use only sso_username.",
       "revId": "742eebac70008105d8da1407f752d9b1220d4ee8",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c3044faf_c5a6fd06",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-06-19T20:54:52Z",
+      "side": 1,
+      "message": "unit test ?",
+      "revId": "742eebac70008105d8da1407f752d9b1220d4ee8",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
