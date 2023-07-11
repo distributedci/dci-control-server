@@ -76,9 +76,25 @@ def create_components(user):
     if "team_id" in values:
         if user.is_not_in_team(values["team_id"]):
             raise dci_exc.Unauthorized()
+        if "product_id" not in values and "topic_id" not in values:
+            raise dci_exc.DCIException(
+                "team based components should have either a product_id or a topic_id provided"
+            )
+    elif "product_id" in values:
+        raise dci_exc.DCIException(
+            "product components are scoped by team: team_id is missing"
+        )
     else:
         if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
             raise dci_exc.Unauthorized()
+        if "product_id" not in values and "topic_id" not in values:
+            raise dci_exc.DCIException(
+                "components should have either a product_id or a topic_id provided"
+            )
+
+    if "topic_id" in values and "product_id" not in values:
+        t = base.get_resource_orm(models2.Topic, values["topic_id"])
+        values["product_id"] = t.product_id
 
     values["type"] = values["type"].lower()
     display_name = values.get("display_name")
@@ -98,7 +114,7 @@ def create_components(user):
 
     # todo(yassine): move this logic the event handler
     # just send a "component_created" event with the component payload
-    if c["state"] == "active":
+    if c["state"] == "active" and "topic_id" in values:
         c_notification = dict(c)
         t = base.get_resource_orm(models2.Topic, c["topic_id"])
         c_notification["topic_name"] = t.name
