@@ -76,9 +76,17 @@ def create_components(user):
     if "team_id" in values:
         if user.is_not_in_team(values["team_id"]):
             raise dci_exc.Unauthorized()
+        if "product_id" not in values and "topic_id" not in values:
+            raise dci_exc.DCIException(
+                "team based components should have either a product_id or a topic_id provided"
+            )
     else:
         if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
             raise dci_exc.Unauthorized()
+
+    if "topic_id" in values and "product_id" not in values:
+        t = base.get_resource_orm(models2.Topic, values["topic_id"])
+        values["product_id"] = t.product_id
 
     values["type"] = values["type"].lower()
     display_name = values.get("display_name")
@@ -98,7 +106,7 @@ def create_components(user):
 
     # todo(yassine): move this logic the event handler
     # just send a "component_created" event with the component payload
-    if c["state"] == "active":
+    if c["state"] == "active" and "topic_id" in values:
         c_notification = dict(c)
         t = base.get_resource_orm(models2.Topic, c["topic_id"])
         c_notification["topic_name"] = t.name
@@ -145,9 +153,8 @@ def update_components(user, c_id):
     )
 
 
-def get_all_components(user, topic_id):
-    """Get all components of a topic that are accessible by
-    the user."""
+def get_all_components(user, topic_id=None):
+    """Get all components accessible by the user."""
 
     args = check_and_get_args(flask.request.args.to_dict())
 
@@ -155,12 +162,9 @@ def get_all_components(user, topic_id):
         args["sort"] = ["-released_at"]
 
     query = flask.g.session.query(models2.Component)
-    query = query.filter(
-        sql.and_(
-            models2.Component.topic_id == topic_id,
-            models2.Component.state != "archived",
-        )
-    )
+    query = query.filter(models2.Component.state != "archived")
+    if topic_id:
+        query = query.filter(models2.Component.topic_id == topic_id)
 
     if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
         query = query.filter(
@@ -177,6 +181,11 @@ def get_all_components(user, topic_id):
     components = [component.serialize() for component in query.all()]
 
     return flask.jsonify({"components": components, "_meta": {"count": nb_components}})
+
+
+@api.route("/components", methods=["GET"])
+def get_components(user):
+    return get_all_components(user)
 
 
 @api.route("/components/<uuid:c_id>", methods=["GET"])

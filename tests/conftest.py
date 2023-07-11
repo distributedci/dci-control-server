@@ -450,6 +450,11 @@ def product(admin):
 
 
 @pytest.fixture
+def product_id(product):
+    return product["id"]
+
+
+@pytest.fixture
 def product2(admin):
     return admin.get("/api/v1/products?where=label:BEST").data["products"][0]
 
