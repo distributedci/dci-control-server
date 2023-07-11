@@ -13,17 +13,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Add JobKeyValue
+"""components: add product_id
 
-Revision ID: 1c16157d0b73
-Revises: 66680dcf2c88
-Create Date: 2023-01-25 13:37:09.897416
+Revision ID: e02e327dd662
+Revises: caa65adffe8e
+Create Date: 2023-07-11 00:15:32.174702
 
 """
 
 # revision identifiers, used by Alembic.
-revision = "1c16157d0b73"
-down_revision = "66680dcf2c88"
+revision = "e02e327dd662"
+down_revision = "caa65adffe8e"
 branch_labels = None
 depends_on = None
 
@@ -33,20 +33,15 @@ from sqlalchemy.dialects import postgresql as pg
 
 
 def upgrade():
-    op.create_table(
-        "jobs_keys_values",
-        sa.Column("key", sa.String(255), nullable=False, primary_key=True),
-        sa.Column("value", sa.Float(), nullable=False, primary_key=True),
+    op.add_column(
+        "components",
         sa.Column(
-            "job_id",
+            "product_id",
             pg.UUID(as_uuid=True),
-            sa.ForeignKey("jobs.id", ondelete="CASCADE"),
-            nullable=False,
-            primary_key=True,
+            sa.ForeignKey("products.id", ondelete="CASCADE"),
+            nullable=True,
         ),
     )
-    op.create_index("jobs_keys_values_key_idx", "jobs_keys_values", ["key"])
-    op.create_index("jobs_keys_values_job_id_idx", "jobs_keys_values", ["job_id"])
 
 
 def downgrade():

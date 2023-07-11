@@ -94,11 +94,19 @@ def create_components(user):
     values["version"] = values.get("version") or component_info["version"]
     values["uid"] = values.get("uid") or component_info["uid"]
 
+    if "team_id" in values and "product_id" not in values and "topic_id" not in values:
+        raise dci_exc.DCIException(
+            "team based components should have either a product_id or a topic_id provided"
+        )
+
+    if "product_id" in values and "team_id" not in values:
+        raise dci_exc.DCIException("team_id is mandatory when product_id is provided")
+
     c = base.create_resource_orm(models2.Component, values)
 
     # todo(yassine): move this logic the event handler
     # just send a "component_created" event with the component payload
-    if c["state"] == "active":
+    if c["state"] == "active" and "team_id" not in values:
         c_notification = dict(c)
         t = base.get_resource_orm(models2.Topic, c["topic_id"])
         c_notification["topic_name"] = t.name
