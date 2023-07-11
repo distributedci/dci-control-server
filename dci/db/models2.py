@@ -413,26 +413,51 @@ class Component(dci_declarative.Mixin, Base):
     __tablename__ = "components"
     __table_args__ = (
         sa.Index(
-            "active_display_name_topic_id_type_version_team_id_null_key",
+            "components_team_id_null_topic_id_not_null",
             "display_name",
+            "product_id",
             "topic_id",
             "type",
             "version",
             unique=True,
             postgresql_where=sa.sql.text(
-                "components.state = 'active' AND components.team_id is NULL"
+                "components.state = 'active' AND components.team_id is NULL AND components.topic_id is not NULL"
             ),
         ),
         sa.Index(
-            "active_display_name_topic_id_type_version_team_id_not_null_key",
+            "components_team_id_null_topic_id_null",
             "display_name",
+            "product_id",
+            "type",
+            "version",
+            unique=True,
+            postgresql_where=sa.sql.text(
+                "components.state = 'active' AND components.team_id is NULL AND components.topic_id is NULL"
+            ),
+        ),
+        sa.Index(
+            "components_team_id_not_null_topic_id_not_null",
+            "display_name",
+            "product_id",
+            "team_id",
             "topic_id",
             "type",
             "version",
-            "team_id",
             unique=True,
             postgresql_where=sa.sql.text(
-                "components.state = 'active' AND components.team_id is not NULL"
+                "components.state = 'active' AND components.team_id is not NULL AND components.topic_id is not NULL"
+            ),
+        ),
+        sa.Index(
+            "components_team_id_not_null_topic_id_null",
+            "display_name",
+            "product_id",
+            "team_id",
+            "type",
+            "version",
+            unique=True,
+            postgresql_where=sa.sql.text(
+                "components.state = 'active' AND components.team_id is not NULL AND components.topic_id is NULL"
             ),
         ),
         sa.Index("components_topic_id_idx", "topic_id"),
@@ -464,6 +489,11 @@ class Component(dci_declarative.Mixin, Base):
     title = sa.Column(sa.Text)
     message = sa.Column(sa.Text)
     url = sa.Column(sa.Text)
+    product_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=True,
+    )
     topic_id = sa.Column(
         pg.UUID(as_uuid=True),
         sa.ForeignKey("topics.id", ondelete="CASCADE"),

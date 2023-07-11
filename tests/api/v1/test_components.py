@@ -473,6 +473,13 @@ def test_get_all_components(admin, topic_id):
 
     assert db_all_cs_ids == created_c_ids
 
+    db_all_cs = admin.get("/api/v1/components?where=topic_id:%s" % topic_id).data
+    db_all_cs = db_all_cs["components"]
+    db_all_cs_ids = [db_ct["id"] for db_ct in db_all_cs]
+    db_all_cs_ids.sort()
+
+    assert db_all_cs_ids == created_c_ids
+
 
 def test_get_all_components_not_in_topic(admin, user, product_openstack):
     topic = admin.post(
@@ -1314,6 +1321,43 @@ def test_teams_components_isolation(
     )
     assert components.status_code == 200
     assert components.data["components"][0]["team_id"] == team_user_id2
+
+
+# ######### tests product teams components
+
+
+def test_create_component_with_product(
+    user,
+    product_id,
+    feeder_context,
+    team_user_id,
+):
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "product_id": product_id,
+        "team_id": team_user_id,
+    }
+    pc = user.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+
+    # product component without team
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "product_id": product_id,
+    }
+    pc = feeder_context.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+
+    # team based component must have either product_id or topic_id
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "team_id": team_user_id,
+    }
+    pc = user.post("/api/v1/components", data=data)
+    assert pc.status_code == 400
 
 
 # S3 components related tests
