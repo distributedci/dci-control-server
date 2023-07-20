@@ -18,6 +18,23 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "22014a0c_ef99633f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-07-20T09:28:00Z",
+      "side": 1,
+      "message": "If we speak about REST for a second, I will prefer this endpoint to manipulate components:\n\nI want to create a component for a topic, I would expect a POST on /topics/:id/components with the component info in the payload.\n\nSame for the creation of a composant in a product: POST /products/:id/components\n\nHere we use the endpoint /components and change the logic in the endpoint depending on the topic_id or product_id.\n\nIf I decide to use only the endpoint /components, I should provide the topic_id or product_id.",
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "37f54a62_7972971d",
