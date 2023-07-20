@@ -16,6 +16,75 @@
       "message": "Those alembic migrations scripts are weird, can you rebase on top of master ?",
       "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37f54a62_7972971d",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-07-20T09:24:13Z",
+      "side": 1,
+      "message": "hum, We don\u0027t have any Red Hat components that will be attached to the product ? Why limiting only to teams ?",
+      "range": {
+        "startLine": 83,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 9
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "27e5e92b_db2e57ee",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-07-20T09:24:13Z",
+      "side": 1,
+      "message": "\"product_id\" will never be in values because of the \n\n`elif \"product_id\" in values:`",
+      "range": {
+        "startLine": 90,
+        "startChar": 11,
+        "endLine": 90,
+        "endChar": 38
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1acae1c4_6e7f20d7",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 455,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-07-20T09:24:13Z",
+      "side": 1,
+      "message": "you can require one of product_id or topic_id",
+      "range": {
+        "startLine": 455,
+        "startChar": 3,
+        "endLine": 455,
+        "endChar": 25
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
