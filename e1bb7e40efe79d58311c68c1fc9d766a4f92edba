@@ -58,6 +58,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b22404e_0296057d",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-07-21T01:31:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "37f54a62_7972971d",
+      "range": {
+        "startLine": 83,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 9
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "27e5e92b_db2e57ee",
@@ -71,6 +95,30 @@
       "writtenOn": "2023-07-20T09:24:13Z",
       "side": 1,
       "message": "\"product_id\" will never be in values because of the \n\n`elif \"product_id\" in values:`",
+      "range": {
+        "startLine": 90,
+        "startChar": 11,
+        "endLine": 90,
+        "endChar": 38
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f6dbb5fb_9ad12d3d",
+        "filename": "dci/api/v1/components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-07-21T01:31:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "27e5e92b_db2e57ee",
       "range": {
         "startLine": 90,
         "startChar": 11,
@@ -117,6 +165,30 @@
       "writtenOn": "2023-07-20T09:30:23Z",
       "side": 1,
       "message": "I would like to challenge this.\nA feeder or an admin can create a component without a team_id for a product.",
+      "range": {
+        "startLine": 1337,
+        "startChar": 6,
+        "endLine": 1337,
+        "endChar": 59
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5dcd2db9_835d365e",
+        "filename": "tests/api/v1/test_components.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 1337,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-07-21T01:31:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c0f3ae4f_0cc6630b",
       "range": {
         "startLine": 1337,
         "startChar": 6,
