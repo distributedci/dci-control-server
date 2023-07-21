@@ -154,6 +154,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8804d0b5_b083cc4f",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 455,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-07-21T01:32:36Z",
+      "side": 1,
+      "message": "I think it\u0027s more anyOf, but i got non hard readable error messages :/",
+      "parentUuid": "1acae1c4_6e7f20d7",
+      "range": {
+        "startLine": 455,
+        "startChar": 3,
+        "endLine": 455,
+        "endChar": 25
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c0f3ae4f_0cc6630b",
         "filename": "tests/api/v1/test_components.py",
         "patchSetId": 2
