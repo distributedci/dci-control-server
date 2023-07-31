@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96ac89a5_a1f580a0",
+        "filename": "dci/alembic/versions/151c7129cc09_set_product_id_value_to_old_components.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-07-31T12:53:39Z",
+      "side": 1,
+      "message": "we should modify all components no ?\nwe should not have a lot of archived components",
+      "range": {
+        "startLine": 47,
+        "startChar": 16,
+        "endLine": 47,
+        "endChar": 62
+      },
+      "revId": "60fcc4ac070049b8db79a83928808b61db69ca8c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
