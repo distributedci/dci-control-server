@@ -1316,6 +1316,52 @@ def test_teams_components_isolation(
     assert components.data["components"][0]["team_id"] == team_user_id2
 
 
+# ######### tests product teams components
+def test_create_component_with_product(
+    user,
+    product,
+    feeder_context,
+    team_user_id,
+    admin,
+):
+    product_id = product["id"]
+    data = {
+        "name": "pname1",
+        "type": "mytest1",
+        "product_id": product_id,
+        "team_id": team_user_id,
+    }
+    pc = user.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+
+    gc = user.get("/api/v1/products/%s/components" % product_id)
+    assert len(gc.data["components"]) == 1
+    assert gc.data["components"][0]["name"] == "pname1"
+    assert gc.data["components"][0]["team_id"] == team_user_id
+
+    component_id = gc.data["components"][0]["id"]
+    component = user.get("/api/v1/components/%s" % component_id)
+    print(component)
+    assert False
+
+    # product component without team
+    data = {
+        "name": "pname2",
+        "type": "mytest2",
+        "product_id": product_id,
+    }
+    pc = feeder_context.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+    # team based component must have either product_id or topic_id
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "team_id": team_user_id,
+    }
+    pc = user.post("/api/v1/components", data=data)
+    assert pc.status_code == 400
+
+
 # S3 components related tests
 
 
