@@ -41,6 +41,7 @@ from dci.db import models2
 from dci.db import declarative
 from dci.db import migration_components
 from dci.stores import files_utils
+from sqlalchemy import exc
 import sqlalchemy.orm as sa_orm
 
 
@@ -76,9 +77,17 @@ def create_components(user):
     if "team_id" in values:
         if user.is_not_in_team(values["team_id"]):
             raise dci_exc.Unauthorized()
+        if "product_id" not in values and "topic_id" not in values:
+            raise dci_exc.DCIException(
+                "team based components should have either a product_id or a topic_id provided"
+            )
     else:
         if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
             raise dci_exc.Unauthorized()
+
+    product_id = None
+    if "product_id" in values:
+        product_id = values.pop("product_id")
 
     values["type"] = values["type"].lower()
     display_name = values.get("display_name")
@@ -94,11 +103,23 @@ def create_components(user):
     values["version"] = values.get("version") or component_info["version"]
     values["uid"] = values.get("uid") or component_info["uid"]
 
-    c = base.create_resource_orm(models2.Component, values)
+    try:
+        c = models2.Component(**values)
+        flask.g.session.add(c)
+        if product_id:
+            join_product_component = models2.JOIN_PRODUCTS_COMPONENTS(product_id=product_id, topic_id=values["topic_id"])
+            flask.g.session.add(join_product_component)
+        flask.g.session.commit()
+    except exc.IntegrityError as ie:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message=str(ie), status_code=409)
+    except Exception as e:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message=str(e))
 
     # todo(yassine): move this logic the event handler
     # just send a "component_created" event with the component payload
-    if c["state"] == "active":
+    if c["state"] == "active" and "topic_id" in values:
         c_notification = dict(c)
         t = base.get_resource_orm(models2.Topic, c["topic_id"])
         c_notification["topic_name"] = t.name

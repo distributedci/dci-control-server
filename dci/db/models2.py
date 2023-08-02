@@ -720,3 +720,23 @@ class Pipeline(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team")
     state = sa.Column(STATES, default="active")
+
+
+JOIN_PRODUCTS_COMPONENTS = sa.Table(
+    "products_components",
+    Base.metadata,
+    sa.Column(
+        "product_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+    sa.Column(
+        "component_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("components.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+)
