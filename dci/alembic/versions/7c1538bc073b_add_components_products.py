@@ -13,25 +13,27 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""jobs_add_created_at_index
+"""add components products
 
-Revision ID: caa65adffe8e
-Revises: 66680dcf2c88
-Create Date: 2023-06-23 01:31:49.194371
+Revision ID: 7c1538bc073b
+Revises: 850229f38182
+Create Date: 2023-08-02 12:36:58.735091
 
 """
 
 # revision identifiers, used by Alembic.
-revision = "caa65adffe8e"
-down_revision = "66680dcf2c88"
+revision = "7c1538bc073b"
+down_revision = "850229f38182"
 branch_labels = None
 depends_on = None
 
 from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql as pg
 
 
 def upgrade():
-    op.create_index("jobs_created_at_idx", "jobs", ["created_at"])
+    pass
 
 
 def downgrade():

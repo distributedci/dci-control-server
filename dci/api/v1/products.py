@@ -281,6 +281,37 @@ def get_all_teams_from_product(user, product_id):
     return flask.jsonify({"teams": teams, "_meta": {"count": len(teams)}})
 
 
+@api.route("/products/<uuid:product_id>/components", methods=["GET"])
+@decorators.login_required
+def get_components_from_product(user, product_id):
+    args = check_and_get_args(flask.request.args.to_dict())
+
+    if len(args["sort"]) == 0:
+        args["sort"] = ["-released_at"]
+
+    query = flask.g.session.query(models2.Component).filter(
+        models2.Component.state != "archived"
+    )
+    if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
+        query = query.filter(
+            sql.or_(
+                models2.Component.team_id.in_(user.teams_ids),
+                models2.Component.team_id == None,  # noqa
+            )
+        )
+    query = query.join(models2.JOIN_PRODUCTS_COMPONENTS).filter(
+        models2.JOIN_PRODUCTS_COMPONENTS.c.product_id == product_id
+    )
+
+    query = d.handle_args(query, models2.Component, args)
+    nb_components = query.count()
+    query = d.handle_pagination(query, args)
+
+    components = [component.serialize() for component in query.all()]
+
+    return flask.jsonify({"components": components, "_meta": {"count": nb_components}})
+
+
 @api.route("/products/purge", methods=["GET"])
 @decorators.login_required
 def get_to_purge_archived_products(user):

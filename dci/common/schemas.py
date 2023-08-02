@@ -458,6 +458,7 @@ create_component_properties = {
     "url": with_default(Properties.string, ""),
     "uid": with_default(Properties.string, ""),
     "type": Properties.string,
+    "product_id": Properties.uuid,
     "topic_id": Properties.uuid,
     "team_id": Properties.uuid,
     "state": with_default(Properties.enum(valid_resource_states), "active"),
@@ -468,7 +469,7 @@ create_component_properties = {
 create_component_schema = {
     "type": "object",
     "properties": create_component_properties,
-    "required": ["type", "topic_id"],
+    "required": ["type"],
     "additionalProperties": False,
     "oneOf": [{"required": ["name"]}, {"required": ["display_name"]}],
 }
