@@ -41,6 +41,7 @@ from dci.db import models2
 from dci.db import declarative
 from dci.db import migration_components
 from dci.stores import files_utils
+from sqlalchemy import exc
 import sqlalchemy.orm as sa_orm
 
 
@@ -93,9 +94,23 @@ def create_components(user):
     if "team_id" in values:
         if user.is_not_in_team(values["team_id"]):
             raise dci_exc.Unauthorized()
+        if "product_id" not in values and "topic_id" not in values:
+            raise dci_exc.DCIException(
+                "team based components should have either a product_id or a topic_id provided"
+            )
     else:
         if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
             raise dci_exc.Unauthorized()
+
+    product_id = None
+    if "product_id" in values:
+        product_id = values.pop("product_id")
+
+    topic_id = None
+    if "topic_id" in values and product_id not in values:
+        topic_id = values.get("topic_id")
+        t = base.get_resource_orm(models2.Topic, topic_id)
+        product_id = t.product_id
 
     values["type"] = values["type"].lower()
     display_name = values.get("display_name")
@@ -111,18 +126,31 @@ def create_components(user):
     values["version"] = values.get("version") or component_info["version"]
     values["uid"] = values.get("uid") or component_info["uid"]
 
-    c = base.create_resource_orm(models2.Component, values)
+    try:
+        c = models2.Component(**values)
+        c_serialized = c.serialize()
+        flask.g.session.add(c)
+        p = base.get_resource_orm(models2.Product, product_id)
+        p.components.append(c)
+        flask.g.session.add(p)
+        flask.g.session.commit()
+    except exc.IntegrityError as ie:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message=str(ie), status_code=409)
+    except Exception as e:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message=str(e))
 
     # todo(yassine): move this logic the event handler
     # just send a "component_created" event with the component payload
-    if c["state"] == "active":
-        c_notification = dict(c)
-        t = base.get_resource_orm(models2.Topic, c["topic_id"])
+    if c_serialized["state"] == "active" and "topic_id" in values:
+        c_notification = dict(c_serialized)
+        t = base.get_resource_orm(models2.Topic, c_serialized["topic_id"])
         c_notification["topic_name"] = t.name
         notifications.component_dispatcher(c_notification)
 
     return flask.Response(
-        json.dumps({"component": c}),
+        json.dumps({"component": c_serialized}),
         201,
         headers={"ETag": values["etag"]},
         content_type="application/json",
@@ -162,8 +190,8 @@ def update_components(user, c_id):
     )
 
 
-def get_all_components(user, topics_ids):
-    """Get all components of a topic that are accessible by
+def get_all_components(user, topics_ids, product_id=None):
+    """Get all components of some topics or a product that are accessible by
     the user."""
 
     args = check_and_get_args(flask.request.args.to_dict())
@@ -178,6 +206,8 @@ def get_all_components(user, topics_ids):
             models2.Component.state != "archived",
         )
     )
+    if product_id:
+        query = query.options(sa_orm.joinedload("products", innerjoin=False))
 
     if user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
         components_access_teams_ids = get_components_access_teams_ids(user.teams_ids)
@@ -188,6 +218,7 @@ def get_all_components(user, topics_ids):
                 models2.Component.team_id == None,  # noqa
             )
         )
+        query = query.options(sa_orm.joinedload("products", innerjoin=False))
 
     query = declarative.handle_args(query, models2.Component, args)
     nb_components = query.count()
@@ -209,7 +240,12 @@ def get_components(user):
 @decorators.login_required
 def get_component_by_id(user, c_id):
     component = base.get_resource_orm(
-        models2.Component, c_id, options=[sa_orm.selectinload("files")]
+        models2.Component,
+        c_id,
+        options=[
+            sa_orm.selectinload("files"),
+            sa_orm.joinedload("products", innerjoin=False),
+        ],
     )
     _verify_component_and_topic_access(user, component)
 

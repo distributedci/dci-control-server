@@ -47,6 +47,25 @@ def upgrade():
     op.drop_constraint("name_topic_id_type_team_id_unique", "components")
     op.drop_index("active_components_name_topic_id_team_id_null_key", "components")
 
+    op.create_index(
+        "active_display_name_topic_id_type_version_team_id_not_null_key",
+        "components",
+        ["display_name", "topic_id", "type", "version", "team_id"],
+        unique=True,
+        postgresql_where=sa.text(
+            "components.state = 'active' AND components.team_id is not NULL"
+        ),
+    )
+    op.create_index(
+        "active_display_name_topic_id_type_version_team_id_null_key",
+        "components",
+        ["display_name", "topic_id", "type", "version"],
+        unique=True,
+        postgresql_where=sa.text(
+            "components.state = 'active' AND components.team_id is NULL"
+        ),
+    )
+
 
 def downgrade():
     op.drop_column("components", "version")

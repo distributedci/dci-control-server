@@ -318,6 +318,26 @@ class Remoteci(dci_declarative.Mixin, Base):
     team = sa_orm.relationship("Team", back_populates="remotecis")
 
 
+JOIN_PRODUCTS_COMPONENTS = sa.Table(
+    "products_components",
+    Base.metadata,
+    sa.Column(
+        "product_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+    sa.Column(
+        "component_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("components.id", ondelete="CASCADE"),
+        nullable=False,
+        primary_key=True,
+    ),
+)
+
+
 class Product(dci_declarative.Mixin, Base):
     __tablename__ = "products"
 
@@ -341,6 +361,9 @@ class Product(dci_declarative.Mixin, Base):
     topics = sa_orm.relationship("Topic")
     teams = sa_orm.relationship(
         "Team", secondary=JOIN_PRODUCTS_TEAMS, back_populates="products"
+    )
+    components = sa_orm.relationship(
+        "Component", secondary=JOIN_PRODUCTS_COMPONENTS, back_populates="products"
     )
 
 
@@ -507,6 +530,9 @@ class Component(dci_declarative.Mixin, Base):
     files = sa_orm.relationship("Componentfile")
     jobs = sa_orm.relationship(
         "Job", secondary=JOIN_JOBS_COMPONENTS, back_populates="components"
+    )
+    products = sa_orm.relationship(
+        "Product", secondary=JOIN_PRODUCTS_COMPONENTS, back_populates="components"
     )
 
 
