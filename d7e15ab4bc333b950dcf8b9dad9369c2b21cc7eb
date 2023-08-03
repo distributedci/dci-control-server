@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a6e4ca1_ea9738b8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 648
+      },
+      "writtenOn": "2023-08-03T16:05:25Z",
+      "side": 1,
+      "message": "question: how does this relate with 28637 ?",
+      "revId": "d7e15ab4bc333b950dcf8b9dad9369c2b21cc7eb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
