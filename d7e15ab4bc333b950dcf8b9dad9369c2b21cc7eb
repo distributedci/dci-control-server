@@ -16,6 +16,23 @@
       "message": "question: how does this relate with 28637 ?",
       "revId": "d7e15ab4bc333b950dcf8b9dad9369c2b21cc7eb",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "078019f4_a86fe65c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-08-07T14:13:40Z",
+      "side": 1,
+      "message": "28637 is not needed, I\u0027m doing the creation in multiple step on the ui",
+      "revId": "d7e15ab4bc333b950dcf8b9dad9369c2b21cc7eb",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
