@@ -230,9 +230,8 @@ class OpenIDCAuth(BaseMechanism):
             )
 
         team_id = None
-        ro_group = conf["SSO_READ_ONLY_GROUP"]
-        realm_access = decoded_token["realm_access"]
-        if "roles" in realm_access and ro_group in realm_access["roles"]:
+        read_only_group = conf["SSO_READ_ONLY_GROUP"]
+        if self._is_read_only_user(decoded_token, read_only_group):
             team_id = flask.g.team_redhat_id
 
         user_info = self._get_user_info(decoded_token)
@@ -243,37 +242,79 @@ class OpenIDCAuth(BaseMechanism):
         return True
 
     @staticmethod
+    def _is_read_only_user(token, read_only_group):
+        # todo(gvincent): implement the solution with idp and verified email
+        try:
+            realm_access = token["realm_access"]
+            return "roles" in realm_access and read_only_group in realm_access["roles"]
+        except:
+            return False
+
+    @staticmethod
     def _get_user_info(token):
+        # preferred_username is OIDC Standard
+        username = token.get("preferred_username", token.get("username"))
         return {
-            "name": token.get("username"),
-            "fullname": token.get("username"),
-            "sso_username": token.get("username"),
+            "name": username,
+            "fullname": username,
+            "sso_username": username,
             "email": token.get("email"),
             "timezone": "UTC",
         }
 
     def _get_or_create_user(self, user_info, team_id=None):
-        constraint = sql.or_(
-            models2.User.sso_username == user_info["sso_username"],
-            models2.User.email == user_info["sso_username"],
-            models2.User.email == user_info["email"],
-        )
-        identity = self.identity_from_db(constraint)
-        if identity is None:
-            try:
-                user = models2.User(**user_info)
-                flask.g.session.add(user)
-                flask.g.session.commit()
-                if team_id is not None:
-                    team = base.get_resource_orm(models2.Team, team_id)
-                    team.users.append(user)
-                    flask.g.session.add(team)
-                    flask.g.session.commit()
-            except Exception:
-                flask.g.session.rollback()
-                raise dci_exc.DCIException(
-                    message="Cannot create user in Open ID Connect auth mechanism"
-                )
-            identity = self.identity_from_db(constraint)
+        sso_username = user_info["sso_username"]
+        if not sso_username:
+            raise Exception(
+                "Red Hat login is required. Please contact a DCI administrator."
+            )
+        identity = self._get_user(user_info)
+        if identity:
             return identity
-        return identity
+
+        identity = self._get_user_with_only_red_hat_login(sso_username)
+        if identity:
+            return self._update_user(identity, user_info)
+
+        return self._create_user(user_info, team_id)
+
+    def _get_user(self, user_info):
+        sso_username = user_info["sso_username"]
+        email = user_info["email"]
+        existing_user_constraint = sql.and_(
+            models2.User.sso_username == sso_username,
+            models2.User.email == email,
+        )
+        return self.identity_from_db(existing_user_constraint)
+
+    def _get_user_with_only_red_hat_login(self, sso_username):
+        return self.identity_from_db(models2.User.sso_username == sso_username)
+
+    def _create_user(self, user_info, team_id):
+        try:
+            user = models2.User(**user_info)
+            flask.g.session.add(user)
+            flask.g.session.commit()
+            if team_id is not None:
+                team = base.get_resource_orm(models2.Team, team_id)
+                team.users.append(user)
+                flask.g.session.add(team)
+                flask.g.session.commit()
+        except Exception:
+            flask.g.session.rollback()
+            raise dci_exc.DCIException(
+                message="Cannot create user in Open ID Connect auth mechanism"
+            )
+        return self._get_user(user_info)
+
+    def _update_user(self, user, user_info):
+        try:
+            email = user_info["email"]
+            user.email = email
+            flask.g.session.commit()
+        except Exception:
+            flask.g.session.rollback()
+            raise dci_exc.DCIException(
+                message="Cannot update user email in Open ID Connect auth mechanism"
+            )
+        return self._get_user(user_info)
