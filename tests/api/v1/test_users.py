@@ -707,11 +707,12 @@ def test_create_user_schema(user_json):
         pytest.fail("create_user_schema is invalid")
 
 
-def test_create_user_schema_required_value():
+def test_create_user_schema_required_value(user_json):
     with pytest.raises(DCIException) as e:
         check_json_is_valid(create_user_schema, {})
     result = e.value
     assert result.status_code == 400
+    assert result.payload["errors"] == ["'email' is a required property"]
 
 
 def test_create_user_schema_optional_value(user_json):
@@ -777,8 +778,8 @@ def test_get_user_then_update_user_doesnt_raise_error_500(admin, team_id):
     assert request.data["user"]["fullname"] == "Mr User 1"
 
 
-def test_create_user_with_only_email(epm):
-    request = epm.post(
+def test_create_user_with_only_email(admin):
+    request = admin.post(
         "/api/v1/users",
         data={
             "email": "onlyemail@example.org",
@@ -786,7 +787,7 @@ def test_create_user_with_only_email(epm):
     )
     assert request.status_code == 201
 
-    user = epm.get("/api/v1/users/%s" % request.data["user"]["id"]).data["user"]
+    user = admin.get("/api/v1/users/%s" % request.data["user"]["id"]).data["user"]
     assert user == {
         "id": mock.ANY,
         "etag": mock.ANY,
@@ -795,32 +796,6 @@ def test_create_user_with_only_email(epm):
         "fullname": "onlyemail@example.org",
         "timezone": "UTC",
         "sso_username": None,
-        "created_at": mock.ANY,
-        "updated_at": mock.ANY,
-        "state": "active",
-        "team": [],
-        "remotecis": [],
-    }
-
-
-def test_create_user_with_only_sso_username(epm):
-    request = epm.post(
-        "/api/v1/users",
-        data={
-            "sso_username": "rh-login-1",
-        },
-    )
-    assert request.status_code == 201
-
-    user = epm.get("/api/v1/users/%s" % request.data["user"]["id"]).data["user"]
-    assert user == {
-        "id": mock.ANY,
-        "etag": mock.ANY,
-        "email": None,
-        "name": "rh-login-1",
-        "fullname": "rh-login-1",
-        "timezone": "UTC",
-        "sso_username": "rh-login-1",
         "created_at": mock.ANY,
         "updated_at": mock.ANY,
         "state": "active",
