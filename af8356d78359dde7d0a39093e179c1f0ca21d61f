@@ -50,6 +50,23 @@
       "message": "recheck",
       "revId": "af8356d78359dde7d0a39093e179c1f0ca21d61f",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "06cb3f80_ef080e87",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-08-09T07:24:08Z",
+      "side": 1,
+      "message": "I remove those basic auth tests because they are fragile.\nBasic auth tests are already present in test_identity.py. We are testing the API at boundaries with basic auth requests, instead of testing the class. This is implementation details. ",
+      "revId": "af8356d78359dde7d0a39093e179c1f0ca21d61f",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
