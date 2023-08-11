@@ -12,7 +12,7 @@ Release:        2.VERS%{?dist}
 Summary:        DCI control server
 License:        ASL 2.0
 URL:            https://github.com/redhat-cip/dci-control-server
-Source0:        dci-control-server-%{version}.tar.gz
+Source0:        dci-control-server-%{version}.dev0+VERS.tar.gz
 BuildArch:      noarch
 
 
@@ -118,7 +118,7 @@ Requires:       zeromq
 The implementation of the DCI control server API.
 
 %prep -a
-%autosetup -n %{name}-%{version}
+%autosetup -n %{name}-%{version}.dev0+VERS
 sed -i "s/==/>=/g" requirements.txt
 
 %build
