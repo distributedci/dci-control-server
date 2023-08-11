@@ -17,8 +17,25 @@
 import codecs
 import os
 import setuptools
+import subprocess
 
 from dci import version
+
+
+# dcibuild can be loaded only when doing the sdist sub-command because
+# dci-packaging is extracted at the same level. When doing the other
+# sub-commands like build, we extract the version from version.py.
+try:
+    from dcibuild import sdist, get_version
+
+    sdist.dci_mod = "dci"
+except:
+    sdist = None
+
+    def get_version():
+        from dciauth import version
+
+        return version.__version__
 
 
 def _get_requirements():
@@ -40,7 +57,7 @@ def _get_readme():
 
 setuptools.setup(
     name="dci-control-server",
-    version=version.__version__,
+    version=get_version(),
     packages=setuptools.find_packages(exclude=["tests", "tests.*"]),
     author="Distributed ci team.",
     author_email="distributed-ci@redhat.com",
@@ -62,4 +79,8 @@ setuptools.setup(
         "Topic :: System :: Distributed Computing",
     ],
     scripts=["bin/dci-dbsync", "bin/dci-dbinit"],
+    cmdclass={
+        "sdist": sdist,
+    },
+
 )

@@ -8,11 +8,11 @@
 
 Name:           dci-control-server
 Version:        0.3.4
-Release:        1.VERS%{?dist}
+Release:        3.VERS%{?dist}
 Summary:        DCI control server
 License:        ASL 2.0
 URL:            https://github.com/redhat-cip/dci-control-server
-Source0:        dci-control-server-%{version}.tar.gz
+Source0:        dci-control-server-%{version}.postDATE.tar.gz
 BuildArch:      noarch
 
 
@@ -117,7 +117,7 @@ Requires:       zeromq
 The implementation of the DCI control server API.
 
 %prep -a
-%autosetup -n %{name}-%{version}
+%autosetup -n %{name}-%{version}.postDATE
 sed -i "s/==/>=/g" requirements.txt
 
 %build
@@ -159,6 +159,9 @@ install -p -D -m 644 dci/systemd/dci-worker.service %{buildroot}%{_unitdir}/dci-
 %exclude %{python_sitelib}/dci/settings.py?
 
 %changelog
+* Wed Nov 15 2023 Haïkel Guémar <hguemar@redhat.org> - 0.3.4-3
+- use the new build process compatible with PEP-0440
+
 * Tue Feb 21 2023 Yassine Lamgarchal <ylamgarc@redhat.com> - 0.3.4
 - Add pyparsing dependency
 
