@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13bfa609_e88b1a7e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-01T09:36:35Z",
+      "side": 1,
+      "message": "It\u0027s recommended to use psycopg2-binary instead. Works with python3.11",
+      "range": {
+        "startLine": 11,
+        "startChar": 48,
+        "endLine": 13,
+        "endChar": 50
+      },
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae2d37ce_b8507ab8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-01T09:36:35Z",
+      "side": 1,
+      "message": "See comments inline.\n\nThe dependencies version constraints in requirements.txt should be removed also.\n\nOne issue remains: we should install DCI dependencies (dciauth, dci-umb) \"local\" copy instead of public/remote (the directories should be available when building with Zuul if the project is configured correctly)",
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03194a25_13340cd4",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-01T09:36:35Z",
+      "side": 1,
+      "message": "can be removed",
+      "range": {
+        "startLine": 11,
+        "startChar": 42,
+        "endLine": 11,
+        "endChar": 58
+      },
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8afa2434_586b62bb",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-01T09:36:35Z",
+      "side": 1,
+      "message": "can be removed",
+      "range": {
+        "startLine": 15,
+        "startChar": 41,
+        "endLine": 15,
+        "endChar": 57
+      },
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a7198d8_dfa037c7",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-01T09:36:35Z",
+      "side": 1,
+      "message": "For development purposes I suggest to add `--reload` to have auto-reload on code change.\nThis would have to change for production but would be overridden by the systemd unit file or other starting mechanism.",
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
