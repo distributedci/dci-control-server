@@ -83,6 +83,24 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a4ddc33_f51858a9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-04T15:12:37Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "706623ec_61b5ce06",
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "03194a25_13340cd4",
@@ -208,6 +226,24 @@
       "side": 1,
       "message": "For --reload to work you\u0027d also have to manually run the container with a volume attached to it anyway. I am adding a gunicorn.conf.py you can mount as well, something like `podman run -v $PWD:/usr/src/dci-control-server -v custom.conf.py:/etc/gunicorn.conf.py dci-cs-image:latest` I am definitely not enabling live reload code for the production image tho",
       "parentUuid": "0a7198d8_dfa037c7",
+      "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e6d07c9_8e1bc18f",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-04T15:12:37Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c8bd21c5_72cd1a08",
       "revId": "c2c5f688f2231a1c05d7d7041780456f41ca8724",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
