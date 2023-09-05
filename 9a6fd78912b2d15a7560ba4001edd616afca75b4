@@ -22,6 +22,30 @@
       },
       "revId": "9a6fd78912b2d15a7560ba4001edd616afca75b4",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "796ac35e_313e1e87",
+        "filename": "requirements.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-09-05T17:11:56Z",
+      "side": 1,
+      "message": "@Guillaume: as per Jorge\u0027s comment, the first goal is to run with gunicorn + python36 without touching too many things.\n\nJorge\u0027s not too comfortable removing fixed version because some dependencies require some code updates (e.g. SQLAlchemy 1.3 -\u003e 1.4 -\u003e 2.0)\n\nWe discussed the possibility to first run with gunicorn in a container - using the same requirements as currently - then address the requirements version bumps in another patch.",
+      "parentUuid": "2a8a60bd_a7880aba",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 25,
+        "endChar": 58
+      },
+      "revId": "9a6fd78912b2d15a7560ba4001edd616afca75b4",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
