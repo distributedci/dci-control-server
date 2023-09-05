@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a8a60bd_a7880aba",
+        "filename": "requirements.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-09-05T11:12:59Z",
+      "side": 1,
+      "message": "Should we remove all the hardcoded versions here ?",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 25,
+        "endChar": 58
+      },
+      "revId": "9a6fd78912b2d15a7560ba4001edd616afca75b4",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
