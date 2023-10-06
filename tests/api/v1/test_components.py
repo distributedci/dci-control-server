@@ -1316,6 +1316,66 @@ def test_teams_components_isolation(
     assert components.data["components"][0]["team_id"] == team_user_id2
 
 
+def test_components_access_of_other_teams(
+    admin, user, user2, topic_user_id, team_user_id, team_user_id2
+):
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "topic_id": topic_user_id,
+        "team_id": team_user_id,
+    }
+    pc = user.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+
+    components = user.get(
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+    ).data
+    assert components["components"][0]["team_id"] == team_user_id
+
+    data = {
+        "name": "pname",
+        "type": "mytest",
+        "topic_id": topic_user_id,
+        "team_id": team_user_id2,
+    }
+    pc = user2.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+
+    components = user2.get(
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+    )
+    assert components.status_code == 200
+    assert components.data["components"] == []
+
+    # team_user_id2 has now access to the components of team_user_id
+    cat = admin.post(
+        "/api/v1/teams/%s/permissions/components" % team_user_id2,
+        data={"teams_ids": [team_user_id]},
+    )
+    print(cat.data)
+    assert cat.status_code == 201
+
+    components = user2.get(
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+    )
+    assert components.status_code == 200
+    assert components.data["components"][0]["team_id"] == team_user_id
+
+    # team_user_id2 has no longer access to the components of team_user_id
+    cat = admin.delete(
+        "/api/v1/teams/%s/permissions/components" % team_user_id2,
+        data={"teams_ids": [team_user_id]},
+    )
+    assert cat.status_code == 204
+
+    components = user2.get(
+        "/api/v1/topics/%s/components?where=team_id:%s" % (topic_user_id, team_user_id)
+    )
+    assert components.status_code == 200
+    assert components.data["components"] == []
+
+
 # S3 components related tests
 
 
