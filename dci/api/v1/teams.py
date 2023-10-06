@@ -208,6 +208,56 @@ def delete_team_by_id(user, t_id):
     return flask.Response(None, 204, content_type="application/json")
 
 
+@api.route(
+    "/teams/<uuid:team_id>/components_access_team/<uuid:access_team_id>",
+    methods=["POST"],
+)
+@decorators.login_required
+def add_component_access_team(user, team_id, access_team_id):
+    if user.is_not_epm() and user.is_not_super_admin():
+        raise dci_exc.Unauthorized()
+
+    team = base.get_resource_orm(models2.Team, team_id)
+    access_team = base.get_resource_orm(models2.Team, access_team_id)
+
+    try:
+        team.components_access_teams.append(access_team)
+        flask.g.session.add(team)
+        flask.g.session.commit()
+    except sa_exc.IntegrityError:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(
+            message="conflict when adding component access team", status_code=409
+        )
+
+    return flask.Response(None, 201, content_type="application/json")
+
+
+@api.route(
+    "/teams/<uuid:team_id>/components_access_team/<uuid:access_team_id>",
+    methods=["DELETE"],
+)
+@decorators.login_required
+def remove_component_access_team(user, team_id, access_team_id):
+    if user.is_not_super_admin() and user.is_not_epm():
+        raise dci_exc.Unauthorized()
+
+    team = base.get_resource_orm(models2.Team, team_id)
+    access_team = base.get_resource_orm(models2.Team, access_team_id)
+
+    try:
+        team.components_access_teams.remove(access_team)
+        flask.g.session.add(team)
+        flask.g.session.commit()
+    except sa_exc.IntegrityError:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(
+            message="conflict when removing component access team", status_code=409
+        )
+
+    return flask.Response(None, 204, content_type="application/json")
+
+
 @api.route("/teams/purge", methods=["GET"])
 @decorators.login_required
 def get_to_purge_archived_teams(user):
