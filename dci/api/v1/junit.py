@@ -111,16 +111,19 @@ def parse_testsuite(testsuite_xml):
 
 
 def parse_junit(file_descriptor):
-    testsuites = []
-    nb_of_testsuites = 0
-    for event, element in ElementTree.iterparse(file_descriptor):
-        if element.tag == "testsuite":
-            testsuite = parse_testsuite(element)
-            testsuite["id"] = nb_of_testsuites
-            nb_of_testsuites += 1
-            testsuites.append(testsuite)
-            element.clear()
-    return testsuites
+    try:
+        testsuites = []
+        nb_of_testsuites = 0
+        for event, element in ElementTree.iterparse(file_descriptor):
+            if element.tag == "testsuite":
+                testsuite = parse_testsuite(element)
+                testsuite["id"] = nb_of_testsuites
+                nb_of_testsuites += 1
+                testsuites.append(testsuite)
+                element.clear()
+        return testsuites
+    except:
+        return []
 
 
 def _get_unique_testcase_key(testsuite, testcase):
