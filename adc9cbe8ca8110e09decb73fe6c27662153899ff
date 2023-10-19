@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "006e97c0_3cba3f04",
+        "filename": "dci/api/v1/junit.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2023-10-19T08:49:51Z",
+      "side": 1,
+      "message": "I find this except: a little bit too broad.\n\nI\u0027d prefer to limit to ElementTree.ParseError as parse_error and check for parse_error.code \u003d\u003d 3 (which matches the error code for xml.parsers.expat.errors.XML_ERROR_NO_ELEMENTS)\n\nif parse_error.code \u003d\u003d 3 then return []\nif parse_error.code !\u003d 3 then re-raise the exception",
+      "revId": "adc9cbe8ca8110e09decb73fe6c27662153899ff",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
