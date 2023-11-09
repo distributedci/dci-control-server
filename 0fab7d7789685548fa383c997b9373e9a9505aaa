@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de8f2cc4_fe38ac95",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-11-09T09:20:29Z",
+      "side": 1,
+      "message": "Hello Yassine,\ncan you add a test for GET /teams/:id/permissions/components please ?\n\nand fix the error in the file /usr/src/dci-control-server/dci/api/v1/teams_components.py line 95 in get_component_access_team:\n\ncomponents_access_team \u003d [t.serialize() for t in team.componenets_access_teams]\n\nAttributeError: \u0027Team\u0027 object has no attribute \u0027componenets_access_teams\u0027\n\nThank you",
+      "revId": "0fab7d7789685548fa383c997b9373e9a9505aaa",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd586990_d1d5ed74",
+        "filename": "tests/api/v1/test_components.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 1356,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-11-09T09:20:29Z",
+      "side": 1,
+      "message": "You need to delete the remaining print here",
+      "range": {
+        "startLine": 1356,
+        "startChar": 0,
+        "endLine": 1356,
+        "endChar": 19
+      },
+      "revId": "0fab7d7789685548fa383c997b9373e9a9505aaa",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
