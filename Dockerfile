@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
-LABEL name="DCI API"
+LABEL name="DCI API" version="0.1.0"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 
