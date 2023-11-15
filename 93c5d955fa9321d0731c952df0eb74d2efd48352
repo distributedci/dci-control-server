@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "881a5f7e_58efd95c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2023-11-15T13:35:52Z",
+      "side": 1,
+      "message": "I\u0027m wondering if we want to push dci-control-server on pypi.\nIMO we should not push dci-control-server on pypi",
+      "revId": "93c5d955fa9321d0731c952df0eb74d2efd48352",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
