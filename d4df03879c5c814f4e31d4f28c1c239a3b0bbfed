@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0df3379_230c36cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:05:36Z",
+      "side": 1,
+      "message": "Hi Guillaume, we\u0027re still using different Python packages to parse JUnit files:\n\n- xml.etree.ElementTree.iterparse in dci-control-server:\nhttps://softwarefactory-project.io/r/plugins/gitiles/dci-control-server/+/refs/heads/master/dci/api/v1/junit.py#118\n\n- junitparser.JUnitXml.fromfile in verify-tests:\nhttps://github.com/redhatci/ansible-collection-redhatci-ocp/blob/main/plugins/filter/junit2dict.py#L8-L9\n\nIf the goal is to enforce schema compatibility, we could add schema verification to junit.py, something like \n\nimport xmlschema\nxmlschema.validate(\u0027my_test_file.xml\u0027, \u0027xunit2.xsd\u0027)\n\nwhere xunit2.xsd is something like this: https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8383cf2e_112f53f2",
+        "filename": "tests/api/v1/test_files.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 466,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:05:36Z",
+      "side": 1,
+      "message": "we could use f-string here:\nres \u003d admin.get(f\"/api/v1/files/{file_id}/content\")",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2fcbb0b_0407d157",
+        "filename": "tests/api/v1/test_files.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:05:36Z",
+      "side": 1,
+      "message": "res \u003d admin.get(f\"/api/v1/files/{file_id}/content\", headers\u003dheaders)",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99a3a12f_dd3267a4",
+        "filename": "tests/api/v1/test_files.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 513,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:05:36Z",
+      "side": 1,
+      "message": "looks like a misprint, the `s` at the end is missing:\njunit_with_multiple_testsuite -\u003e junit_with_multiple_testsuites",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3f43a2d_14355c96",
+        "filename": "tests/api/v1/test_jobs.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 875,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:05:36Z",
+      "side": 1,
+      "message": "file_from_job \u003d user.get(f\"/api/v1/jobs/{job_user_id}/results\")",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
