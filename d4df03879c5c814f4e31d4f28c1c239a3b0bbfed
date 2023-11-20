@@ -36,6 +36,23 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4beac6aa_42d47d27",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:32:07Z",
+      "side": 1,
+      "message": "After the sync with Guillaume, the global picture is like this:\n1. We have 2 JUnit parsers in dci-control-server\n2. And one more parser in the agent\n\nThe idea of Guillaume\u0027s CR is to solve the problem 1 and then approach problem 2 as the next step.",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8383cf2e_112f53f2",
