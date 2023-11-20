@@ -18,6 +18,24 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ef0aff0e_b532f263",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-11-20T10:07:27Z",
+      "side": 1,
+      "message": "or, we could even directly take xunit2 from junitparser: https://github.com/weiwei/junitparser/blob/master/tests/test_xunit2.py",
+      "parentUuid": "d0df3379_230c36cb",
+      "revId": "d4df03879c5c814f4e31d4f28c1c239a3b0bbfed",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8383cf2e_112f53f2",
