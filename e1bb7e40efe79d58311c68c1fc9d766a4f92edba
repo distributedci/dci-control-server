@@ -176,6 +176,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6efd695_96766d06",
+        "filename": "dci/common/schemas.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 455,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-12-14T10:54:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8804d0b5_b083cc4f",
+      "range": {
+        "startLine": 455,
+        "startChar": 3,
+        "endLine": 455,
+        "endChar": 25
+      },
+      "revId": "e1bb7e40efe79d58311c68c1fc9d766a4f92edba",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c0f3ae4f_0cc6630b",

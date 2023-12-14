@@ -24,6 +24,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f0cf66f_615dc029",
+        "filename": "dci/alembic/versions/151c7129cc09_set_product_id_value_to_old_components.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-12-14T10:54:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "96ac89a5_a1f580a0",
+      "range": {
+        "startLine": 47,
+        "startChar": 16,
+        "endLine": 47,
+        "endChar": 62
+      },
+      "revId": "60fcc4ac070049b8db79a83928808b61db69ca8c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "37c135fb_4685953c",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-08-01T09:29:14Z",
       "side": 1,
       "message": "Instead of multiple indexes with/without product_id/topic_id, which would still allow useless duplication of components (same component with: product_id and no topic_id, different product_ids, same product_id but different component_ids).\n\nWe might be better by removing topic_id \u0026 product_id from the components table and use separate tables to join with topics \u0026 products:\n\n- table component (name, version, team_id null/team_id not null …)\n- table product_components (product_id \u003c-\u003e component_id)\n- table topic_components (topic_id \u003c-\u003e component_id)",
+      "range": {
+        "startLine": 414,
+        "startChar": 0,
+        "endLine": 463,
+        "endChar": 56
+      },
+      "revId": "60fcc4ac070049b8db79a83928808b61db69ca8c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c760855f_c679d762",
+        "filename": "dci/db/models2.py",
+        "patchSetId": 4
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 29
+      },
+      "writtenOn": "2023-12-14T10:54:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "37c135fb_4685953c",
       "range": {
         "startLine": 414,
         "startChar": 0,
