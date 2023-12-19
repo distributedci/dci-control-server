@@ -27,7 +27,6 @@ down_revision = "7c1538bc073b"
 branch_labels = None
 depends_on = None
 
-from dci.db import models2
 from alembic import op
 from sqlalchemy.orm.session import Session
 from sqlalchemy import exc
