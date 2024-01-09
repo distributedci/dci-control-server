@@ -70,3 +70,13 @@ def test_tasks_analytics_pipelines_status(user, team_admin_id):
         },
     )
     assert res.status_code == 401
+
+
+def test_tasks_jobs(user):
+    res = user.post(
+        "/api/v1/analytics/jobs",
+        data={
+            "query": "my-query"
+        },
+    )
+    assert res.status_code == 401
