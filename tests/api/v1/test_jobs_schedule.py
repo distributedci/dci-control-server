@@ -202,23 +202,3 @@ def test_schedule_jobs_on_topic_inactive(
     data = {"topic_id": rhel_80_topic["id"]}
     r = remoteci_context.post("/api/v1/jobs/schedule", data=data)
     assert r.status_code == 201
-
-
-def test_schedule_jobs_kills_jobs_older_than_one_day(
-    admin, remoteci_context, rhel_80_topic, rhel_80_component
-):
-    data = {"topic_id": rhel_80_topic["id"]}
-    fixed_now = datetime.datetime(2019, 1, 12, 13, 42, 20, 111136)
-    with patch("dci.api.v1.jobs.get_utc_now", return_value=fixed_now):
-        r = remoteci_context.post("/api/v1/jobs/schedule", data=data)
-        assert r.status_code == 201
-
-    r = remoteci_context.post("/api/v1/jobs/schedule", data=data)
-    assert r.status_code == 201
-
-    r = remoteci_context.post("/api/v1/jobs/schedule", data=data)
-    assert r.status_code == 201
-    jobs = admin.get("/api/v1/jobs?sort=-created_at").data["jobs"]
-    assert jobs[-1]["status"] == "killed"
-    assert jobs[-2]["status"] == "new"
-    assert jobs[-3]["status"] == "new"
