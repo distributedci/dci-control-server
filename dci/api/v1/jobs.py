@@ -60,6 +60,7 @@ def get_utc_now():
 @decorators.login_required
 def create_jobs(user):
     values = flask.request.json
+    print(values)
     check_json_is_valid(create_job_schema, values)
     values.update(v1_utils.common_values_dict())
 
