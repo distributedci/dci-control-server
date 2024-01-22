@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "315c78fb_b5b97a31",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2024-01-22T15:56:23Z",
+      "side": 1,
+      "message": "You should merge the data migration with the structure migration to ensure that no NULL value will be inserted in the tables modified between the two (or it will break).",
+      "revId": "3f302aba8154a99ae50b16142ca00110c82d4ad7",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
