@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d92bbd00_c9a76372",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2024-01-23T11:13:47Z",
+      "side": 1,
+      "message": "this is okay to have this in 2 migration files since all migrations are run protected by the same transaction (in https://github.com/redhat-cip/dci-control-server/blob/1e46f845ac73294f55ce7516289d7c84cb6a0168/dci/alembic/env.py#L74-L75 )",
+      "revId": "2feb25552a6258c64445c95ff33a2b604f520613",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
