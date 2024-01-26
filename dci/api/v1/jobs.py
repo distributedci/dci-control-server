@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2023 Red Hat, Inc
+# Copyright (C) 2015-2024 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -61,7 +61,10 @@ def get_utc_now():
 def create_jobs(user):
     values = flask.request.json
     check_json_is_valid(create_job_schema, values)
-    values.update(v1_utils.common_values_dict())
+    common_values_dict = v1_utils.common_values_dict()
+    if "created_at" in values:
+        common_values_dict.pop("created_at")
+    values.update(common_values_dict)
 
     components_ids = values.pop("components")
 
@@ -108,17 +111,21 @@ def internal_create_jobs(user, values, components_ids=None):
     if previous_job_id:
         base.get_resource_orm(models2.Job, previous_job_id)
 
+    duration = values.get("duration")
+    now = get_utc_now().isoformat()
+    created_at = values.get("created_at", now)
+
     values.update(
         {
             "id": utils.gen_uuid(),
-            "created_at": get_utc_now().isoformat(),
-            "updated_at": get_utc_now().isoformat(),
+            "created_at": created_at,
+            "updated_at": created_at,
             "etag": utils.gen_etag(),
             "status": "new",
             "remoteci_id": user.id,
             "team_id": user.teams_ids[0],
             "product_id": topic.product_id,
-            "duration": 0,
+            "duration": duration,
             "user_agent": flask.request.environ.get("HTTP_USER_AGENT"),
             "client_version": flask.request.environ.get("HTTP_CLIENT_VERSION"),
             "previous_job_id": previous_job_id,

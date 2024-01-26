@@ -21,18 +21,14 @@ import mock
 import uuid
 
 
-@mock.patch("dci.api.v1.jobs.get_utc_now")
 def test_get_jobs(
-    m_get_utc_now,
     session,
     remoteci_context,
     components_user_ids,
     topic_user_id,
     team_user_id,
 ):
-    m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
-        hours=2
-    )
+    created_at = (datetime.datetime.utcnow() - datetime.timedelta(hours=2)).isoformat()
 
     pipeline = remoteci_context.post(
         "/api/v1/pipelines",
@@ -46,6 +42,7 @@ def test_get_jobs(
         "components": components_user_ids,
         "topic_id": topic_user_id,
         "pipeline_id": pipeline_id,
+        "created_at": created_at,
     }
     for _ in range(4):
         j_id = remoteci_context.post("/api/v1/jobs", data=data).data["job"]["id"]
