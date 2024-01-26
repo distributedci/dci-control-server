@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2023 Red Hat, Inc
+# Copyright (C) 2015-2024 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -108,17 +108,21 @@ def internal_create_jobs(user, values, components_ids=None):
     if previous_job_id:
         base.get_resource_orm(models2.Job, previous_job_id)
 
+    duration = values.get("duration", 0)
+    now = get_utc_now().isoformat()
+    created_at = values.get("created_at", now)
+
     values.update(
         {
             "id": utils.gen_uuid(),
-            "created_at": get_utc_now().isoformat(),
-            "updated_at": get_utc_now().isoformat(),
+            "created_at": created_at,
+            "updated_at": now,
             "etag": utils.gen_etag(),
             "status": "new",
             "remoteci_id": user.id,
             "team_id": user.teams_ids[0],
             "product_id": topic.product_id,
-            "duration": 0,
+            "duration": duration,
             "user_agent": flask.request.environ.get("HTTP_USER_AGENT"),
             "client_version": flask.request.environ.get("HTTP_CLIENT_VERSION"),
             "previous_job_id": previous_job_id,
