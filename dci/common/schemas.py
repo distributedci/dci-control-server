@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2018-2023 Red Hat, Inc.
+# Copyright 2018-2024 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -177,6 +177,7 @@ create_job_properties = {
     "team_id": Properties.uuid,
     "components": Properties.array,
     "comment": with_default(Properties.string, ""),
+    "duration": with_default(Properties.integer, 0),
     "previous_job_id": with_default(Properties.uuid, None),
     "update_previous_job_id": with_default(Properties.uuid, None),
     "state": with_default(Properties.enum(valid_resource_states), "active"),
@@ -198,6 +199,8 @@ create_job_schema = {
 
 update_job_properties = {
     "comment": Properties.string,
+    "duration": Properties.integer,
+    "created_at": Properties.isoformat_date,
     "status": Properties.enum(
         [
             "new",
