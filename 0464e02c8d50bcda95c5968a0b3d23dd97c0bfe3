@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37065793_149416ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-02-01T14:11:19Z",
+      "side": 1,
+      "message": "I\u0027m not a big fan of allowing the change of some values that are automatically calculated. What is the problem we try to solve here?\n\nAnd also What if I update the created_at and put a value after the updated_at ?\nWhat happen if I put a duration int that overflow the max integer value ?\n\nWe need to introduce some tests and check.",
+      "revId": "0464e02c8d50bcda95c5968a0b3d23dd97c0bfe3",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
