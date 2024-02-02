@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4453fdb8_32e24bf2",
+        "filename": "dci/api/v1/jobs.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2024-02-02T15:54:37Z",
+      "side": 1,
+      "message": "-2\n\ncreated_at and updated_at are also used for auditing purposes, they must not be changed by user input.",
+      "range": {
+        "startLine": 121,
+        "startChar": 0,
+        "endLine": 122,
+        "endChar": 37
+      },
+      "revId": "14b1036f9abdd50a3876a9a06cc357e961132929",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
