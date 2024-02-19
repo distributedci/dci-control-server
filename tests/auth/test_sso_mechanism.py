@@ -19,7 +19,7 @@ import datetime
 import dci.auth_mechanism as authm
 from dci.common import exceptions as dci_exc
 from dci import dci_config
-from tests.utils import generate_client
+from tests.utils import generate_client, generate_jwt
 import flask
 import mock
 import pytest
@@ -119,6 +119,153 @@ def test_sso_auth_verified_rh_employee(
             if iu["name"] == "dci-rh" and iu["email"] == "dci-rh@redhat.com":
                 ro_user_found = True
         assert ro_user_found
+
+
+SSO_SECRET_KEY = """-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC7VJTUt9Us8cKj
+MzEfYyjiWA4R4/M2bS1GB4t7NXp98C3SC6dVMvDuictGeurT8jNbvJZHtCSuYEvu
+NMoSfm76oqFvAp8Gy0iz5sxjZmSnXyCdPEovGhLa0VzMaQ8s+CLOyS56YyCFGeJZ
+qgtzJ6GR3eqoYSW9b9UMvkBpZODSctWSNGj3P7jRFDO5VoTwCQAWbFnOjDfH5Ulg
+p2PKSQnSJP3AJLQNFNe7br1XbrhV//eO+t51mIpGSDCUv3E0DDFcWDTH9cXDTTlR
+ZVEiR2BwpZOOkE/Z0/BVnhZYL71oZV34bKfWjQIt6V/isSMahdsAASACp4ZTGtwi
+VuNd9tybAgMBAAECggEBAKTmjaS6tkK8BlPXClTQ2vpz/N6uxDeS35mXpqasqskV
+laAidgg/sWqpjXDbXr93otIMLlWsM+X0CqMDgSXKejLS2jx4GDjI1ZTXg++0AMJ8
+sJ74pWzVDOfmCEQ/7wXs3+cbnXhKriO8Z036q92Qc1+N87SI38nkGa0ABH9CN83H
+mQqt4fB7UdHzuIRe/me2PGhIq5ZBzj6h3BpoPGzEP+x3l9YmK8t/1cN0pqI+dQwY
+dgfGjackLu/2qH80MCF7IyQaseZUOJyKrCLtSD/Iixv/hzDEUPfOCjFDgTpzf3cw
+ta8+oE4wHCo1iI1/4TlPkwmXx4qSXtmw4aQPz7IDQvECgYEA8KNThCO2gsC2I9PQ
+DM/8Cw0O983WCDY+oi+7JPiNAJwv5DYBqEZB1QYdj06YD16XlC/HAZMsMku1na2T
+N0driwenQQWzoev3g2S7gRDoS/FCJSI3jJ+kjgtaA7Qmzlgk1TxODN+G1H91HW7t
+0l7VnL27IWyYo2qRRK3jzxqUiPUCgYEAx0oQs2reBQGMVZnApD1jeq7n4MvNLcPv
+t8b/eU9iUv6Y4Mj0Suo/AU8lYZXm8ubbqAlwz2VSVunD2tOplHyMUrtCtObAfVDU
+AhCndKaA9gApgfb3xw1IKbuQ1u4IF1FJl3VtumfQn//LiH1B3rXhcdyo3/vIttEk
+48RakUKClU8CgYEAzV7W3COOlDDcQd935DdtKBFRAPRPAlspQUnzMi5eSHMD/ISL
+DY5IiQHbIH83D4bvXq0X7qQoSBSNP7Dvv3HYuqMhf0DaegrlBuJllFVVq9qPVRnK
+xt1Il2HgxOBvbhOT+9in1BzA+YJ99UzC85O0Qz06A+CmtHEy4aZ2kj5hHjECgYEA
+mNS4+A8Fkss8Js1RieK2LniBxMgmYml3pfVLKGnzmng7H2+cwPLhPIzIuwytXywh
+2bzbsYEfYx3EoEVgMEpPhoarQnYPukrJO4gwE2o5Te6T5mJSZGlQJQj9q4ZB2Dfz
+et6INsK0oG8XVGXSpQvQh3RUYekCZQkBBFcpqWpbIEsCgYAnM3DQf3FJoSnXaMhr
+VBIovic5l0xFkEHskAjFTevO86Fsz1C2aSeRKSqGFoOQ0tmJzBEs1R6KqnHInicD
+TQrKhArgLXX4v3CddjfTRJkFWDbE/CkvKZNOrcf1nhaGCPspRJj2KUkj1Fhl9Cnc
+dn/RsYEONbwQSjIfMPkvxF+8HQ==
+-----END PRIVATE KEY-----
+"""
+
+
+def test_user_creation_with_an_old_token(app, admin):
+    with app.app_context():
+        john_doe_token = generate_jwt(
+            {
+                "aud": "dci",
+                "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
+                "typ": "Bearer",
+                "scope": "openid",
+                "name": "John Doe",
+                "given_name": "John",
+                "family_name": "Doe",
+                "email": "jdoe@example.org",
+                "username": "jdoe1@example.org",
+            },
+            SSO_SECRET_KEY,
+        )
+        john_doe_client = generate_client(app, access_token=john_doe_token)
+        r = john_doe_client.get("/api/v1/identity")
+        assert r.status_code == 200
+
+        jdoe = admin.get("/api/v1/users?where=email:jdoe@example.org").data["users"][0]
+        assert jdoe["name"] == "jdoe1@example.org"
+        assert jdoe["fullname"] == "John Doe"
+        assert jdoe["sso_username"] == "jdoe1@example.org"
+        assert jdoe["sso_sub"] is None
+        assert jdoe["email"] == "jdoe@example.org"
+
+
+def test_user_creation_with_a_new_token_without_scope_specified(app, admin):
+    with app.app_context():
+        john_doe_token = generate_jwt(
+            {
+                "aud": ["dci"],
+                "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
+                "typ": "Bearer",
+                "scope": "openid",
+                "name": "John Doe",
+                "given_name": "John",
+                "family_name": "Doe",
+                "email": "jdoe@example.org",
+                "username": "jdoe1@example.org",
+            },
+            SSO_SECRET_KEY,
+        )
+        john_doe_client = generate_client(app, access_token=john_doe_token)
+        r = john_doe_client.get("/api/v1/identity")
+        assert r.status_code == 200
+
+        jdoe = admin.get("/api/v1/users?where=email:jdoe@example.org").data["users"][0]
+        assert jdoe["name"] == "jdoe1@example.org"
+        assert jdoe["fullname"] == "John Doe"
+        assert jdoe["sso_username"] == "jdoe1@example.org"
+        assert jdoe["sso_sub"] is None
+        assert jdoe["email"] == "jdoe@example.org"
+
+
+def test_user_creation_with_a_new_token_with_apidci_scope_specified(app, admin):
+    with app.app_context():
+        john_doe_token = generate_jwt(
+            {
+                "aud": ["api.dci", "dci"],
+                "sub": "87654321",
+                "typ": "Bearer",
+                "scope": "api.dci",
+                "email_verified": True,
+                "name": "John Doe",
+                "preferred_username": "jdoe1@example.org",
+                "given_name": "John",
+                "family_name": "Doe",
+                "email": "jdoe@example.org",
+                "username": "jdoe1@example.org",
+            },
+            SSO_SECRET_KEY,
+        )
+        john_doe_client = generate_client(app, access_token=john_doe_token)
+        r = john_doe_client.get("/api/v1/identity")
+        assert r.status_code == 200
+
+        jdoe = admin.get("/api/v1/users?where=email:jdoe@example.org").data["users"][0]
+        assert jdoe["name"] == "jdoe1@example.org"
+        assert jdoe["fullname"] == "John Doe"
+        assert jdoe["sso_username"] == "jdoe1@example.org"
+        assert jdoe["sso_sub"] == "87654321"
+        assert jdoe["email"] == "jdoe@example.org"
+
+
+def test_user_creation_with_a_new_token_with_apidci_scope_specified_but_dci_audience_not_added(
+    app, admin
+):
+    with app.app_context():
+        john_doe_token = generate_jwt(
+            {
+                "aud": ["api.dci"],
+                "sub": "87654321",
+                "typ": "Bearer",
+                "scope": "api.dci",
+                "email_verified": True,
+                "name": "John Doe",
+                "preferred_username": "jdoe1@example.org",
+                "email": "jdoe@example.org",
+                "username": "not_used@example.org",
+            },
+            SSO_SECRET_KEY,
+        )
+        john_doe_client = generate_client(app, access_token=john_doe_token)
+        r = john_doe_client.get("/api/v1/identity")
+        assert r.status_code == 200
+
+        jdoe = admin.get("/api/v1/users?where=email:jdoe@example.org").data["users"][0]
+        assert jdoe["name"] == "jdoe1@example.org"
+        assert jdoe["fullname"] == "John Doe"
+        assert jdoe["sso_username"] == "jdoe1@example.org"
+        assert jdoe["sso_sub"] == "87654321"
+        assert jdoe["email"] == "jdoe@example.org"
 
 
 @mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
