@@ -46,6 +46,30 @@
       },
       "revId": "14b1036f9abdd50a3876a9a06cc357e961132929",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f96d098_fc0525ad",
+        "filename": "dci/api/v1/jobs.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2024-02-21T09:25:22Z",
+      "side": 1,
+      "message": "That would be okay I guess",
+      "parentUuid": "e6f38dbe_d5e32275",
+      "range": {
+        "startLine": 121,
+        "startChar": 0,
+        "endLine": 122,
+        "endChar": 37
+      },
+      "revId": "14b1036f9abdd50a3876a9a06cc357e961132929",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
