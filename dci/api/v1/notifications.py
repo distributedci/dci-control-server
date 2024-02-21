@@ -15,11 +15,16 @@
 # under the License.
 import json
 import flask
+import logging
 
 from dci.api.v1 import base
 from dci.common import exceptions as dci_exc
 from dci.common import utils
 from dci.db import models2
+
+import kombu
+
+logger = logging.getLogger(__name__)
 
 
 def format_job_mail_message(mesg):
@@ -190,3 +195,13 @@ def job_dispatcher(job):
 
 def component_dispatcher(component):
     _handle_component_event(component)
+
+
+def publish_job_started(job):
+    flask.g.messaging.publish({"event": "job_started",
+                               "job": job})
+
+
+def publish_job_finished(job):
+    flask.g.messaging.publish({"event": "job_finished",
+                               "job": job})

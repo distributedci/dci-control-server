@@ -20,6 +20,7 @@ from dci.db import models2
 from dci import dci_config
 
 import flask
+import kombu
 import logging
 import sys
 import time
@@ -41,6 +42,7 @@ class DciControlServer(flask.Flask):
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
         self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
+        self.messaging = KombuProducer()
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
@@ -79,6 +81,24 @@ class DciControlServer(flask.Flask):
             )
             sys.exit(1)
         return team.id
+
+
+class KombuProducer():
+    def __init__(self):
+        super(KombuProducer, self).__init__()
+        self._connection = kombu.Connection("amqp://guest:guest@rabbitmq:5672//")
+        self._exchange = kombu.Exchange("dci-analytics-exchange", type="direct")
+        self._queue = kombu.Queue(name="dci-analytics-queue", exchange=self._exchange, routing_key="dci-analytics-jobs")
+        self._producer = None
+    
+    def publish(self, message):
+        if not self._producer:
+            channel = self._connection.channel()
+            self._producer = kombu.Producer(exchange=self._exchange, channel=channel, routing_key="dci-analytics-jobs")
+            self._queue.maybe_bind(self._connection)
+            self._queue.declare()
+
+        return self._producer.publish(message)
 
 
 def configure_root_logger():
@@ -129,6 +149,7 @@ def create_app(param=None):
         flask.g.team_admin_id = dci_app.team_admin_id
         flask.g.team_redhat_id = dci_app.team_redhat_id
         flask.g.team_epm_id = dci_app.team_epm_id
+        flask.g.messaging = dci_app.messaging
 
         for i in range(5):
             try:
@@ -149,16 +170,16 @@ def create_app(param=None):
     def teardown_request(_):
         try:
             flask.g.session.close()
-        except Exception:
+        except Exception as e:
             logging.warning(
-                "There's been an arror while calling session.close() in teardown_request."
+                "error while calling session.close(): %s" % str(e)
             )
 
         try:
             flask.g.db_conn.close()
-        except Exception:
+        except Exception as e:
             logging.warning(
-                "There's been an error while calling db_conn.close() in teardown_request."
+                "error while calling db_conn.close(): %s" % str(e)
             )
 
     # Registering REST error handler

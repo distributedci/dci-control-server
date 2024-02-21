@@ -23,11 +23,13 @@ import sqlalchemy.orm as sa_orm
 
 from datetime import datetime, timedelta
 
+from dci.analytics import access_data_layer as a_d_l
 from dci.api.v1 import api
 from dci.api.v1 import base
 from dci.api.v1 import components
 from dci.api.v1 import utils as v1_utils
 from dci.api.v1 import jobs_events
+from dci.api.v1 import notifications
 from dci import decorators
 from dci.common import exceptions as dci_exc
 from dci.common.schemas import (
@@ -176,6 +178,9 @@ def internal_create_jobs(user, values, components_ids=None):
                     message="conflict when adding component %s" % c.name,
                     status_code=409,
                 )
+
+    job = a_d_l.get_job_by_id(flask.g.session, values["id"])
+    notifications.publish_job_started(job)
 
     return flask.Response(
         json.dumps({"job": values}),
