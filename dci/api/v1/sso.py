@@ -16,6 +16,7 @@
 
 from cryptography.hazmat.primitives import serialization
 import json
+import jwt
 from jwt.algorithms import RSAAlgorithm
 import requests
 
@@ -55,6 +56,45 @@ def decode_token_with_latest_public_key(token):
     try:
         decoded_token = auth.decode_jwt(token, latest_public_key, conf["SSO_CLIENT_ID"])
         conf["SSO_PUBLIC_KEY"] = latest_public_key
+        return decoded_token
+    except (jwt_exc.DecodeError, TypeError):
+        raise dci_exc.DCIException("Invalid JWT token.", status_code=401)
+    except jwt_exc.ExpiredSignatureError:
+        raise dci_exc.DCIException(
+            "JWT token expired, please refresh.", status_code=401
+        )
+
+
+def get_public_key_from_token(token):
+    header = jwt.get_unverified_header(token)
+    kid = header["kid"]
+    sso_url = dci_config.CONFIG.get("SSO_URL")
+    realm = dci_config.CONFIG.get("SSO_REALM")
+    url = "%s/auth/realms/%s/.well-known/openid-configuration" % (sso_url, realm)
+    jwks_uri = requests.get(url).json()["jwks_uri"]
+    keys = requests.get(jwks_uri).json()["keys"]
+
+    for k in keys:
+        if k["kid"] == kid:
+            return k
+
+    return None
+
+
+def decode_token(token):
+
+    conf = dci_config.CONFIG
+    try:
+        public_key = get_public_key_from_token(token)
+        if not public_key:
+            raise Exception("key not found")
+    except Exception as e:
+        raise dci_exc.DCIException(
+            "Unable to get public key: %s" % str(e), status_code=401
+        )
+
+    try:
+        decoded_token = auth.decode_jwt(token, public_key, conf["SSO_CLIENT_ID"])
         return decoded_token
     except (jwt_exc.DecodeError, TypeError):
         raise dci_exc.DCIException("Invalid JWT token.", status_code=401)

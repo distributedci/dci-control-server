@@ -211,15 +211,15 @@ class OpenIDCAuth(BaseMechanism):
         auth_header = self.request.headers.get("Authorization").split(" ")
         if len(auth_header) != 2:
             return False
-        bearer, token = auth_header
-
+        _, token = auth_header
         conf = dci_config.CONFIG
+
         try:
-            decoded_token = decode_jwt(
-                token, conf["SSO_PUBLIC_KEY"], conf["SSO_CLIENT_ID"]
+            decoded_token = sso.decode_token(token)
+        except (jwt_exc.DecodeError, ValueError) as e:
+            raise dci_exc.DCIException(
+                "JWT token decode error: %s" % str(e), status_code=401
             )
-        except (jwt_exc.DecodeError, ValueError):
-            decoded_token = sso.decode_token_with_latest_public_key(token)
         except jwt_exc.ExpiredSignatureError:
             raise dci_exc.DCIException(
                 "JWT token expired, please refresh.", status_code=401
