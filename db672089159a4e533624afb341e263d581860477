@@ -41,6 +41,30 @@
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d08f9be1_2995ae67",
+        "filename": "dci/alembic/versions/83c6c24dc160_add_user_subject_identifier.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-03-04T08:40:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b02d113d_f5dd58cd",
+      "range": {
+        "startLine": 36,
+        "startChar": 32,
+        "endLine": 36,
+        "endChar": 36
+      },
+      "revId": "db672089159a4e533624afb341e263d581860477",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a9970aa3_98417388",
@@ -54,6 +78,30 @@
       "writtenOn": "2024-02-28T18:04:15Z",
       "side": 1,
       "message": "This errors out `sqlalchemy.exc.CompileError: Can\u0027t emit DROP CONSTRAINT for constraint UniqueConstraint(); it has no name`\n\nYou have to name the constraint to be able to drop it (so it\u0027s better to name it also when creating it)",
+      "range": {
+        "startLine": 40,
+        "startChar": 23,
+        "endLine": 40,
+        "endChar": 27
+      },
+      "revId": "db672089159a4e533624afb341e263d581860477",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ba10728_e3b448e9",
+        "filename": "dci/alembic/versions/83c6c24dc160_add_user_subject_identifier.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-03-04T08:40:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a9970aa3_98417388",
       "range": {
         "startLine": 40,
         "startChar": 23,
