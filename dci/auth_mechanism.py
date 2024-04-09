@@ -203,7 +203,9 @@ class Hmac2Mechanism(HmacMechanism):
             headers,
         )
         if not valid:
-            raise dci_exc.DCIException("Hmac2Mechanism failed: %s" % error_message)
+            raise dci_exc.DCIException(
+                "Hmac2Mechanism failed: %s" % error_message, status_code=401
+            )
         if len(self.identity.teams_ids) > 0:
             self.check_team_is_active(self.identity.teams_ids[0])
         return True
