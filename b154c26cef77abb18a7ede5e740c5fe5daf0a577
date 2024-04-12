@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ddab92bb_9a5aaead",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-04-12T08:04:52Z",
+      "side": 1,
+      "message": "If it\u0027s not mandatory or not needed for the other patch. I would prefer to not touch the error code. 400 Bad Request is fine here.",
+      "revId": "b154c26cef77abb18a7ede5e740c5fe5daf0a577",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
