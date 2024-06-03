@@ -1,0 +1,5 @@
+{
+  "query": {
+    "term": { "topic.id.keyword": "afbb1c48-277e-4ddb-aa14-d24fe27434a7" }
+  }
+}
