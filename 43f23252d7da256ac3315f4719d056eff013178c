@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0d78a10_1c3727f9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-06-05T06:48:17Z",
+      "side": 1,
+      "message": "Depends-On: https://softwarefactory-project.io/r/c/dci-packaging/+/31625",
+      "revId": "43f23252d7da256ac3315f4719d056eff013178c",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
