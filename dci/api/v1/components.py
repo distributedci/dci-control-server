@@ -23,10 +23,12 @@ from flask import json
 import logging
 from sqlalchemy import sql
 
-from dci.api.v1 import api, notifications
+from dci.api.v1 import api
+from dci.api.v1 import notifications
 from dci.api.v1 import base
 from dci.api.v1 import export_control
 from dci.api.v1 import utils as v1_utils
+from dci.api.v1 import download
 from dci import decorators
 from dci.common import exceptions as dci_exc
 from dci.common.schemas import (
@@ -274,17 +276,34 @@ def list_components_files(user, c_id):
     )
 
 
+def get_file_info(filepath):
+    file_info = flask.g.store.head("components", filepath)
+    return {
+        "etag": file_info.get("etag", file_info.get("ETag")),
+        "md5": file_info.get("etag", file_info.get("ChecksumSHA256")),
+        "mime": file_info.get("content-type", file_info.get("ContentType")),
+        "size": file_info.get("content-length", file_info.get("ContentLength")),
+    }
+
+
 @api.route("/components/<uuid:c_id>/files/<path:filepath>", methods=["GET", "HEAD"])
 @decorators.login_required
-def get_component_file_from_s3(user, c_id, filepath):
+def get_component_file_from_s3(identity, c_id, filepath):
     component = base.get_resource_orm(models2.Component, c_id)
-    _verify_component_and_topic_access(user, component)
+    _verify_component_and_topic_access(identity, component)
 
     normalized_filepath = os.path.normpath("/" + filepath).lstrip("/")
     normalized_component_id_filepath = os.path.join(str(c_id), normalized_filepath)
     component_id_filepath = os.path.join(str(c_id), filepath)
     if component_id_filepath != normalized_component_id_filepath:
         raise dci_exc.DCIException("Request malformed: filepath is invalid")
+
+    download.insert_or_update_daily_download(
+        identity.teams_ids[0],
+        c_id,
+        get_file_info(normalized_component_id_filepath)["size"],
+        datetime.date.today(),
+    )
 
     presign_url_method = "get_object"
     if flask.request.method == "HEAD":
@@ -322,7 +341,7 @@ def download_component_file(user, c_id, f_id):
     file_path = files_utils.build_file_path(component.topic_id, c_id, f_id)
 
     # Check if file exist on the storage engine
-    store.head("components", file_path)
+    get_file_info(file_path)
 
     _, file_descriptor = store.get("components", file_path)
     return flask.send_file(file_descriptor, mimetype=componentfile.mime)
@@ -342,7 +361,7 @@ def upload_component_file(user, c_id):
     file_id = utils.gen_uuid()
     file_path = files_utils.build_file_path(component.topic_id, c_id, file_id)
     store.upload("components", file_path, io.BytesIO(flask.request.data))
-    s_file = store.head("components", file_path)
+    file_info = get_file_info(file_path)
 
     values = dict.fromkeys(["md5", "mime", "component_id", "name"])
 
@@ -352,10 +371,10 @@ def upload_component_file(user, c_id):
             "component_id": c_id,
             "name": file_id,
             "created_at": datetime.datetime.utcnow().isoformat(),
-            "etag": s_file.get("etag", s_file.get("ETag")),
-            "md5": s_file.get("etag", s_file.get("ChecksumSHA256")),
-            "mime": s_file.get("content-type", s_file.get("ContentType")),
-            "size": s_file.get("content-length", s_file.get("ContentLength")),
+            "etag": file_info["etag"],
+            "md5": file_info["md5"],
+            "mime": file_info["mime"],
+            "size": file_info["size"],
         }
     )
 
