@@ -741,3 +741,30 @@ class Pipeline(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team")
     state = sa.Column(STATES, default="active")
+
+
+class DailyDownload(Base):
+    __tablename__ = "daily_downloads"
+    __table_args__ = (
+        sa.Index(
+            "daily_downloads_pk",
+            "team_id",
+            "component_id",
+            "day",
+            unique=True,
+        ),
+    )
+    team_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    component_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("components.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    day = sa.Column(
+        sa.Date(), default=datetime.date.today, primary_key=True, nullable=False
+    )
+    total_downloaded = sa.Column(sa.BIGINT, nullable=False, default=0)
