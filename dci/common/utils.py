@@ -15,6 +15,7 @@
 # under the License.
 
 import datetime
+import decimal
 import hashlib
 import uuid
 import logging
@@ -63,6 +64,8 @@ class JSONEncoder(json.JSONEncoder):
             return list(o)
         elif isinstance(o, uuid.UUID):
             return str(o)
+        elif isinstance(o, decimal.Decimal):
+            return float(o)
 
 
 def gen_uuid():
