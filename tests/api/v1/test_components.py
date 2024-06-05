@@ -1450,7 +1450,9 @@ def test_components_access_by_id(
 # S3 components related tests
 
 
+@mock.patch("dci.api.v1.components.get_file_info", return_value={"size": 0})
 def test_get_component_file_from_s3_user_team_in_RHEL_with_released_component(
+    _,
     admin,
     remoteci_context,
     remoteci_user,
@@ -1493,7 +1495,9 @@ def test_get_component_file_from_s3_user_team_in_RHEL_with_released_component(
     assert r.status_code == 401
 
 
+@mock.patch("dci.api.v1.components.get_file_info", return_value={"size": 0})
 def test_get_component_file_from_s3_user_team_in_RHEL_with_pre_release_component(
+    _,
     admin,
     remoteci_context,
     team_user,
@@ -1525,7 +1529,9 @@ def test_get_component_file_from_s3_user_team_in_RHEL_with_pre_release_component
     )
 
 
+@mock.patch("dci.api.v1.components.get_file_info", return_value={"size": 0})
 def test_get_component_file_from_s3_user_team_in_RHEL81(
+    _,
     admin,
     remoteci_context,
     team_user,
@@ -1562,8 +1568,9 @@ def test_get_component_file_from_s3_user_team_in_RHEL81(
     )
 
 
+@mock.patch("dci.api.v1.components.get_file_info", return_value={"size": 0})
 def test_get_component_file_from_s3_return_400_if_transversal_attack(
-    remoteci_context, rhel_80_component, rhel_81_component
+    _, remoteci_context, rhel_80_component, rhel_81_component
 ):
     r = remoteci_context.get(
         "/api/v1/components/%s/files/COMPOSE_ID" % rhel_81_component["id"]
