@@ -16,6 +16,23 @@
       "message": "The more I think about it, the more it leaves a feeling of being incomplete:\n\n- maybe we can use this opportunity to introduce a relationship table for topics_components as for products_components ?\n\n- once we have this, maybe we can allow to attach a component to multiple topics and/or multiple products.\n\n- if we allow to attach a component to multiple topics, is there a need to attach it to a product at all ?\n\n\u003c- these are just questions, maybe they can be addressed later.",
       "revId": "1290896dd8c3b821fc04ca629e33f37462de2510",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9604c394_8a56e8ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-07-10T12:58:05Z",
+      "side": 1,
+      "message": "I would prefer the topic_component association to be able to attach one component to multiple topic",
+      "revId": "1290896dd8c3b821fc04ca629e33f37462de2510",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
