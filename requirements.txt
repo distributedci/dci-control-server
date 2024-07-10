@@ -3,7 +3,7 @@ cryptography==3.2.1  # python-cryptography-3.2.1-5.el8.src.rpm baseos
 pyparsing==2.1.10  # pyparsing-2.1.10-7.el8.src.rpm baseos
 
 pytz==2017.2  # pytz-2017.2-9.el8.src.rpm appstream
-psycopg2==2.7.5  # python-psycopg2-2.7.5-7.el8.src.rpm appstream
+psycopg2==2.8.6  # python-psycopg2-2.8.6-6.el9.src.rpm appstream
 pyOpenSSL==19.0.0  # pyOpenSSL-19.0.0-1.el8.src.rpm appstream
 jsonschema==2.6.0  # python-jsonschema-2.6.0-4.el8.src.rpm appstream
 SQLAlchemy==1.3.2  # python-sqlalchemy-1.3.2-2.module_el8.5.0+761+faacb0fb.src.rpm appstream
