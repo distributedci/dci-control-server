@@ -71,13 +71,11 @@ def test_get_jobs(
     assert len(jobs) == 2
 
 
-@mock.patch("dci.api.v1.components.v1_utils.datetime")
-def test_get_components(m_datetime, session, admin, topic_id):
-    m_utcnow = mock.MagicMock()
-    m_datetime.datetime.utcnow.return_value = m_utcnow
-    m_utcnow.isoformat.return_value = (
-        datetime.datetime.utcnow() - datetime.timedelta(hours=2)
-    ).isoformat()
+@mock.patch("dci.api.v1.utils.get_utc_now")
+def test_get_components(m_get_utc_now, session, admin, topic_id):
+    m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
+        hours=2
+    )
     for i in range(5):
         admin.post(
             "/api/v1/components",
