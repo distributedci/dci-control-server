@@ -4,9 +4,6 @@ LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 COPY . /opt/dci-control-server
 
-COPY entrypoint.sh /usr/local/sbin/
-COPY gunicorn.conf.py /etc/
-
 COPY sso/RH-IT-Root-CA.crt /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
 RUN update-ca-trust
 
@@ -19,6 +16,9 @@ RUN microdnf update && \
     pip3 --no-cache-dir install --editable . && \
     microdnf -y remove python3-devel gcc postgresql-devel && \
     microdnf -y clean all
+
+COPY entrypoint.sh /usr/local/sbin/
+COPY gunicorn.conf.py /etc/
 
 EXPOSE 5000
 
