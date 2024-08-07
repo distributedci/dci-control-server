@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a73208a7_52c47d49",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2024-08-07T14:07:22Z",
+      "side": 1,
+      "message": "recheck",
+      "revId": "013b8658dcccde9bbbe9f64460550db6b485ebef",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "541c96d3_c5be7875",
+        "filename": "entrypoint.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2024-08-07T14:07:22Z",
+      "side": 1,
+      "message": "The previous lines seems to be leftovers from debugging, unless they\u0027re needed for something else, they should be removed",
+      "revId": "013b8658dcccde9bbbe9f64460550db6b485ebef",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "581bb2cb_8f633bd6",
+        "filename": "entrypoint.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 166
+      },
+      "writtenOn": "2024-08-07T14:07:22Z",
+      "side": 1,
+      "message": "Ack",
+      "revId": "013b8658dcccde9bbbe9f64460550db6b485ebef",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
