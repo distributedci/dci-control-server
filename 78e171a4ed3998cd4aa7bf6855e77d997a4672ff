@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "00be675b_48d985a7",
+        "filename": "entrypoint.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2024-08-07T14:10:21Z",
+      "side": 1,
+      "message": "Should it exit with something else than 0 to be more explicit that this is a failure ?",
+      "range": {
+        "startLine": 14,
+        "startChar": 0,
+        "endLine": 14,
+        "endChar": 10
+      },
+      "revId": "78e171a4ed3998cd4aa7bf6855e77d997a4672ff",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
