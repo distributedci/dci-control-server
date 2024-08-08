@@ -115,3 +115,5 @@ SSO_URL = os.getenv("SSO_URL", "https://sso.redhat.com")
 SSO_REALM = os.getenv("SSO_REALM", "redhat-external")
 
 CERTIFICATION_URL = "https://access.stage.redhat.com/hydra/rest/cwe/xmlrpc/v2"
+
+RHDL_API_URL = "https://rhdl.distributed-ci.io/api/v1"
