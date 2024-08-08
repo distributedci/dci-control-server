@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 from dci.api import v1 as api_v1
+from dci.api import v2 as api_v2
 from dci.common import exceptions
 from dci.common import utils
 from dci.db import models2
@@ -167,6 +168,7 @@ def create_app(param=None):
 
     # Registering REST API v1
     dci_app.register_blueprint(api_v1.api, url_prefix="/api/v1")
+    dci_app.register_blueprint(api_v2.api, url_prefix="/api/v2")
 
     # Registering custom encoder
     dci_app.json_encoder = utils.JSONEncoder
