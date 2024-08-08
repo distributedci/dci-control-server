@@ -16,6 +16,24 @@
       "message": "Unless there\u0027s a specific reason, could you make the entrypoint script exit with an error code instead of 0 when there are problems with the database ?",
       "revId": "70e3b57a9dbacf6f07103a9395d1c08aaa36990f",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbbc280b_b972b89f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 20
+      },
+      "writtenOn": "2024-08-08T10:13:26Z",
+      "side": 1,
+      "message": "\u003e Unless there\u0027s a specific reason, could you make the entrypoint script exit with an error code instead of 0 when there are problems with the database ?\n\nYes there is a reason: when there is a failure at this stage there is no way to recover. So when you configure your `compose.yml` with `restart: on-failure` it will not loop like crazy for nothing. It happened to me multiple times.",
+      "parentUuid": "f8c7e19f_90c4c460",
+      "revId": "70e3b57a9dbacf6f07103a9395d1c08aaa36990f",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
