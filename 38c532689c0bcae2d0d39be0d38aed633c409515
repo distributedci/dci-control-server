@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "77a9d2d6_64f5b7cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-08-12T08:11:46Z",
+      "side": 1,
+      "message": "It\u0027s a good one Haikel,\n\nI have one comment to improve the outcome a little.\nCould you give a look ?",
+      "revId": "38c532689c0bcae2d0d39be0d38aed633c409515",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c033c9b3_68374540",
+        "filename": "dci/api/v1/teams.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-08-12T08:11:46Z",
+      "side": 1,
+      "message": "Is it possible to use this patch to clean this function a little ?\n\nOne solution:\n\nWe can try to do the update \n\n    deleted_team \u003d (\n        flask.g.session.query(models2.Team)\n        .filter(models2.Team.id \u003d\u003d t_id)\n        .filter(models2.Team.etag \u003d\u003d if_match_etag)\n        .update({\"state\": \"archived\"})\n    )\n\nthen we raise the error if we don\u0027t find the deleted_team:\n\n    if not deleted_team:\n        flask.g.session.rollback()\n        raise dci_exc.DCIException(\n            message\u003d\"delete failed, either team already deleted or etag not matched\",\n            status_code\u003d409,\n        )\n\nThen we remove the users from the team, but maybe you can use deleted_team instead of team\n\n    [team.users.remove(user) for user in deleted_team.users]\n\nThen we archive all the File, Remoteci and Job from this team:\n\n    try:\n        for model in [models2.File, models2.Remoteci, models2.Job]:\n            flask.g.session.query(model).filter(model.team_id \u003d\u003d t_id).update(\n                {\"state\": \"archived\"}\n            )\n        flask.g.session.commit()\n    except Exception as e:\n        flask.g.session.rollback()\n        raise dci_exc.DCIException(message\u003dstr(e), status_code\u003d409)\n\nIt will be easier to understand IMO",
+      "range": {
+        "startLine": 187,
+        "startChar": 0,
+        "endLine": 188,
+        "endChar": 29
+      },
+      "revId": "38c532689c0bcae2d0d39be0d38aed633c409515",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
