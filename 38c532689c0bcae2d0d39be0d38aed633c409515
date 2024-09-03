@@ -39,6 +39,30 @@
       },
       "revId": "38c532689c0bcae2d0d39be0d38aed633c409515",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0a67a6f_9b084065",
+        "filename": "dci/api/v1/teams.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2024-09-03T12:14:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c033c9b3_68374540",
+      "range": {
+        "startLine": 187,
+        "startChar": 0,
+        "endLine": 188,
+        "endChar": 29
+      },
+      "revId": "38c532689c0bcae2d0d39be0d38aed633c409515",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
