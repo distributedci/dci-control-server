@@ -87,19 +87,16 @@ def test_parse_query_valid():
 
 def test_build():
     ret = qed.build("f1=v1")
-    assert ret == {"query": {"term": {"f1": "v1"}}}
+    assert ret == {"term": {"f1": "v1"}}
 
     ret = qed.build("(f1=v1)")
-    assert ret == {"query": {"term": {"f1": "v1"}}}
+    assert ret == {"term": {"f1": "v1"}}
 
     ret = qed.build("(f1=v1) and (f2=v2)")
-    assert ret == {
-        "query": {"bool": {"filter": [{"term": {"f1": "v1"}}, {"term": {"f2": "v2"}}]}}
-    }
+    assert ret == {"bool": {"filter": [{"term": {"f1": "v1"}}, {"term": {"f2": "v2"}}]}}
 
     ret = qed.build("((f1=v1) and (f2=v2)) or (f3=v3)")
     assert ret == {
-        "query": {
             "bool": {
                 "should": [
                     {
@@ -110,12 +107,10 @@ def test_build():
                     {"term": {"f3": "v3"}},
                 ]
             }
-        }
     }
 
     ret = qed.build("((f1=v1) and (f2=v2)) or ((f3=v3) and (f4=v4))")
     assert ret == {
-        "query": {
             "bool": {
                 "should": [
                     {
@@ -130,12 +125,11 @@ def test_build():
                     },
                 ]
             }
-        }
+        
     }
 
     ret = qed.build("((f1=v1) and ((f2=v2) or (f2=v22))) or ((f3=v3) and (f4=v4))")
     assert ret == {
-        "query": {
             "bool": {
                 "should": [
                     {
@@ -160,14 +154,13 @@ def test_build():
                     },
                 ]
             }
-        }
+        
     }
 
     ret = qed.build(
         "((f1=v1) and ((f2=v2) or (f2=v22))) or ((f3=v3) and ((f4=v4) or (f4=v44)))"
     )
     assert ret == {
-        "query": {
             "bool": {
                 "should": [
                     {
@@ -202,14 +195,12 @@ def test_build():
                     },
                 ]
             }
-        }
     }
 
     ret = qed.build(
         "(name=vcp) and (((components.type=ocp) and (components.version=4.14.27)) and ((components.type=aspenmesh) and (components.version=1.18.7-am1)))"
     )
     assert ret == {
-        "query": {
             "bool": {
                 "filter": [
                     {"term": {"name": "vcp"}},
@@ -263,14 +254,12 @@ def test_build():
                     },
                 ]
             }
-        }
     }
 
     ret = qed.build(
         "((components.type=cnf-certification-test)) and ((team.name not_in [telcoci, RedHat]))"
     )
     assert ret == {
-        "query": {
             "bool": {
                 "filter": [
                     {
@@ -295,7 +284,6 @@ def test_build():
                     },
                 ]
             }
-        }
     }
 
 
@@ -304,7 +292,6 @@ def test_query_1():
         "(components.type=cnf-certification-test) and (components.name not_in [telcoci, RedHat])"
     )
     assert ret == {
-        "query": {
             "nested": {
                 "path": "components",
                 "query": {
@@ -324,7 +311,6 @@ def test_query_1():
                     }
                 },
             }
-        }
     }
 
 
@@ -332,35 +318,20 @@ def test_query_2():
 
     ret = qed.build("components.type=cpt_type")
     assert ret == {
-        "query": {
             "nested": {
                 "path": "components",
                 "query": {"term": {"components.type": "cpt_type"}},
             }
-        }
     }
 
 
-def not_yet_test_query_3():
-    ret = qed.build("created_at>2024-06-01 and created_at<2024-06-30")
-    assert ret == {
-        "query": {
-            "range": {
-                "created_at": {
-                    "gte": "2024-06-01T00:00:00",
-                    "lte": "2024-06-30T23:59:59",
-                    "format": "strict_date_optional_time",
-                }
-            }
-        }
-    }
-
-
-def not_yet_test_query_4():
-    """
-    {
-        "size": 50,
-        "_source": ["created_at","team.name","remoteci.name","pipeline.name","name"],
-        "query": {}
-    }
-    """
+def test_query_build_regex():
+    ret = qed.build("(((components.name=openshift-vanilla) and (components.type=ocp)) and ((components.type=netapp-trident) and (components.version=~v24\\.02.*)))")
+    assert ret == {'bool': {'filter': [{'nested': {'path': 'components',
+                                 'query': {'bool': {'filter': [{'term': {'components.name': 'openshift-vanilla'}},
+                                                               {'term': {'components.type': 'ocp'}}]}}}},
+                     {'nested': {'path': 'components',
+                                 'query': {'bool': {'filter': [{'term': {'components.type': 'netapp-trident'}},
+                                                               {'regexp': {'components.version': {'case_insensitive': True,
+                                                                                                  'flags': 'ALL',
+                                                                                                  'value': 'v24\\.02.*'}}}]}}}}]}}
