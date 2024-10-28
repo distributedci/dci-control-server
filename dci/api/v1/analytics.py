@@ -272,6 +272,7 @@ def handle_es_timeframe(query, args):
                 ]
             }
         }
+    return query
 
 
 def handle_includes_excludes(args):
@@ -304,6 +305,8 @@ def build_es_query(args):
     _source = handle_includes_excludes(args)
     if _source:
         es_query["_source"] = _source
+
+    return es_query
 
 
 @api.route("/analytics/jobs", methods=["GET", "POST"])
