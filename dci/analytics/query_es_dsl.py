@@ -91,7 +91,7 @@ def _generate_from_operators(parsed_query, handle_nested=False):
             handle_nested, operator, operand_1, operand_2
         )
     elif operator == "=~":
-        return {
+        _regexp = {
             "regexp": {
                 operand_1: {
                     "value": operand_2,
@@ -100,6 +100,9 @@ def _generate_from_operators(parsed_query, handle_nested=False):
                 }
             }
         }
+        if handle_nested and "." in operand_1:
+            return {"nested": {"path": operand_1.split(".")[0], "query": _regexp}}
+        return _regexp
     elif operator == "not_in":
         if handle_nested and "." in operand_1:
             return {
@@ -192,7 +195,9 @@ def _generate_es_query(parsed_query, handle_nested=True):
             }
     else:
         operands = _get_logical_operands(parsed_query)
+        print("operands %s" % str(operands))
         path = _is_nested_query(operands)
+        print("path %s" % str(path))
         if path:
             return {
                 "nested": {
