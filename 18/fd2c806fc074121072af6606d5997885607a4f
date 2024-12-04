@@ -1,0 +1,8 @@
+Code-Review+2: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Workflow+1: Yassine Lamgarchal <yassine.lamgarchal@redhat.com>
+Verified+2: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-by: Zuul CI <zuul@softwarefactory-project.io>
+Submitted-at: Wed, 04 Dec 2024 16:14:48 +0000
+Reviewed-on: https://softwarefactory-project.io/r/c/dci-control-server/+/32696
+Project: dci-control-server
+Branch: refs/heads/master
