@@ -33,6 +33,7 @@ _word = pp.Word(
     + "}"
     + "["
     + "]"
+    + "/"
 )
 _value_with_quotes = pp.Suppress(pp.Literal("'")) + _word + pp.Suppress(pp.Literal("'"))
 _value_without_quotes = _word
