@@ -92,6 +92,12 @@ def test_build():
     ret = qed.build("f1=v1")
     assert ret == {"term": {"f1": "v1"}}
 
+    ret = qed.build("f1=v1/v11")
+    assert ret == {"term": {"f1": "v1/v11"}}
+
+    ret = qed.build("f1=(v11)v2")
+    assert ret == {"term": {"f1": "(v11)v2"}}
+
     ret = qed.build("(f1=v1)")
     assert ret == {"term": {"f1": "v1"}}
 
