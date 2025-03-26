@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41a556c9_734403be",
+        "filename": "dci/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2025-03-26T16:30:09Z",
+      "side": 1,
+      "message": "Don\u0027t you want to user \"5\" and \"25\" instead of integer.\nTo be sure we have a similar value we will get reading .env file where everything is string.",
+      "range": {
+        "startLine": 56,
+        "startChar": 0,
+        "endLine": 57,
+        "endChar": 71
+      },
+      "revId": "993e852f1c7d27682161358da64101f4cc03067a",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbdb601e_c1ff906f",
+        "filename": "dci/settings.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 1440
+      },
+      "writtenOn": "2025-03-26T16:30:09Z",
+      "side": 1,
+      "message": "same here\n\n\"3.0\" and \"10.0\"",
+      "range": {
+        "startLine": 120,
+        "startChar": 0,
+        "endLine": 121,
+        "endChar": 52
+      },
+      "revId": "993e852f1c7d27682161358da64101f4cc03067a",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
