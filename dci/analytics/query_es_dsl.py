@@ -37,7 +37,6 @@ _word = pp.Word(
     + "("
     + ")"
 )
-_integer = pp.Word(pp.nums).setParseAction(lambda tokens: int(tokens[0]))
 
 
 def _int_or_float(v):
@@ -50,13 +49,15 @@ def _int_or_float(v):
 _integer_or_float = pp.Word(pp.nums + "." + "-").setParseAction(
     lambda tokens: _int_or_float(tokens[0])
 )
+_empty_value = pp.Literal("''")
 _value_with_quotes = pp.Suppress(pp.Literal("'")) + _word + pp.Suppress(pp.Literal("'"))
-_value = _integer_or_float | _value_with_quotes
+_value = _integer_or_float | _value_with_quotes | _empty_value
 
 _value_for_list = pp.Word(pp.alphanums + "_" + "." + "-" + ":" + " ")
 _value_for_list = (
     pp.Suppress(pp.Literal("'")) + _value_for_list + pp.Suppress(pp.Literal("'"))
 )
+_value_for_list = _value_for_list | _empty_value
 
 _comma = pp.Suppress(pp.Literal(","))
 _lp = pp.Suppress(pp.Literal("("))
@@ -124,7 +125,7 @@ def _handle_comparison_operator(handle_nested, operator, operand_1, operand_2):
 def _generate_from_operators(parsed_query, handle_nested=False):
     operand_1 = parsed_query[0]
     operator = parsed_query[1]
-    operand_2 = parsed_query[2]
+    operand_2 = "" if parsed_query[2] == "''" else parsed_query
 
     if operator == "=":
         if handle_nested and "." in operand_1:
@@ -295,4 +296,5 @@ def _generate_es_query(parsed_query, handle_nested=True):
 
 def build(query):
     parsed_query = parse(query)
+    print(parsed_query)
     return _generate_es_query(parsed_query)
