@@ -635,3 +635,27 @@ def test_nrt_nested_first():
             ]
         }
     }
+
+
+def test_nrt_empty_string_value():
+    ret = qed.build("(tags in ['ztp']) and (comment!='')")
+
+    assert ret == {
+        "bool": {
+            "filter": [
+                {"terms": {"tags": ["tags", "in", ["ztp"]]}},
+                {"bool": {"must_not": {"term": {"comment": ""}}}},
+            ]
+        }
+    }
+
+    ret = qed.build("(tags in ['']) and (comment!='')")
+
+    assert ret == {
+        "bool": {
+            "filter": [
+                {"terms": {"tags": ["tags", "in", ["''"]]}},
+                {"bool": {"must_not": {"term": {"comment": ""}}}},
+            ]
+        }
+    }
