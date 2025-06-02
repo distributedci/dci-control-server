@@ -16,6 +16,24 @@
       "message": "Instead of all the `if os.getenv() is not None` conditionals why not just do e.g. `max_requests \u003d os.getenv(\"MAX_REQUESTS\", 1000)` since you already know the defaults?",
       "revId": "84463ac2d9a723237a4e0fc7f4f61e4e1f2cb8dd",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0fb7c841_86e08f73",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2025-06-02T12:47:19Z",
+      "side": 1,
+      "message": "I do that because I do *not* want to set the variables if they\u0027re not define (to be sure we don\u0027t set a /wrong/ default value (if the default value changes)",
+      "parentUuid": "629cc558_b67629b9",
+      "revId": "84463ac2d9a723237a4e0fc7f4f61e4e1f2cb8dd",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
