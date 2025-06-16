@@ -33,7 +33,9 @@ def test_cors_preflight(admin):
     resp = admin.options("/api/v1", headers=headers)
     headers = resp.headers
 
-    allowed_headers = "Authorization, Content-Type, If-Match, ETag, " "X-Requested-With"
+    allowed_headers = (
+        "Authorization, Content-Type, If-Match, ETag, X-Requested-With, X-DCI-Team-ID"
+    )
 
     assert resp.status_code == 200
     assert headers["Access-Control-Allow-Headers"] == allowed_headers
