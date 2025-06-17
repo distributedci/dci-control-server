@@ -56,6 +56,11 @@ class BaseMechanism(object):
         except orm.exc.NoResultFound:
             return None
 
+    def get_scoped_team_id(self):
+        if "X-Dci-Team-Id" in self.request.headers:
+            return self.request.headers["X-Dci-Team-Id"]
+        return None
+
     def identity_from_user(self, user):
         user_info = {
             # UUID to str
@@ -74,6 +79,7 @@ class BaseMechanism(object):
         is_read_only_user = False
         is_epm_user = False
         user_teams = {}
+        scoped_team_id = self.get_scoped_team_id()
         for user_team in user.team:
             if user_team.id == flask.g.team_admin_id:
                 is_super_admin = True
@@ -81,6 +87,8 @@ class BaseMechanism(object):
                 is_read_only_user = True
             if user_team.id == flask.g.team_epm_id:
                 is_epm_user = True
+            if scoped_team_id and scoped_team_id != str(user_team.id):
+                continue
             # TODO (gvincent): use user_team.serialize()
             user_teams[user_team.id] = {
                 "id": user_team.id,
