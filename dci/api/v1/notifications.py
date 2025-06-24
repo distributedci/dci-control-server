@@ -190,3 +190,7 @@ def job_dispatcher(job):
 
 def component_dispatcher(component):
     _handle_component_event(component)
+
+
+def publish(payload):
+    flask.g.messaging.publish(payload)
