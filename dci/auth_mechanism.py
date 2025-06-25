@@ -91,7 +91,7 @@ class BaseMechanism(object):
         for user_team in user.team:
             team_id = user_team.id
             if team_id == flask.g.team_admin_id:
-                is_super_admin = True
+                is_super_admin = scoped_team_id is None or scoped_team_id == team_id
             if team_id == flask.g.team_redhat_id:
                 is_read_only_user = scoped_team_id is None or scoped_team_id == team_id
             if team_id == flask.g.team_epm_id:
@@ -112,7 +112,7 @@ class BaseMechanism(object):
         user_info["is_super_admin"] = is_super_admin
         user_info["is_read_only_user"] = is_read_only_user
         user_info["is_epm_user"] = is_epm_user
-
+        print(user_info)
         return Identity(user_info)
 
     def check_team_is_active(self, team_id):
