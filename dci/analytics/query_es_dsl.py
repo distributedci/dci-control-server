@@ -16,7 +16,7 @@
 
 import pyparsing as pp
 
-_field = pp.Word(pp.alphanums + "_" + ".")
+_field = pp.Word(pp.alphanums + "_" + "." + "-")
 _word = pp.Word(
     pp.alphanums
     + " "

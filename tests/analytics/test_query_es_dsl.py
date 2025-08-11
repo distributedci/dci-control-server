@@ -656,3 +656,8 @@ def test_nested_extra():
             ]
         }
     }
+
+
+def test_nrt_hyphen_field():
+    ret = qed.build("(extra.kernel.master-0.version=~'.*')")
+    assert ret == {'term': {'extra.kernel.master-0.version': '5.14'}}
