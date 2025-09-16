@@ -16,6 +16,23 @@
       "message": "```\n$ sudo podman run -it --rm --entrypoint\u003d\"\" quay.io/distributedci/dci-control-server:git9203c32 python3\nTrying to pull quay.io/distributedci/dci-control-server:git9203c32...\nGetting image source signatures\n[…]\nWriting manifest to image destination\nPython 3.6.8 (default, Aug 11 2025, 09:47:15) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-28)] on linux\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\n\u003e\u003e\u003e import psycopg2\n\u003e\u003e\u003e conn \u003d psycopg2.connect(\"postgresql://dci:\u003clemotdepasse\u003e@10.31.22.12:5432/dci\")\n# OK\n\u003e\u003e\u003e conn \u003d psycopg2.connect(\"postgresql://dci:\u003clemotdepasse\u003e@10.31.22.12:5432/dci?sslmode\u003drequire\")\n# OK\n\u003e\u003e\u003e conn \u003d psycopg2.connect(\"postgresql://dci:\u003clemotdepasse\u003e@10.31.22.12:5432/dci?sslmode\u003ddisable\")\nTraceback (most recent call last):\n  File \"\u003cstdin\u003e\", line 1, in \u003cmodule\u003e\n  File \"/usr/local/lib64/python3.6/site-packages/psycopg2/__init__.py\", line 130, in connect\n    conn \u003d _connect(dsn, connection_factory\u003dconnection_factory, **kwasync)\npsycopg2.OperationalError: FATAL:  no pg_hba.conf entry for host \"10.31.3.221\", user \"dci\", database \"dci\", no encryption\n# OK\n```",
       "revId": "9203c321043befea9a8a2b56602791b980f68219",
       "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a7049959_49de8e6e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2025-09-16T09:10:20Z",
+      "side": 1,
+      "message": "recheck",
+      "revId": "9203c321043befea9a8a2b56602791b980f68219",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
     }
   ]
 }
