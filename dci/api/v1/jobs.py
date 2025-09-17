@@ -77,6 +77,7 @@ def schedule_jobs(user):
     will never be finished.
     """
     values = flask.request.json
+    raise
     check_json_is_valid(schedule_job_schema, values)
 
     return internal_create_jobs(user, values)
