@@ -28,7 +28,7 @@ api = flask.Blueprint("api_v1", __name__)
 def index():
     logger.info("control server is ok...")
     return flask.Response(
-        json.dumps({"_status": "OK", "message": "Distributed CI."}),
+        json.dumps({"_status": "OK", "message": "Distributed CI is the best!"}),
         status=200,
         content_type="application/json",
     )
