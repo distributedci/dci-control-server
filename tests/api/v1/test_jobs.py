@@ -357,9 +357,9 @@ def test_get_all_jobs_with_pagination(
     assert jobs.data["jobs"] == []
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_get_all_jobs_with_subresources(
-    job_dispatcher_mock,
+    _,
     client_admin,
     hmac_client_team1,
     team1_id,
@@ -927,8 +927,8 @@ def test_get_files_by_job_id_as_epm(client_epm, team1_job_id, team1_job_file):
     assert file_from_job.data["_meta"]["count"] == 1
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_get_results_by_job_id(job_dispatcher_mock, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_get_results_by_job_id(_, client_user1, team1_job_id):
     headers = {
         "DCI-JOB-ID": team1_job_id,
         "Content-Type": "application/junit",

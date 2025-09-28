@@ -19,11 +19,8 @@ from dci.common import time
 import flask
 from flask import json
 
-from dci.analytics import access_data_layer as a_d_l
 from dci.api.v1 import api
 from dci.api.v1 import base
-from dci.api.v1 import jobs_events
-from dci.api.v1 import notifications
 from dci import decorators
 from dci.common import exceptions as dci_exc
 from dci.common.schemas import check_json_is_valid, jobstate_schema, check_and_get_args
@@ -42,20 +39,6 @@ def insert_jobstate(values):
     )
     flask.g.session.add(job_state)
     flask.g.session.commit()
-
-
-def serialize_job(job_id):
-    job = base.get_resource_orm(
-        models2.Job,
-        job_id,
-        options=[
-            sa_orm.joinedload("topic", innerjoin=True),
-            sa_orm.joinedload("remoteci", innerjoin=True),
-            sa_orm.selectinload("components"),
-            sa_orm.selectinload("results"),
-        ],
-    )
-    return job.serialize()
 
 
 @api.route("/jobstates", methods=["POST"])
@@ -92,13 +75,7 @@ def create_jobstates(user):
 
     # send notification in case of final jobstate status
     if status in models2.FINAL_STATUSES and not is_job_final_state:
-        job_serialized = serialize_job(job_id)
-        jobs_events.create_event(
-            job_serialized["id"], values["status"], job_serialized["topic_id"]
-        )
-        notifications.job_dispatcher(job_serialized)
-        job = a_d_l.get_job_by_id(flask.g.session, job_id)
-        notifications.publish({"event": "job_finished", "job": job})
+        flask.g.messaging.publish_jobs_finished({"job_id": job_id})
 
     result = json.dumps({"jobstate": created_js})
     return flask.Response(result, 201, content_type="application/json")

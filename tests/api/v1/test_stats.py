@@ -16,9 +16,9 @@
 import mock
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_get_stats(
-    n,
+    _,
     client_admin,
     team_admin_job,
     client_user1,

@@ -470,6 +470,7 @@ class Component(dci_declarative.Mixin, Base):
     jobs = sa_orm.relationship(
         "Job", secondary=JOIN_JOBS_COMPONENTS, back_populates="components"
     )
+    topic = sa_orm.relationship("Topic")
 
 
 class Job(dci_declarative.Mixin, Base):

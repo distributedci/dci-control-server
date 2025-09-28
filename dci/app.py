@@ -23,28 +23,22 @@ import psycogreen.gevent
 psycogreen.gevent.patch_psycopg()
 
 from dci.api import v1 as api_v1
-from dci.api.v1 import notifications
 from dci.api import v2 as api_v2
 from dci.common import exceptions
 from dci.common import utils
 from dci.common.redis_client import RedisClient
+from dci import dci_kombu
 from dci.db import models2
 from dci import dci_config
 
 import flask
-import kombu
 import logging
-import socket
 import sys
 import time
-import zmq
-
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
-
-zmq_sender = None
 
 
 class DciControlServer(flask.Flask):
@@ -53,7 +47,6 @@ class DciControlServer(flask.Flask):
         self.config.update(dci_config.CONFIG)
         self.url_map.strict_slashes = False
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
-        self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
         self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
         session = sessionmaker(bind=self.engine)()
@@ -61,13 +54,6 @@ class DciControlServer(flask.Flask):
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
         self.team_epm_id = self._get_team_id(session, "EPM")
         session.close()
-
-    def _get_zmq_sender(self, zmq_conn):
-        global zmq_sender
-        if not zmq_sender:
-            zmq_sender = zmq.Context().socket(zmq.PUSH)
-            zmq_sender.connect(zmq_conn)
-        return zmq_sender
 
     def make_default_options_response(self):
         resp = super(DciControlServer, self).make_default_options_response()
@@ -94,53 +80,6 @@ class DciControlServer(flask.Flask):
             )
             sys.exit(1)
         return team.id
-
-
-class KombuProducer:
-    def __init__(self):
-        super(KombuProducer, self).__init__()
-        self._connection = kombu.Connection(
-            dci_config.CONFIG["AMQP_BROKER_URL"],
-            transport_options={"confirm_publish": True},
-        )
-        self._exchange = kombu.Exchange("dci.analytics.exchange", type="direct")
-        self._queue = kombu.Queue(
-            name="dci.analytics.queue",
-            exchange=self._exchange,
-            routing_key="dci.analytics.jobs",
-        )
-        self._producer = None
-
-    def _error_mail(self, exc):
-
-        return f"""
-You are receiving this email because the DCI control server failed to send a message to RabbitMQ.
-
-Exception traceback:
-
-{exc}
-
-"""
-
-    def publish(self, message):
-        try:
-            if not self._producer:
-                channel = self._connection.channel()
-                self._producer = kombu.Producer(
-                    exchange=self._exchange,
-                    channel=channel,
-                    routing_key="dci.analytics.jobs",
-                )
-                self._queue.maybe_bind(self._connection)
-                self._queue.declare()
-            return self._producer.publish(message)
-        except (OSError, socket.gaierror, Exception) as e:
-            _msg = self._error_mail(str(e))
-            notifications.send_alert_mail(
-                subject="RabbitMQ transport error",
-                message=_msg,
-            )
-            logger.exception("error while trying to publish a message.")
 
 
 def configure_root_logger():
@@ -191,7 +130,7 @@ def create_app(param=None):
         flask.g.team_admin_id = dci_app.team_admin_id
         flask.g.team_redhat_id = dci_app.team_redhat_id
         flask.g.team_epm_id = dci_app.team_epm_id
-        flask.g.messaging = KombuProducer()
+        flask.g.messaging = dci_kombu.KombuProducer()
 
         for i in range(5):
             try:
@@ -206,7 +145,6 @@ def create_app(param=None):
                 time.sleep(1)
                 pass
         flask.g.store = dci_app.store
-        flask.g.sender = dci_app.sender
         flask.g.redis_client = dci_app.redis_client
 
     @dci_app.teardown_request

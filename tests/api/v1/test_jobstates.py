@@ -23,9 +23,10 @@ import uuid
 def test_create_jobstates(client_user1, team1_job_id):
     data = {"job_id": team1_job_id, "status": "running", "comment": "kikoolol"}
 
-    with mock.patch("dci.api.v1.notifications") as mocked_notif:
+    with mock.patch("dci.app.dci_kombu.KombuProducer") as mock_kp:
+        mock_kp = mock_kp.return_value
         js = client_user1.post("/api/v1/jobstates", data=data).data
-        assert not mocked_notif.job_dispatcher.called
+        mock_kp.publish_jobs_finished.assert_not_called()
     js_id = js["jobstate"]["id"]
 
     js = client_user1.get("/api/v1/jobstates/%s" % js_id).data
@@ -35,44 +36,30 @@ def test_create_jobstates(client_user1, team1_job_id):
     assert job["job"]["status"] == "running"
 
 
-@mock.patch("dci.api.v1.jobstates.notifications.job_dispatcher")
-def test_create_jobstates_failure(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_jobstates_failure(mock_kp, client_user1, team1_job_id):
+    mock_kp = mock_kp.return_value
     data = {"job_id": team1_job_id, "status": "failure"}
     client_user1.post("/api/v1/jobstates", data=data)
     # Notification should be sent just one time
     client_user1.post("/api/v1/jobstates", data=data)
-    mocked_disp.assert_called_once()
+    mock_kp.publish_jobs_finished.assert_called_once()
 
     job = client_user1.get("/api/v1/jobs/%s" % team1_job_id).data
     assert job["job"]["status"] == "failure"
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_jobstates_notification(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_jobstates_notification(mock_kp, client_user1, team1_job_id):
+    mock_kp = mock_kp.return_value
     data = {"job_id": team1_job_id, "status": "failure"}
 
     client_user1.post("/api/v1/jobstates", data=data)
-    events, _ = mocked_disp.call_args
-    event = events[0]
-    assert "components" in event
-    assert "topic" in event
-    assert "remoteci" in event
-    assert "results" in event
+    mock_kp.publish_jobs_finished.assert_called_with({"job_id": team1_job_id})
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_final_job_status_umb_notification(
-    mocked_disp, client_user1, team1_job_id
-):
-    data = {"job_id": team1_job_id, "status": "success"}
-    client_user1.post("/api/v1/jobstates", data=data)
-    events, _ = mocked_disp.call_args
-    event = events[0]
-    assert str(event["id"]) == team1_job_id
-
-
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_jobstates_new_to_failure(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_jobstates_new_to_failure(_, client_user1, team1_job_id):
     data = {"job_id": team1_job_id, "status": "new"}
     js = client_user1.post("/api/v1/jobstates", data=data).data
     assert js["jobstate"]["status"] == "new"
@@ -82,8 +69,8 @@ def test_create_jobstates_new_to_failure(mocked_disp, client_user1, team1_job_id
     assert js["jobstate"]["status"] == "error"
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_jobstates_error(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_jobstates_error(_, client_user1, team1_job_id):
     data = {"job_id": team1_job_id, "status": "error"}
 
     js = client_user1.post("/api/v1/jobstates", data=data).data
@@ -132,8 +119,8 @@ def test_get_jobstate_with_embed(client_user1, team1_job_id):
     assert js_embed.status_code == 200
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_delete_jobstate_by_id(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_delete_jobstate_by_id(_, client_user1, team1_job_id):
     js = client_user1.post(
         "/api/v1/jobstates",
         data={"job_id": team1_job_id, "comment": "kikoolol", "status": "running"},
@@ -155,8 +142,8 @@ def test_delete_jobstate_by_id(mocked_disp, client_user1, team1_job_id):
 # Tests for the isolation
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_jobstate_as_user(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_jobstate_as_user(_, client_user1, team1_job_id):
     jobstate = client_user1.post(
         "/api/v1/jobstates",
         data={"job_id": team1_job_id, "comment": "kikoolol", "status": "running"},
@@ -169,8 +156,8 @@ def test_create_jobstate_as_user(mocked_disp, client_user1, team1_job_id):
     assert jobstate.data["jobstate"]["job_id"] == team1_job_id
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_get_jobstate_as_user(mocked_disp, client_user1, team1_jobstate, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_get_jobstate_as_user(_, client_user1, team1_jobstate, team1_job_id):
     # jobstate = user.get('/api/v1/jobstates/%s' % jobstate_id)
     # assert jobstate.status_code == 404
 
@@ -183,8 +170,8 @@ def test_get_jobstate_as_user(mocked_disp, client_user1, team1_jobstate, team1_j
     assert jobstate.status_code == 200
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_delete_jobstate_as_user(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_delete_jobstate_as_user(_, client_user1, team1_job_id):
     js_user = client_user1.post(
         "/api/v1/jobstates",
         data={"job_id": team1_job_id, "comment": "kikoolol", "status": "running"},

@@ -26,8 +26,10 @@ from dci.stores import files_utils
 from dci.common import exceptions as dci_exc
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
-def test_create_components_active(mock_disp, client_admin, rhel_80_topic_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_components_active(mock_kp, client_admin, rhel_80_topic_id):
+    mock_kp = mock_kp.return_value
+
     data = {
         "name": "pname",
         "type": "gerrit_review",
@@ -40,13 +42,14 @@ def test_create_components_active(mock_disp, client_admin, rhel_80_topic_id):
     gc = client_admin.get("/api/v1/components/%s" % pc_id).data
     assert gc["component"]["name"] == "pname"
     assert gc["component"]["state"] == "active"
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_create_component_with_canonical_project_name(
-    mock_disp, client_admin, rhel_80_topic_id
+    mock_kp, client_admin, rhel_80_topic_id
 ):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "4.12.0 2023-01-12",
         "canonical_project_name": "OpenShift 4.12.0 2023-01-12",
@@ -67,13 +70,14 @@ def test_create_component_with_canonical_project_name(
         == "quay.io/openshift-release-dev/ocp-release@sha256:4c5a7e26d707780be6466ddc9591865beb2e3baa5556432d23e8d57966a2dd18"
     )
     assert gc["component"]["state"] == "active"
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_create_component_without_canonical_project_name(
-    mock_disp, client_admin, rhel_80_topic_id
+    mock_kp, client_admin, rhel_80_topic_id
 ):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "OpenShift 4.12.0",
         "type": "ocp",
@@ -92,11 +96,12 @@ def test_create_component_without_canonical_project_name(
         == "quay.io/openshift-release-dev/ocp-release@sha256:4c5a7e26d707780be6466ddc9591865beb2e3baa5556432d23e8d57966a2dd18"
     )
     assert gc["component"]["state"] == "active"
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
-def test_create_component_with_display_name(mock_disp, client_admin, rhel_80_topic_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_component_with_display_name(mock_kp, client_admin, rhel_80_topic_id):
+    mock_kp = mock_kp.return_value
     data = {
         "display_name": "RHEL-8.6.0-20211205.3",
         "version": "8.6.0-20211205.3",
@@ -116,7 +121,7 @@ def test_create_component_with_display_name(mock_disp, client_admin, rhel_80_top
     assert component["message"] == ""
     assert component["title"] == ""
 
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
 def test_raise_an_error_if_name_and_display_name_are_absent(
@@ -150,8 +155,9 @@ def test_raise_an_error_if_name_or_display_name_empty(client_admin, rhel_80_topi
     assert r.status_code == 400
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
-def test_create_component_with_version(mock_disp, client_admin, rhel_80_topic_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_component_with_version(mock_kp, client_admin, rhel_80_topic_id):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "RHEL-8.6.0-20211205.3",
         "version": "8.6.0-20211205.3",
@@ -171,13 +177,14 @@ def test_create_component_with_version(mock_disp, client_admin, rhel_80_topic_id
     assert component["message"] == ""
     assert component["title"] == ""
 
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_create_component_without_version_nor_display_name(
-    mock_disp, client_admin, rhel_80_topic_id
+    mock_kp, client_admin, rhel_80_topic_id
 ):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8",
         "canonical_project_name": "dci-openshift-agent 0.5.0-1.202209222145git23657e82.el8",
@@ -204,11 +211,12 @@ def test_create_component_without_version_nor_display_name(
     assert gc["component"]["version"] == "0.5.0-1.202209222145git23657e82.el8"
     assert gc["component"]["uid"] == ""
     assert gc["component"]["state"] == "active"
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
-def test_create_components_inactive(mock_disp, client_admin, rhel_80_topic_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_components_inactive(mock_kp, client_admin, rhel_80_topic_id):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "pname",
         "type": "gerrit_review",
@@ -221,7 +229,7 @@ def test_create_components_inactive(mock_disp, client_admin, rhel_80_topic_id):
     gc = client_admin.get("/api/v1/components/%s" % pc_id).data
     assert gc["component"]["name"] == "pname"
     assert gc["component"]["state"] == "inactive"
-    mock_disp.assert_not_called()
+    mock_kp.publish_components_created.assert_called()
 
 
 def test_create_component_lowercase_type(client_admin, rhel_80_topic_id):
@@ -791,10 +799,11 @@ def test_update_component_v2(client_admin, rhel_80_topic_id):
     assert updated_component["state"] == "active"
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_put_component_from_inactive_to_active(
-    mock_disp, client_admin, client_user1, rhel_80_topic_id
+    mock_kp, client_admin, client_user1, rhel_80_topic_id
 ):
+    mock_kp = mock_kp.return_value
     data = {
         "name": "pname1",
         "title": "aaa",
@@ -804,13 +813,13 @@ def test_put_component_from_inactive_to_active(
     }
 
     ct_1 = client_admin.post("/api/v1/components", data=data).data["component"]
-    mock_disp.assert_not_called()
+    mock_kp.publish_components_created.assert_called()
 
     url = "/api/v1/components/%s" % ct_1["id"]
     data = {"name": "cname2", "state": "active"}
     headers = {"If-match": ct_1["etag"]}
     client_admin.put(url, data=data, headers=headers)
-    mock_disp.assert_called()
+    mock_kp.publish_components_created.assert_called()
 
 
 def test_update_component_with_tags(client_admin, rhel_80_topic_id):

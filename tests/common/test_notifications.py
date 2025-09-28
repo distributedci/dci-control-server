@@ -16,46 +16,13 @@
 
 from __future__ import unicode_literals
 
-from dci.api.v1 import notifications
+from dci.common import notifications
 
-import flask
 import mock
 
 
-def test_get_emails_from_remoteci(
-    client_user1, team1_remoteci_id, app, engine, session
-):
-    r = client_user1.post("/api/v1/remotecis/%s/users" % team1_remoteci_id)
-    assert r.status_code == 201
-
-    with app.app_context():
-        flask.g.db_conn = engine.connect()
-        flask.g.session = session
-        emails = notifications.get_emails_from_remoteci(team1_remoteci_id)
-        assert emails == ["user1@example.org"]
-
-
-def test_get_emails_from_remoteci_deleted(
-    client_user1, team1_remoteci_id, app, engine, session
-):
-    r = client_user1.post("/api/v1/remotecis/%s/users" % team1_remoteci_id)
-    assert r.status_code == 201
-    r = client_user1.get("/api/v1/remotecis/%s" % team1_remoteci_id)
-    r = client_user1.delete(
-        "/api/v1/remotecis/%s" % team1_remoteci_id,
-        headers={"If-match": r.data["remoteci"]["etag"]},
-    )
-    assert r.status_code == 204
-
-    with app.app_context():
-        flask.g.db_conn = engine.connect()
-        flask.g.session = session
-        emails = notifications.get_emails_from_remoteci(team1_remoteci_id)
-        assert emails == []
-
-
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_get_job_event_on_job_error(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_get_job_event_on_job_error(_, client_user1, team1_job_id):
     # set job to error status
     data = {"job_id": team1_job_id, "status": "error"}
     client_user1.post("/api/v1/jobstates", data=data)
@@ -64,7 +31,6 @@ def test_get_job_event_on_job_error(mocked_disp, client_user1, team1_job_id):
     )
     job = job.data["job"]
     email_event = notifications.get_job_event(job, ["user1@example.org"])
-    assert email_event["event"] == "notification"
     assert email_event["emails"] == ["user1@example.org"]
     assert email_event["job_id"] == team1_job_id
     assert email_event["status"] == "error"
@@ -76,8 +42,8 @@ def test_get_job_event_on_job_error(mocked_disp, client_user1, team1_job_id):
     assert email_event["regressions"] == {}
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_get_job_event_on_job_success(mocked_disp, client_user1, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_get_job_event_on_job_success(_, client_user1, team1_job_id):
     # set job to error status
     data = {"job_id": team1_job_id, "status": "success"}
     client_user1.post("/api/v1/jobstates", data=data)
@@ -113,14 +79,9 @@ https://www.distributed-ci.io/jobs/abc123
     assert expected_message == notifications.format_job_mail_message(mesg)
 
 
-@mock.patch("dci.api.v1.notifications.component_dispatcher")
-def test_new_component_created(mocked_disp, client_admin, rhel_80_topic_id):
-    _arg = {}
-
-    def side_effect(component):
-        _arg.update(component)
-
-    mocked_disp.side_effect = side_effect
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_new_component_created(mock_kp, client_admin, rhel_80_topic_id):
+    mock_kp = mock_kp.return_value
 
     data = {
         "name": "pname",
@@ -129,8 +90,8 @@ def test_new_component_created(mocked_disp, client_admin, rhel_80_topic_id):
         "topic_id": rhel_80_topic_id,
         "state": "active",
     }
-    client_admin.post("/api/v1/components", data=data).data
-    mocked_disp.assert_called_once_with(_arg)
+    c_id = client_admin.post("/api/v1/components", data=data).data["component"]["id"]
+    mock_kp.publish_components_created.assert_called_once_with({"component_id": c_id})
 
 
 def test_delete_a_remoteci_delete_the_associated_subscriptions(
