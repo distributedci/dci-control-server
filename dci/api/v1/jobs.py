@@ -174,8 +174,10 @@ def internal_create_jobs(user, values, components_ids=None):
                 )
 
     job = a_d_l.get_job_by_id(flask.g.session, values["id"])
-    logger.info("send notification message: job_started, job_id: %s" % values["id"])
-    notifications.publish({"event": "job_started", "job": job})
+    logger.info(
+        "send notification message on analytics: job_started, job_id: %s" % values["id"]
+    )
+    notifications.publish_on_analytics({"event": "job_started", "job": job})
 
     return flask.Response(
         json.dumps({"job": values}),
