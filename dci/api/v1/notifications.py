@@ -131,27 +131,19 @@ def get_emails_from_remoteci(remoteci_id):
         return []
 
 
-def send_events(events):
-    flask.g.sender.send_json(events)
-
-
 def _handle_job_event(job):
-    events = []
     emails = get_emails_from_remoteci(job["remoteci_id"])
     job_event = get_job_event(job, emails)
     if job_event:
-        events.append(job_event)
+        publish_on_controlserver(job_event)
 
     dlrn_event = dlrn(job)
     if dlrn_event:
-        events.append(dlrn_event)
+        publish_on_controlserver(dlrn_event)
 
     umb_job_finished_event = build_job_finished_umb_event(job)
     if umb_job_finished_event:
-        events.append(umb_job_finished_event)
-
-    if events:
-        send_events(events)
+        publish_on_controlserver(umb_job_finished_event)
 
 
 def get_emails_from_topic(topic_id):
@@ -185,7 +177,7 @@ def _handle_component_event(component):
     emails = get_emails_from_topic(component["topic_id"])
     component_event = get_component_event(component, emails)
     if component_event:
-        send_events([component_event])
+        publish_on_controlserver(component_event)
 
 
 def job_dispatcher(job):
@@ -196,8 +188,15 @@ def component_dispatcher(component):
     _handle_component_event(component)
 
 
-def publish(payload):
+def publish_on_analytics(message):
     try:
-        flask.g.messaging.publish(payload)
+        flask.g.messaging.publish_on_analytics(message)
+    except (OSError, socket.gaierror, Exception) as e:
+        logger.error("error while trying to publish a message: %s", str(e))
+
+
+def publish_on_controlserver(self, message):
+    try:
+        flask.g.messaging.publish_on_controlserver(message)
     except (OSError, socket.gaierror, Exception) as e:
         logger.error("error while trying to publish a message: %s", str(e))
