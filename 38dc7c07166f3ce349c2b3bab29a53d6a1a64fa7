@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f337f45b_cc93ef2a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28
+      },
+      "writtenOn": "2025-10-01T09:41:36Z",
+      "side": 1,
+      "message": "Would it be possible to fix dci-integration-tests before merging this patch ?",
+      "revId": "38dc7c07166f3ce349c2b3bab29a53d6a1a64fa7",
+      "serverId": "6c1dc8ef-8b94-40e4-bd83-c2359d45ecc0"
+    }
+  ]
+}
