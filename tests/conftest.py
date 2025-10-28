@@ -105,7 +105,8 @@ def app(db_provisioning, engine, fs_clean):
     app = dci.app.create_app()
     app.testing = True
     app.engine = engine
-    app.messaging.publish = lambda x: None
+    app.messaging.publish_on_analytics = lambda x: None
+    app.messaging.publish_on_controlserver = lambda x: None
     return app
 
 

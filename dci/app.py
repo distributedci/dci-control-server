@@ -25,8 +25,6 @@ import kombu
 import logging
 import sys
 import time
-import zmq
-
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
 
@@ -39,8 +37,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-zmq_sender = None
-
 
 class DciControlServer(flask.Flask):
     def __init__(self):
@@ -48,7 +44,6 @@ class DciControlServer(flask.Flask):
         self.config.update(dci_config.CONFIG)
         self.url_map.strict_slashes = False
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
-        self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
         self.messaging = KombuProducer()
         session = sessionmaker(bind=self.engine)()
@@ -56,13 +51,6 @@ class DciControlServer(flask.Flask):
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
         self.team_epm_id = self._get_team_id(session, "EPM")
         session.close()
-
-    def _get_zmq_sender(self, zmq_conn):
-        global zmq_sender
-        if not zmq_sender:
-            zmq_sender = zmq.Context().socket(zmq.PUSH)
-            zmq_sender.connect(zmq_conn)
-        return zmq_sender
 
     def make_default_options_response(self):
         resp = super(DciControlServer, self).make_default_options_response()
@@ -95,26 +83,47 @@ class KombuProducer:
     def __init__(self):
         super(KombuProducer, self).__init__()
         self._connection = kombu.Connection(dci_config.CONFIG["AMQP_BROKER_URL"])
-        self._exchange = kombu.Exchange("dci.analytics.exchange", type="direct")
-        self._queue = kombu.Queue(
+        self._exchange_analytics = kombu.Exchange(
+            "dci.analytics.exchange", type="direct"
+        )
+        self._exchange_controlserver = kombu.Exchange(
+            "dci.controlserver.exchange", type="direct"
+        )
+        self._queue_analytics = kombu.Queue(
             name="dci.analytics.queue",
-            exchange=self._exchange,
+            exchange=self._exchange_analytics,
             routing_key="dci.analytics.jobs",
+        )
+        self._queue_controlserver = kombu.Queue(
+            name="dci.controlserver.queue",
+            exchange=self._exchange_controlserver,
+            routing_key="dci.controlserver.events",
         )
         self._producer = None
 
-    def publish(self, message):
+    def publish_on_analytics(self, message):
         if not self._producer:
             channel = self._connection.channel()
-            self._producer = kombu.Producer(
-                exchange=self._exchange,
-                channel=channel,
-                routing_key="dci.analytics.jobs",
-            )
-            self._queue.maybe_bind(self._connection)
-            self._queue.declare()
+            self._producer = kombu.Producer(channel=channel, serializer="json")
 
-        return self._producer.publish(message)
+        return self._producer.publish(
+            message,
+            exchange="dci.analytics.exchange",
+            routing_key="dci.analytics.jobs",
+            declare=[self._exchange_analytics, self._queue_analytics],
+        )
+
+    def publish_on_controlserver(self, message):
+        if not self._producer:
+            channel = self._connection.channel()
+            self._producer = kombu.Producer(channel=channel, serializer="json")
+
+        return self._producer.publish(
+            message,
+            exchange="dci.controlserver.exchange",
+            routing_key="dci.controlserver.events",
+            declare=[self._exchange_controlserver, self._queue_controlserver],
+        )
 
 
 def configure_root_logger():
@@ -180,7 +189,6 @@ def create_app(param=None):
                 time.sleep(1)
                 pass
         flask.g.store = dci_app.store
-        flask.g.sender = dci_app.sender
 
     @dci_app.teardown_request
     def teardown_request(_):
