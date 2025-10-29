@@ -1045,3 +1045,43 @@ def test_nrt_empty_tags_are_filtered_out_when_updating_a_job(
     updated_job = r.data["job"]
     expected_tags = ["tag1", "tag2", "tag3"]
     assert updated_job["tags"] == expected_tags
+
+
+def test_nrt_get_jobs_not_contains_tags(
+    hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
+):
+    data1 = {
+        "components": [rhel_80_component_id],
+        "topic_id": rhel_80_topic_id,
+        "tags": ["both", "tag1"],
+    }
+    job1 = hmac_client_team1.post("/api/v1/jobs", data=data1)
+    job_id_1 = job1.data["job"]["id"]
+    data2 = {
+        "components": [rhel_80_component_id],
+        "topic_id": rhel_80_topic_id,
+        "tags": ["both", "tag2"],
+    }
+    job2 = hmac_client_team1.post("/api/v1/jobs", data=data2)
+    job_id_2 = job2.data["job"]["id"]
+
+    assert job1.status_code == 201
+    assert job2.status_code == 201
+
+    contains_both_rsp = hmac_client_team1.get("/api/v1/jobs/?query=contains(tags,both)")
+    assert contains_both_rsp.status_code == 200
+    jobs_both = contains_both_rsp.data["jobs"]
+    assert len(jobs_both) == 2
+    jobs_both_ids = [j["id"] for j in jobs_both]
+    assert job_id_1 in jobs_both_ids
+    assert job_id_2 in jobs_both_ids
+
+    not_contains_tag2_rsp = hmac_client_team1.get(
+        "/api/v1/jobs/?query=not_contains(tags,tag2)"
+    )
+    assert not_contains_tag2_rsp.status_code == 200
+    jobs_nottag2 = not_contains_tag2_rsp.data["jobs"]
+    assert len(jobs_nottag2) == 1
+    jobs_nottag2_ids = [j["id"] for j in jobs_nottag2]
+    assert job_id_1 in jobs_nottag2_ids
+    assert job_id_2 not in jobs_nottag2_ids
