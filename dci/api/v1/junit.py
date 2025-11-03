@@ -179,14 +179,22 @@ def _compare_testsuites(testsuite1, testsuite2):
             testcase["state"] = "UNCHANGED"
             unchanged += 1
         else:
-            if previous_testcase["action"] == "success":
+            if (
+                previous_testcase["action"] == "success"
+                and testcase["action"] == "failure"
+            ):
                 testcase["state"] = "REGRESSED"
                 testcase["regression"] = True  # tobedeleted
                 regressions += 1
-            else:
+            elif (
+                previous_testcase["action"] == "failure"
+                and testcase["action"] == "success"
+            ):
                 testcase["state"] = "RECOVERED"
                 testcase["successfix"] = True  # tobedeleted
                 successfixes += 1
+            elif previous_testcase["action"] == "skipped":
+                testcase["state"] = "ADDED"
         testcases.append(testcase)
 
     testsuite2["testcases"] = sorted(testcases, key=lambda d: d["name"])
