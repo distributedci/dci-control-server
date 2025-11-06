@@ -111,6 +111,7 @@ class User(dci_declarative.Mixin, Base):
     password = sa.Column(sa.Text, nullable=True)
     timezone = sa.Column(sa.String(255), nullable=False, default="UTC")
     state = sa.Column(STATES, default="active")
+    last_auth_at = sa.Column(sa.DateTime(), nullable=True)
     team = sa_orm.relationship("Team", secondary=USERS_TEAMS, back_populates="users")
     remotecis = sa_orm.relationship(
         "Remoteci", secondary=USER_REMOTECIS, back_populates="users"
@@ -287,6 +288,7 @@ class Remoteci(dci_declarative.Mixin, Base):
     )
     public = sa.Column("public", sa.BOOLEAN, default=False)
     state = sa.Column("state", STATES, default="active")
+    last_auth_at = sa.Column(sa.DateTime(), nullable=True)
     users = sa_orm.relationship(
         "User", secondary=USER_REMOTECIS, back_populates="remotecis"
     )
@@ -349,6 +351,7 @@ class Feeder(dci_declarative.Mixin, Base):
         nullable=False,
     )
     state = sa.Column("state", STATES, default="active")
+    last_auth_at = sa.Column(sa.DateTime(), nullable=True)
     team = sa_orm.relationship("Team", back_populates="feeders")
 
 

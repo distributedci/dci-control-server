@@ -61,5 +61,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.4",
         "Topic :: System :: Distributed Computing",
     ],
-    scripts=["bin/dci-dbsync", "bin/dci-dbinit"],
+    scripts=["bin/dci-dbsync", "bin/dci-dbinit", "bin/dci-sync-redis-auth"],
 )

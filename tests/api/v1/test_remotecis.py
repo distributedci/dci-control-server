@@ -17,6 +17,9 @@
 from __future__ import unicode_literals
 import pytest
 import uuid
+import datetime
+
+from dci.db import models2
 
 
 def test_create_remotecis(client_user1, team1_id):
@@ -501,3 +504,357 @@ def test_success_ensure_put_api_secret_is_not_leaked(client_user1, team1_id):
     )
     assert ppr.status_code == 200
     assert "api_secret" not in ppr.data["remoteci"]
+
+
+def test_disable_inactive_remotecis_never_authenticated(
+    client_admin, team1_id, session, app
+):
+    """Test disabling RemoteCIs that have never authenticated."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Create RemoteCIs with different creation dates
+    old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days + 10
+    )
+    recent_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days - 10
+    )
+
+    # Create old RemoteCI that never authenticated
+    old_remoteci = models2.Remoteci(
+        name="old_never_auth",
+        team_id=team1_id,
+        api_secret="secret1",
+        created_at=old_date.replace(tzinfo=None),
+        last_auth_at=None,
+        state="active",
+    )
+
+    # Create recent RemoteCI that never authenticated
+    recent_remoteci = models2.Remoteci(
+        name="recent_never_auth",
+        team_id=team1_id,
+        api_secret="secret2",
+        created_at=recent_date.replace(tzinfo=None),
+        last_auth_at=None,
+        state="active",
+    )
+
+    session.add_all([old_remoteci, recent_remoteci])
+    session.commit()
+
+    old_remoteci_id = str(old_remoteci.id)
+    recent_remoteci_id = str(recent_remoteci.id)
+
+    # Disable RemoteCIs inactive (uses configured threshold)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    assert data["disabled"] >= 1
+
+    # Check that old RemoteCI was disabled
+    old_rci = client_admin.get(f"/api/v1/remotecis/{old_remoteci_id}").data["remoteci"]
+    assert old_rci["state"] == "inactive"
+
+    # Check that recent RemoteCI is still active
+    recent_rci = client_admin.get(f"/api/v1/remotecis/{recent_remoteci_id}").data[
+        "remoteci"
+    ]
+    assert recent_rci["state"] == "active"
+
+
+def test_disable_inactive_remotecis_old_authentication(
+    client_admin, team1_id, session, app
+):
+    """Test disabling RemoteCIs with old last_auth_at."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    old_auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days + 10
+    )
+    old_created_date = old_auth_date - datetime.timedelta(minutes=1)
+    recent_auth_date = datetime.datetime.now(
+        datetime.timezone.utc
+    ) - datetime.timedelta(days=inactive_days - 10)
+    recent_created_date = recent_auth_date - datetime.timedelta(minutes=1)
+
+    # Create RemoteCI with old authentication
+    old_auth_remoteci = models2.Remoteci(
+        name="old_auth",
+        team_id=team1_id,
+        api_secret="secret3",
+        created_at=old_created_date.replace(tzinfo=None),
+        last_auth_at=old_auth_date.replace(tzinfo=None),
+        state="active",
+    )
+
+    # Create RemoteCI with recent authentication
+    recent_auth_remoteci = models2.Remoteci(
+        name="recent_auth",
+        team_id=team1_id,
+        api_secret="secret4",
+        created_at=recent_created_date.replace(tzinfo=None),
+        last_auth_at=recent_auth_date.replace(tzinfo=None),
+        state="active",
+    )
+
+    session.add_all([old_auth_remoteci, recent_auth_remoteci])
+    session.commit()
+
+    old_remoteci_id = str(old_auth_remoteci.id)
+    recent_remoteci_id = str(recent_auth_remoteci.id)
+
+    # Disable RemoteCIs inactive (uses configured threshold)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    assert data["disabled"] >= 1
+
+    # Check that old auth RemoteCI was disabled
+    old_rci = client_admin.get(f"/api/v1/remotecis/{old_remoteci_id}").data["remoteci"]
+    assert old_rci["state"] == "inactive"
+
+    # Check that recent auth RemoteCI is still active
+    recent_rci = client_admin.get(f"/api/v1/remotecis/{recent_remoteci_id}").data[
+        "remoteci"
+    ]
+    assert recent_rci["state"] == "active"
+
+
+def test_disable_inactive_remotecis_mixed_scenarios(
+    client_admin, team1_id, session, app
+):
+    """Test with mix of scenarios: never auth, old auth, recent activity."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days
+    )
+
+    # Should be disabled: never authenticated, created before cutoff
+    old_never_auth = models2.Remoteci(
+        name="should_disable_1",
+        team_id=team1_id,
+        api_secret="secret5",
+        created_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
+        last_auth_at=None,
+        state="active",
+    )
+
+    # Should be disabled: last auth before cutoff
+    old_auth = models2.Remoteci(
+        name="should_disable_2",
+        team_id=team1_id,
+        api_secret="secret6",
+        created_at=(cutoff_date - datetime.timedelta(days=11)).replace(tzinfo=None),
+        last_auth_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
+        state="active",
+    )
+
+    # Should stay active: recent auth
+    recent_auth = models2.Remoteci(
+        name="should_stay_active_1",
+        team_id=team1_id,
+        api_secret="secret7",
+        created_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
+        last_auth_at=(cutoff_date + datetime.timedelta(days=10)).replace(tzinfo=None),
+        state="active",
+    )
+
+    # Should stay active: never authenticated but recently created
+    recent_never_auth = models2.Remoteci(
+        name="should_stay_active_2",
+        team_id=team1_id,
+        api_secret="secret8",
+        created_at=(cutoff_date + datetime.timedelta(days=10)).replace(tzinfo=None),
+        last_auth_at=None,
+        state="active",
+    )
+
+    # Should stay active: already inactive
+    already_inactive = models2.Remoteci(
+        name="already_inactive",
+        team_id=team1_id,
+        api_secret="secret9",
+        created_at=(cutoff_date - datetime.timedelta(days=11)).replace(tzinfo=None),
+        last_auth_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
+        state="inactive",
+    )
+
+    session.add_all(
+        [old_never_auth, old_auth, recent_auth, recent_never_auth, already_inactive]
+    )
+    session.commit()
+
+    remoteci_ids = {
+        "old_never_auth": str(old_never_auth.id),
+        "old_auth": str(old_auth.id),
+        "recent_auth": str(recent_auth.id),
+        "recent_never_auth": str(recent_never_auth.id),
+        "already_inactive": str(already_inactive.id),
+    }
+
+    # Call the endpoint
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    # Should disable at least the 2 old RemoteCIs we created
+    assert data["disabled"] >= 2
+
+    # Verify states
+    rci1 = client_admin.get(f"/api/v1/remotecis/{remoteci_ids['old_never_auth']}").data[
+        "remoteci"
+    ]
+    assert rci1["state"] == "inactive"
+
+    rci2 = client_admin.get(f"/api/v1/remotecis/{remoteci_ids['old_auth']}").data[
+        "remoteci"
+    ]
+    assert rci2["state"] == "inactive"
+
+    rci3 = client_admin.get(f"/api/v1/remotecis/{remoteci_ids['recent_auth']}").data[
+        "remoteci"
+    ]
+    assert rci3["state"] == "active"
+
+    rci4 = client_admin.get(
+        f"/api/v1/remotecis/{remoteci_ids['recent_never_auth']}"
+    ).data["remoteci"]
+    assert rci4["state"] == "active"
+
+    rci5 = client_admin.get(
+        f"/api/v1/remotecis/{remoteci_ids['already_inactive']}"
+    ).data["remoteci"]
+    assert rci5["state"] == "inactive"
+
+
+def test_disable_inactive_remotecis_requires_admin(client_user1):
+    """Test that non-admin users cannot disable inactive RemoteCIs."""
+    response = client_user1.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 401
+
+
+def test_disable_inactive_remotecis_response_format(
+    client_admin, team1_id, session, app
+):
+    """Test the response format from the endpoint."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days + 10
+    )
+
+    remoteci = models2.Remoteci(
+        name="response_format_test",
+        team_id=team1_id,
+        api_secret="secret11",
+        last_auth_at=old_date.replace(tzinfo=None),
+        state="active",
+    )
+
+    session.add(remoteci)
+    session.commit()
+    remoteci_id = str(remoteci.id)
+
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    # Verify response structure
+    assert "disabled" in data
+    assert "cutoff_date" in data
+    assert "remotecis" in data
+    assert isinstance(data["disabled"], int)
+    assert isinstance(data["remotecis"], list)
+
+    # Find our remoteci in the results
+    our_remoteci = None
+    for rci in data["remotecis"]:
+        if rci["id"] == remoteci_id:
+            our_remoteci = rci
+            break
+
+    # Verify remoteci details if it was disabled
+    if our_remoteci:
+        assert "id" in our_remoteci
+        assert "name" in our_remoteci
+        assert "team_id" in our_remoteci
+        assert "last_auth_at" in our_remoteci
+        assert "created_at" in our_remoteci
+        assert our_remoteci["name"] == "response_format_test"
+
+
+def test_disable_inactive_remotecis_default_threshold(
+    client_admin, team1_id, session, app
+):
+    """Test that the configured threshold is applied correctly."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Create RemoteCI with authentication beyond the threshold (should be disabled)
+    old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days + 5
+    )
+    remoteci = models2.Remoteci(
+        name="default_threshold_test",
+        team_id=team1_id,
+        api_secret="secret12",
+        last_auth_at=old_date.replace(tzinfo=None),
+        state="active",
+    )
+
+    session.add(remoteci)
+    session.commit()
+    remoteci_id = str(remoteci.id)
+
+    # Call endpoint (should use configured threshold from config)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    assert data["disabled"] >= 1
+
+    rci = client_admin.get(f"/api/v1/remotecis/{remoteci_id}").data["remoteci"]
+    assert rci["state"] == "inactive"
+
+
+def test_disable_inactive_remotecis_no_inactive_found(
+    client_admin, team1_id, session, app
+):
+    """Test when no RemoteCIs need to be disabled."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Create RemoteCI with recent authentication (within threshold)
+    recent_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days - 10
+    )
+    remoteci = models2.Remoteci(
+        name="active_remoteci",
+        team_id=team1_id,
+        api_secret="secret13",
+        last_auth_at=recent_date.replace(tzinfo=None),
+        state="active",
+    )
+
+    session.add(remoteci)
+    session.commit()
+
+    # Call the endpoint
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
+    assert response.status_code == 200
+
+    data = response.data
+    assert "disabled" in data
+    assert "cutoff_date" in data
+    assert "remotecis" in data
+    # Could be 0 if no other inactive RemoteCIs exist
+    assert isinstance(data["disabled"], int)
+    assert isinstance(data["remotecis"], list)
