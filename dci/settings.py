@@ -127,3 +127,6 @@ REQUESTS_TIMEOUT = (
     float(os.getenv("REQUESTS_TIMEOUT_CONNECT", "3.0")),
     float(os.getenv("REQUESTS_TIMEOUT_READ", "10.0")),
 )
+
+# Redis connection for authentication tracking
+DCI_REDIS_URL = os.getenv("DCI_REDIS_URL", "redis://localhost:6379/0")

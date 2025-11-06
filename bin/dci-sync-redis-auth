@@ -1,0 +1,241 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 Red Hat, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+"""
+This script syncs authentication tracking data from Redis to the database.
+It reads the dirty_last_auth_keys set from Redis and updates the last_auth_at
+field in the users, remotecis, and feeders tables.
+
+By default, the script runs as a daemon in an infinite loop. Use --once to
+run a single sync and exit.
+"""
+
+import argparse
+import logging
+import signal
+import sys
+import time
+
+import sqlalchemy
+from sqlalchemy.orm import sessionmaker
+
+from dci import dci_config
+from dci.common.redis_client import RedisClient
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Global flag for graceful shutdown
+shutdown_requested = False
+
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals gracefully."""
+    global shutdown_requested
+    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+    shutdown_requested = True
+
+
+def perform_sync(redis_client, session):
+    """Perform a single sync operation.
+
+    Args:
+        redis_client: RedisClient instance
+        session: SQLAlchemy database session
+
+    Returns:
+        True if sync was successful (no errors), False otherwise
+    """
+    try:
+        logger.info("Starting authentication data sync from Redis to database")
+        stats = redis_client.sync_dirty_auth_keys(session)
+
+        # Report results
+        logger.info(
+            f"Sync completed: "
+            f"{stats['entities_synced']} entities updated, "
+            f"{stats['errors']} errors"
+        )
+
+        return stats['errors'] == 0
+
+    except Exception as e:
+        logger.error(f"Error during sync: {e}", exc_info=True)
+        return False
+
+
+def main():
+    """Sync Redis authentication tracking data to the database."""
+    global shutdown_requested
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Sync Redis authentication tracking data to database'
+    )
+    parser.add_argument(
+        '--once',
+        action='store_true',
+        help='Run sync once and exit (default: run continuously)'
+    )
+    parser.add_argument(
+        '-i', '--interval',
+        type=int,
+        default=300,
+        metavar='SECONDS',
+        help='Maximum sync interval in seconds (default: 300)'
+    )
+    parser.add_argument(
+        '-t', '--threshold',
+        type=int,
+        default=100,
+        metavar='COUNT',
+        help='Sync when dirty key count reaches threshold (default: 100)'
+    )
+    args = parser.parse_args()
+
+    # Validate arguments
+    if args.interval < 1:
+        logger.error("Interval must be at least 1 second")
+        return 1
+
+    if args.threshold < 1:
+        logger.error("Threshold must be at least 1")
+        return 1
+
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    try:
+        # Get configuration
+        conf = dci_config.CONFIG
+        db_uri = conf["SQLALCHEMY_DATABASE_URI"]
+        redis_url = conf.get("DCI_REDIS_URL")
+
+        if not redis_url:
+            logger.error("DCI_REDIS_URL not configured, cannot sync auth data")
+            return 1
+
+        # Initialize Redis client
+        logger.info(f"Connecting to Redis at {redis_url}")
+        redis_client = RedisClient(redis_url)
+
+        if not redis_client.is_available():
+            logger.error("Redis is not available, cannot sync auth data")
+            return 1
+
+        # Create database engine
+        logger.info(f"Connecting to database at {db_uri}")
+        engine = sqlalchemy.create_engine(db_uri)
+        Session = sessionmaker(bind=engine)
+
+        if args.once:
+            # One-shot mode: run once and exit
+            logger.info("Running in one-shot mode")
+            session = Session()
+            try:
+                success = perform_sync(redis_client, session)
+                return 0 if success else 1
+            finally:
+                session.close()
+        else:
+            # Daemon mode: run continuously
+            logger.info(
+                f"Running in daemon mode:"
+            )
+            logger.info(
+                f"  - Max interval: {args.interval} seconds"
+            )
+            logger.info(
+                f"  - Cardinality threshold: {args.threshold} keys"
+            )
+            logger.info(
+                f"  - Cardinality check interval: 5 seconds"
+            )
+            logger.info("Press Ctrl+C to stop.")
+
+            last_sync_time = time.time()
+            last_cardinality_check_time = time.time()
+            cardinality_check_interval = 5  # Check cardinality every 5 seconds
+
+            while not shutdown_requested:
+                current_time = time.time()
+                time_since_last_sync = current_time - last_sync_time
+                time_since_last_cardinality_check = current_time - last_cardinality_check_time
+
+                # Check if we should sync based on time interval
+                should_sync_by_time = time_since_last_sync >= args.interval
+
+                # Check cardinality if enough time has elapsed since last check
+                should_check_cardinality = time_since_last_cardinality_check >= cardinality_check_interval
+                should_sync_by_threshold = False
+
+                if should_check_cardinality or should_sync_by_time:
+                    try:
+                        dirty_count = redis_client._client.scard("dirty_last_auth_keys")
+
+                        if dirty_count > 0:
+                            logger.debug(
+                                f"Dirty keys: {dirty_count}, "
+                                f"time since last sync: {int(time_since_last_sync)}s"
+                            )
+
+                        should_sync_by_threshold = dirty_count >= args.threshold
+
+                        # Update last cardinality check time
+                        if should_check_cardinality:
+                            last_cardinality_check_time = current_time
+                    except Exception as e:
+                        logger.warning(f"Failed to check dirty keys cardinality: {e}")
+
+                # Sync if either condition is met
+                if should_sync_by_time or should_sync_by_threshold:
+                    reason = []
+                    if should_sync_by_time:
+                        reason.append(f"interval ({args.interval}s elapsed)")
+                    if should_sync_by_threshold:
+                        reason.append(f"threshold ({dirty_count} >= {args.threshold})")
+
+                    logger.info(f"Triggering sync: {' and '.join(reason)}")
+
+                    session = Session()
+                    try:
+                        perform_sync(redis_client, session)
+                        last_sync_time = time.time()
+                        # Reset cardinality check timer after sync
+                        last_cardinality_check_time = time.time()
+                    finally:
+                        session.close()
+
+                # Sleep for 1 second before next iteration
+                if not shutdown_requested:
+                    time.sleep(1)
+
+            logger.info("Shutdown complete")
+            return 0
+
+    except Exception as e:
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
