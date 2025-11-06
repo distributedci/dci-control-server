@@ -352,3 +352,50 @@ def test_update_testcases_with_state_changes_with_no_previous_junit():
 def test_nrt_get_testsuites_from_junit_with_an_empty_junit():
     junit_file = BytesIO()
     assert junit.get_testsuites_from_junit(junit_file) == []
+
+
+def test_nrt_testsuites_successfix_with_prev_skipped():
+    previous_junit_file = BytesIO(
+        """<?xml version='1.0' encoding='utf-8'?>
+<testsuite errors="0" failures="1" name="testsuite_1" tests="1" time="10">
+    <testcase classname="classname_1" name="testcase_1" time="10">
+        <skipped message="skip message" type="skipped">test skipped</skipped>
+    </testcase>
+</testsuite>""".encode(
+            "utf-8"
+        )
+    )
+    junit_file = BytesIO(
+        """<?xml version='1.0' encoding='utf-8'?>
+<testsuite errors="0" failures="1" name="testsuite_1" tests="1" time="10">
+    <testcase classname="classname_1" name="testcase_1" time="10" >
+        <failure type="Exception">Traceback</failure>
+    </testcase>
+</testsuite>""".encode(
+            "utf-8"
+        )
+    )
+
+    previous_testsuites = junit.get_testsuites_from_junit(previous_junit_file)
+    testsuites = junit.get_testsuites_from_junit(junit_file)
+    testsuites = junit.update_testsuites_with_testcase_changes(
+        previous_testsuites, testsuites
+    )
+
+    assert testsuites[0]["testcases"] == [
+        {
+            "name": "testcase_1",
+            "classname": "classname_1",
+            "time": 10.0,
+            "action": "failure",
+            "message": None,
+            "type": "Exception",
+            "value": "Traceback",
+            "stdout": None,
+            "stderr": None,
+            "properties": [],
+            "successfix": False,
+            "regression": False,
+            "state": "ADDED",
+        }
+    ]
