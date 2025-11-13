@@ -397,6 +397,25 @@ def test_change_remoteci_state(client_admin, team2_remoteci_id):
     assert r.data["remoteci"]["state"] == "inactive"
 
 
+def test_nrt_change_remoteci_state_inactive_unusable(hmac_client_team1, team1_remoteci):
+    r = hmac_client_team1.get("/api/v1/jobs")
+    assert r.status_code == 200
+    t = hmac_client_team1.get("/api/v1/remotecis/" + team1_remoteci["id"]).data[
+        "remoteci"
+    ]
+    data = {"state": "inactive"}
+    r = hmac_client_team1.put(
+        "/api/v1/remotecis/" + team1_remoteci["id"],
+        data=data,
+        headers={"If-match": t["etag"]},
+    )
+    assert r.status_code == 200
+    assert r.data["remoteci"]["state"] == "inactive"
+
+    r = hmac_client_team1.get("/api/v1/jobs")
+    assert r.status_code == 401
+
+
 def test_change_remoteci_to_invalid_state(client_admin, team2_remoteci_id):
     t = client_admin.get("/api/v1/remotecis/" + team2_remoteci_id).data["remoteci"]
     data = {"state": "kikoolol"}

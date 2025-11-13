@@ -177,9 +177,16 @@ class HmacMechanism(BaseMechanism):
         identity_model = allowed_types_model.get(client_type)
         if identity_model is None:
             return None
-        identity = base.get_resource_orm(
-            identity_model, client_info["client_id"], options=[orm.selectinload("team")]
-        )
+
+        query = flask.g.session.query(identity_model)
+        query = query.filter(identity_model.id == client_info["client_id"])
+        query = query.filter(identity_model.state == "active")
+        query = query.options(orm.selectinload("team"))
+        identity = query.one_or_none()
+
+        if not identity:
+            return None
+
         return Identity(
             {
                 "id": str(identity.id),
