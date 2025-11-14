@@ -52,8 +52,6 @@ def test_basic_auth_tracked_in_redis(client_user1, redis_clean):
     response = client_user1.get("/api/v1/identity")
     assert response.status_code == 200
 
-    print(response)
-
     # Get user info from response
     identity_data = response.data
     user_id = identity_data["identity"]["id"]
