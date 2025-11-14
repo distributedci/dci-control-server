@@ -550,15 +550,18 @@ def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, s
     old_auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=200
     )
+    old_created_date = old_auth_date - datetime.timedelta(minutes=1)
     recent_auth_date = datetime.datetime.now(
         datetime.timezone.utc
     ) - datetime.timedelta(days=100)
+    recent_created_date = recent_auth_date - datetime.timedelta(minutes=1)
 
     # Create RemoteCI with old authentication
     old_auth_remoteci = models2.Remoteci(
         name="old_auth",
         team_id=team1_id,
         api_secret="secret3",
+        created_at=old_created_date.replace(tzinfo=None),
         last_auth_at=old_auth_date.replace(tzinfo=None),
         state="active",
     )
@@ -568,6 +571,7 @@ def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, s
         name="recent_auth",
         team_id=team1_id,
         api_secret="secret4",
+        created_at=recent_created_date.replace(tzinfo=None),
         last_auth_at=recent_auth_date.replace(tzinfo=None),
         state="active",
     )
@@ -619,6 +623,7 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
         name="should_disable_2",
         team_id=team1_id,
         api_secret="secret6",
+        created_at=(cutoff_date - datetime.timedelta(days=11)).replace(tzinfo=None),
         last_auth_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
         state="active",
     )
@@ -628,6 +633,7 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
         name="should_stay_active_1",
         team_id=team1_id,
         api_secret="secret7",
+        created_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
         last_auth_at=(cutoff_date + datetime.timedelta(days=10)).replace(tzinfo=None),
         state="active",
     )
@@ -647,6 +653,7 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
         name="already_inactive",
         team_id=team1_id,
         api_secret="secret9",
+        created_at=(cutoff_date - datetime.timedelta(days=11)).replace(tzinfo=None),
         last_auth_at=(cutoff_date - datetime.timedelta(days=10)).replace(tzinfo=None),
         state="inactive",
     )
