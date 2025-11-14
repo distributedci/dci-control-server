@@ -49,7 +49,7 @@ class RedisClient:
                 self._client = None
 
     def is_available(self):
-        """Check if Redis client is available and connected."""
+        """Check if Redis client is available was able to connect on creation."""
         return self._client is not None
 
     def track_authentication(self, identity):
@@ -198,7 +198,6 @@ class RedisClient:
         """
         # Import here to avoid circular dependencies
         from dci.db import models2
-        from sqlalchemy import update, bindparam
 
         entities_synced = 0
         error_count = 0
@@ -218,15 +217,8 @@ class RedisClient:
             logger.info(f"Updating {len(updates)} {entity_type} records in database")
 
             try:
-                # Bulk update using session.execute with bindparam
-                # Note: 'b_id' is used instead of 'id' because 'id' is reserved by SQLAlchemy
-                session.execute(
-                    update(model).where(model.id == bindparam("b_id")),
-                    [
-                        {"b_id": u["id"], "last_auth_at": u["last_auth_at"]}
-                        for u in updates
-                    ],
-                )
+                # Bulk update using bulk_update_mappings
+                session.bulk_update_mappings(model, updates)
                 entities_synced += len(updates)
                 logger.info(
                     f"Successfully updated {len(updates)} {entity_type} records"
