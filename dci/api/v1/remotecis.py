@@ -279,32 +279,23 @@ def put_api_secret_remoteci(user, remoteci_id):
     )
 
 
-@api.route("/remotecis/inactive", methods=["POST"])
+@api.route("/remotecis/disable_inactive", methods=["PUT"])
 @decorators.login_required
 def disable_inactive_remotecis_endpoint(user):
     """API endpoint to disable RemoteCIs that haven't authenticated recently.
 
     Requires admin team membership.
-
-    Query parameters:
-        - inactive_days: Number of days of inactivity (default: 180)
     """
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
-    # Get inactive_days from query params
-    inactive_days = flask.request.args.get("inactive_days", 180, type=int)
-
-    if inactive_days < 1:
-        raise dci_exc.DCIException("inactive_days must be at least 1", status_code=400)
-
     # Call the helper function
-    stats = _disable_inactive_remotecis(flask.g.session, inactive_days)
+    stats = _disable_inactive_remotecis(flask.g.session)
 
     return flask.jsonify(stats)
 
 
-def _disable_inactive_remotecis(session, inactive_days=180):
+def _disable_inactive_remotecis(session):
     """Disable RemoteCIs that haven't authenticated in the specified period.
 
     This disables RemoteCIs that either:
@@ -313,7 +304,6 @@ def _disable_inactive_remotecis(session, inactive_days=180):
 
     Args:
         session: SQLAlchemy database session
-        inactive_days: Number of days of inactivity before disabling (default: 180 = 6 months)
 
     Returns:
         Dictionary with statistics:
@@ -321,6 +311,9 @@ def _disable_inactive_remotecis(session, inactive_days=180):
             - cutoff_date: ISO format string of the cutoff date used
             - remotecis: List of dicts with disabled RemoteCI details
     """
+    # Get inactive_days from app configuration
+    inactive_days = flask.current_app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
     # Calculate the cutoff date
     cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=inactive_days

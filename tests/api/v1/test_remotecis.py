@@ -488,15 +488,18 @@ def test_success_ensure_put_api_secret_is_not_leaked(client_user1, team1_id):
 
 
 def test_disable_inactive_remotecis_never_authenticated(
-    client_admin, team1_id, session
+    client_admin, team1_id, session, app
 ):
     """Test disabling RemoteCIs that have never authenticated."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
     # Create RemoteCIs with different creation dates
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=200
+        days=inactive_days + 10
     )
     recent_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=100
+        days=inactive_days - 10
     )
 
     # Create old RemoteCI that never authenticated
@@ -525,8 +528,8 @@ def test_disable_inactive_remotecis_never_authenticated(
     old_remoteci_id = str(old_remoteci.id)
     recent_remoteci_id = str(recent_remoteci.id)
 
-    # Disable RemoteCIs inactive for 180 days
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
+    # Disable RemoteCIs inactive (uses configured threshold)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data
@@ -543,15 +546,20 @@ def test_disable_inactive_remotecis_never_authenticated(
     assert recent_rci["state"] == "active"
 
 
-def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, session):
+def test_disable_inactive_remotecis_old_authentication(
+    client_admin, team1_id, session, app
+):
     """Test disabling RemoteCIs with old last_auth_at."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
     old_auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=200
+        days=inactive_days + 10
     )
     old_created_date = old_auth_date - datetime.timedelta(minutes=1)
     recent_auth_date = datetime.datetime.now(
         datetime.timezone.utc
-    ) - datetime.timedelta(days=100)
+    ) - datetime.timedelta(days=inactive_days - 10)
     recent_created_date = recent_auth_date - datetime.timedelta(minutes=1)
 
     # Create RemoteCI with old authentication
@@ -580,8 +588,8 @@ def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, s
     old_remoteci_id = str(old_auth_remoteci.id)
     recent_remoteci_id = str(recent_auth_remoteci.id)
 
-    # Disable RemoteCIs inactive for 180 days
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
+    # Disable RemoteCIs inactive (uses configured threshold)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data
@@ -598,10 +606,15 @@ def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, s
     assert recent_rci["state"] == "active"
 
 
-def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, session):
+def test_disable_inactive_remotecis_mixed_scenarios(
+    client_admin, team1_id, session, app
+):
     """Test with mix of scenarios: never auth, old auth, recent activity."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
     cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=180
+        days=inactive_days
     )
 
     # Should be disabled: never authenticated, created before cutoff
@@ -668,7 +681,7 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
     }
 
     # Call the endpoint
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data
@@ -702,62 +715,21 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
     assert rci5["state"] == "inactive"
 
 
-def test_disable_inactive_remotecis_custom_threshold(client_admin, team1_id, session):
-    """Test with custom inactive_days threshold."""
-    # Create RemoteCI with authentication 100 days ago
-    auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=100
-    )
-    remoteci = models2.Remoteci(
-        name="custom_threshold_test",
-        team_id=team1_id,
-        api_secret="secret10",
-        last_auth_at=auth_date.replace(tzinfo=None),
-        state="active",
-    )
-
-    session.add(remoteci)
-    session.commit()
-    remoteci_id = str(remoteci.id)
-
-    # Should NOT be disabled with 180 day threshold
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
-    assert response.status_code == 200
-    rci = client_admin.get(f"/api/v1/remotecis/{remoteci_id}").data["remoteci"]
-    assert rci["state"] == "active"
-
-    # Should be disabled with 90 day threshold
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=90")
-    assert response.status_code == 200
-    data = response.data
-    assert data["disabled"] >= 1
-
-    rci = client_admin.get(f"/api/v1/remotecis/{remoteci_id}").data["remoteci"]
-    assert rci["state"] == "inactive"
-
-
 def test_disable_inactive_remotecis_requires_admin(client_user1):
     """Test that non-admin users cannot disable inactive RemoteCIs."""
-    response = client_user1.post("/api/v1/remotecis/inactive?inactive_days=180")
+    response = client_user1.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 401
 
 
-def test_disable_inactive_remotecis_invalid_days(client_admin):
-    """Test validation of inactive_days parameter."""
-    # Test with 0
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=0")
-    assert response.status_code == 400
-    assert "must be at least 1" in response.data["message"]
-
-    # Test with negative
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=-10")
-    assert response.status_code == 400
-
-
-def test_disable_inactive_remotecis_response_format(client_admin, team1_id, session):
+def test_disable_inactive_remotecis_response_format(
+    client_admin, team1_id, session, app
+):
     """Test the response format from the endpoint."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=200
+        days=inactive_days + 10
     )
 
     remoteci = models2.Remoteci(
@@ -772,7 +744,7 @@ def test_disable_inactive_remotecis_response_format(client_admin, team1_id, sess
     session.commit()
     remoteci_id = str(remoteci.id)
 
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data
@@ -800,11 +772,16 @@ def test_disable_inactive_remotecis_response_format(client_admin, team1_id, sess
         assert our_remoteci["name"] == "response_format_test"
 
 
-def test_disable_inactive_remotecis_default_threshold(client_admin, team1_id, session):
-    """Test that default threshold is 180 days."""
-    # Create RemoteCI with authentication 185 days ago (should be disabled)
+def test_disable_inactive_remotecis_default_threshold(
+    client_admin, team1_id, session, app
+):
+    """Test that the configured threshold is applied correctly."""
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Create RemoteCI with authentication beyond the threshold (should be disabled)
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=185
+        days=inactive_days + 5
     )
     remoteci = models2.Remoteci(
         name="default_threshold_test",
@@ -818,8 +795,8 @@ def test_disable_inactive_remotecis_default_threshold(client_admin, team1_id, se
     session.commit()
     remoteci_id = str(remoteci.id)
 
-    # Call without specifying inactive_days (should use default 180)
-    response = client_admin.post("/api/v1/remotecis/inactive")
+    # Call endpoint (should use configured threshold from config)
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data
@@ -829,11 +806,16 @@ def test_disable_inactive_remotecis_default_threshold(client_admin, team1_id, se
     assert rci["state"] == "inactive"
 
 
-def test_disable_inactive_remotecis_no_inactive_found(client_admin, team1_id, session):
+def test_disable_inactive_remotecis_no_inactive_found(
+    client_admin, team1_id, session, app
+):
     """Test when no RemoteCIs need to be disabled."""
-    # Create RemoteCI with recent authentication
+    # Get the configured inactivity threshold
+    inactive_days = app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Create RemoteCI with recent authentication (within threshold)
     recent_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=10
+        days=inactive_days - 10
     )
     remoteci = models2.Remoteci(
         name="active_remoteci",
@@ -847,7 +829,7 @@ def test_disable_inactive_remotecis_no_inactive_found(client_admin, team1_id, se
     session.commit()
 
     # Call the endpoint
-    response = client_admin.post("/api/v1/remotecis/inactive?inactive_days=180")
+    response = client_admin.put("/api/v1/remotecis/disable_inactive")
     assert response.status_code == 200
 
     data = response.data

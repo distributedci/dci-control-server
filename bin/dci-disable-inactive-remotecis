@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 Red Hat, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+"""
+This script disables RemoteCIs that haven't authenticated recently.
+
+It identifies and disables RemoteCIs that either:
+- Have never authenticated and were created before the cutoff date
+- Last authenticated before the cutoff date
+
+The inactivity threshold is configured via the REMOTECI_INACTIVITY_DAYS
+setting (default: 90 days).
+
+Usage:
+    dci-disable-inactive-remotecis [--dry-run] [--verbose]
+"""
+
+import argparse
+import logging
+import sys
+
+from sqlalchemy.orm import sessionmaker
+
+from dci import app as dci_app
+from dci import dci_config
+from dci.api.v1.remotecis import _disable_inactive_remotecis
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Disable RemoteCIs that haven't authenticated recently"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be disabled without making changes",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+    )
+    return parser.parse_args()
+
+
+def main():
+    """Main entry point for the script."""
+    args = parse_args()
+
+    # Set logging level
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger("dci").setLevel(logging.DEBUG)
+
+    # Get configuration
+    conf = dci_config.CONFIG
+    inactive_days = conf.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    logger.info(
+        f"Starting inactive RemoteCI cleanup (threshold: {inactive_days} days)"
+    )
+
+    # Create Flask app to get app context and engine
+    app = dci_app.create_app()
+
+    # Create database session using app's engine
+    Session = sessionmaker(bind=app.engine)
+    session = Session()
+
+    try:
+        if args.dry_run:
+            logger.info("DRY RUN MODE - No changes will be made")
+            logger.warning(
+                "Dry-run mode: Use the API endpoint or modify the code to preview changes"
+            )
+            sys.exit(0)
+
+        # Perform the disable operation within Flask app context
+        logger.info("Disabling inactive RemoteCIs...")
+        with app.app_context():
+            stats = _disable_inactive_remotecis(session)
+
+        # Display results
+        logger.info(f"Successfully disabled {stats['disabled']} RemoteCI(s)")
+        logger.info(f"Cutoff date: {stats['cutoff_date']}")
+
+        if args.verbose and stats["remotecis"]:
+            logger.info("Disabled RemoteCIs:")
+            for rci in stats["remotecis"]:
+                last_auth = rci["last_auth_at"] or "Never"
+                logger.info(
+                    f"  - {rci['name']} (ID: {rci['id']}, "
+                    f"Last Auth: {last_auth}, Created: {rci['created_at']})"
+                )
+
+        # Success
+        logger.info("Inactive RemoteCI cleanup completed successfully")
+        sys.exit(0)
+
+    except Exception as e:
+        logger.error(f"Error disabling inactive RemoteCIs: {e}", exc_info=True)
+        session.rollback()
+        sys.exit(1)
+
+    finally:
+        session.close()
+
+
+if __name__ == "__main__":
+    main()
