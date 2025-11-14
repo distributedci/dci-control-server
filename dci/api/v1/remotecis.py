@@ -13,9 +13,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import datetime
 import flask
 from flask import json
-from sqlalchemy import exc as sa_exc
+import logging
+from sqlalchemy import exc as sa_exc, update, or_, and_
 import sqlalchemy.orm as sa_orm
 
 from dci.api.v1 import api
@@ -35,6 +37,8 @@ from dci.common import signature
 from dci.common import utils
 from dci.db import declarative as d
 from dci.db import models2
+
+logger = logging.getLogger(__name__)
 
 
 @api.route("/remotecis", methods=["POST"])
@@ -273,3 +277,101 @@ def put_api_secret_remoteci(user, remoteci_id):
         headers={"ETag": remoteci.etag},
         content_type="application/json",
     )
+
+
+@api.route("/remotecis/disable_inactive", methods=["PUT"])
+@decorators.login_required
+def disable_inactive_remotecis_endpoint(user):
+    """API endpoint to disable RemoteCIs that haven't authenticated recently.
+
+    Requires admin team membership.
+    """
+    if user.is_not_super_admin():
+        raise dci_exc.Unauthorized()
+
+    # Call the helper function
+    stats = _disable_inactive_remotecis(flask.g.session)
+
+    return flask.jsonify(stats)
+
+
+def _disable_inactive_remotecis(session):
+    """Disable RemoteCIs that haven't authenticated in the specified period.
+
+    This disables RemoteCIs that either:
+    - Have never authenticated and were created before the cutoff date
+    - Last authenticated before the cutoff date
+
+    Args:
+        session: SQLAlchemy database session
+
+    Returns:
+        Dictionary with statistics:
+            - disabled: Number of RemoteCIs disabled
+            - cutoff_date: ISO format string of the cutoff date used
+            - remotecis: List of dicts with disabled RemoteCI details
+    """
+    # Get inactive_days from app configuration
+    inactive_days = flask.current_app.config.get("REMOTECI_INACTIVITY_DAYS", 90)
+
+    # Calculate the cutoff date
+    cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=inactive_days
+    )
+    # Convert to naive UTC for database comparison
+    cutoff_date_naive = cutoff_date.replace(tzinfo=None)
+
+    logger.info(
+        f"Disabling RemoteCIs inactive since {cutoff_date_naive.isoformat()} "
+        f"({inactive_days} days ago)"
+    )
+
+    # Perform the bulk update with RETURNING clause
+    result = session.execute(
+        update(models2.Remoteci)
+        .where(
+            and_(
+                models2.Remoteci.state == "active",
+                or_(
+                    # Never authenticated and old enough
+                    and_(
+                        models2.Remoteci.last_auth_at.is_(None),
+                        models2.Remoteci.created_at < cutoff_date_naive,
+                    ),
+                    # Last auth too old
+                    models2.Remoteci.last_auth_at < cutoff_date_naive,
+                ),
+            )
+        )
+        .values(state="inactive")
+        .returning(
+            models2.Remoteci.id,
+            models2.Remoteci.name,
+            models2.Remoteci.team_id,
+            models2.Remoteci.last_auth_at,
+            models2.Remoteci.created_at,
+        )
+    )
+
+    disabled_remotecis = result.fetchall()
+    session.commit()
+
+    # Format results
+    remotecis_list = [
+        {
+            "id": str(row.id),
+            "name": row.name,
+            "team_id": str(row.team_id),
+            "last_auth_at": row.last_auth_at.isoformat() if row.last_auth_at else None,
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in disabled_remotecis
+    ]
+
+    logger.info(f"Disabled {len(remotecis_list)} inactive RemoteCIs")
+
+    return {
+        "disabled": len(remotecis_list),
+        "cutoff_date": cutoff_date_naive.isoformat(),
+        "remotecis": remotecis_list,
+    }

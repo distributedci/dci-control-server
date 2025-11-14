@@ -45,6 +45,11 @@ class BaseMechanism(object):
         method must raise an exception with proper error message."""
         pass
 
+    def track_authentication(self):
+        """Track successful authentication in Redis."""
+        if self.identity and hasattr(flask.g, "redis_client"):
+            flask.g.redis_client.track_authentication(self.identity)
+
     def get_user(self, model_constraint):
         try:
             return (
@@ -139,6 +144,7 @@ class BasicAuthMechanism(BaseMechanism):
         if not is_authenticated:
             raise dci_exc.DCIException("Invalid user credentials", status_code=401)
         self.identity = self.identity_from_user(user)
+        self.track_authentication()
         return True
 
 
@@ -166,6 +172,7 @@ class HmacMechanism(BaseMechanism):
             raise dci_exc.DCIException("HmacMechanism failed: %s" % error_message)
         if len(self.identity.teams_ids) > 0:
             self.check_team_is_active(self.identity.teams_ids[0])
+        self.track_authentication()
         return True
 
     def build_identity(self, client_info):
@@ -256,6 +263,7 @@ class OpenIDCAuth(BaseMechanism):
             self.identity = self._get_or_update_or_create_user(user_info, team_id)
         except sa_exc.IntegrityError:
             raise dci_exc.DCICreationConflict("users", "username")
+        self.track_authentication()
         return True
 
     @staticmethod
