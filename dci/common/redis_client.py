@@ -245,6 +245,10 @@ class RedisClient:
         sync set, fetches data from Redis, updates the database with all authentication
         timestamps using bulk updates, and then removes the sync set.
 
+        The sync is performed in two phases:
+        1. Database phase: Rename, fetch, update, and commit (atomic with rollback)
+        2. Cleanup phase: Delete sync set (best-effort, DB already committed)
+
         Args:
             session: SQLAlchemy database session for updating records
 
@@ -262,11 +266,14 @@ class RedisClient:
 
         stats = {"entities_synced": 0, "errors": 0}
 
+        # Phase 1: Database update (atomic with rollback on failure)
         try:
             # Atomically rename the dirty set to sync set
             # This ensures we don't lose any new authentications that happen during sync
             try:
                 self._client.rename(dirty_set_name, sync_set_name)
+                # Set TTL as safety net in case cleanup fails (24 hours)
+                self._client.expire(sync_set_name, 86400)
             except Exception as e:
                 # Key might not exist if there are no dirty keys
                 if "no such key" in str(e).lower():
@@ -294,26 +301,25 @@ class RedisClient:
             stats["entities_synced"] += entities_synced
             stats["errors"] += db_errors
 
-            # Commit all database changes
+            # Commit all database changes (point of no return)
             session.commit()
             logger.info(
-                f"Sync completed: {stats['entities_synced']} entities updated, "
+                f"Database committed: {stats['entities_synced']} entities updated, "
                 f"{stats['errors']} errors"
             )
 
-            # Clean up the sync set
-            self._client.delete(sync_set_name)
-
         except Exception as e:
-            # Roll back database changes on error
+            # Database phase failed - rollback and preserve data for retry
             session.rollback()
-            logger.error(f"Fatal error during auth keys sync: {e}")
+            logger.error(f"Database sync failed, rolling back: {e}")
             stats["errors"] += 1
 
-            # Rename the sync set to failed set for later inspection
+            # Preserve sync set as failed for later inspection/retry
             failed_set_name = f"sync_last_auth_keys:failed:{sync_timestamp}"
             try:
                 self._client.rename(sync_set_name, failed_set_name)
+                # Set longer TTL on failed sets for manual inspection (7 days)
+                self._client.expire(failed_set_name, 604800)
                 logger.error(
                     f"Sync failed, data preserved in Redis set: {failed_set_name}"
                 )
@@ -321,5 +327,21 @@ class RedisClient:
                 logger.error(
                     f"Failed to preserve sync set after failure: {rename_error}"
                 )
+
+            return stats
+
+        # Phase 2: Cleanup Redis sync set (best-effort, DB already committed)
+        try:
+            self._client.delete(sync_set_name)
+            logger.info("Redis sync set cleaned up successfully")
+        except Exception as e:
+            # Database is already updated, so this is just a cleanup warning
+            # The sync set will be automatically cleaned up by TTL after 24 hours
+            logger.warning(
+                f"Failed to cleanup Redis sync set {sync_set_name}: {e}. "
+                f"Data was successfully synced to database. "
+                f"Set will expire automatically after 24 hours."
+            )
+            # Don't increment error count - sync was actually successful
 
         return stats
