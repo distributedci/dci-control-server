@@ -19,6 +19,8 @@ import pytest
 import uuid
 import datetime
 
+from dci.db import models2
+
 
 def test_create_remotecis(client_user1, team1_id):
     pr = client_user1.post(
@@ -489,8 +491,6 @@ def test_disable_inactive_remotecis_never_authenticated(
     client_admin, team1_id, session
 ):
     """Test disabling RemoteCIs that have never authenticated."""
-    from dci.db import models2
-
     # Create RemoteCIs with different creation dates
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=200
@@ -545,8 +545,6 @@ def test_disable_inactive_remotecis_never_authenticated(
 
 def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, session):
     """Test disabling RemoteCIs with old last_auth_at."""
-    from dci.db import models2
-
     old_auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=200
     )
@@ -602,8 +600,6 @@ def test_disable_inactive_remotecis_old_authentication(client_admin, team1_id, s
 
 def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, session):
     """Test with mix of scenarios: never auth, old auth, recent activity."""
-    from dci.db import models2
-
     cutoff_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=180
     )
@@ -708,8 +704,6 @@ def test_disable_inactive_remotecis_mixed_scenarios(client_admin, team1_id, sess
 
 def test_disable_inactive_remotecis_custom_threshold(client_admin, team1_id, session):
     """Test with custom inactive_days threshold."""
-    from dci.db import models2
-
     # Create RemoteCI with authentication 100 days ago
     auth_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=100
@@ -762,8 +756,6 @@ def test_disable_inactive_remotecis_invalid_days(client_admin):
 
 def test_disable_inactive_remotecis_response_format(client_admin, team1_id, session):
     """Test the response format from the endpoint."""
-    from dci.db import models2
-
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=200
     )
@@ -810,8 +802,6 @@ def test_disable_inactive_remotecis_response_format(client_admin, team1_id, sess
 
 def test_disable_inactive_remotecis_default_threshold(client_admin, team1_id, session):
     """Test that default threshold is 180 days."""
-    from dci.db import models2
-
     # Create RemoteCI with authentication 185 days ago (should be disabled)
     old_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=185
@@ -841,8 +831,6 @@ def test_disable_inactive_remotecis_default_threshold(client_admin, team1_id, se
 
 def test_disable_inactive_remotecis_no_inactive_found(client_admin, team1_id, session):
     """Test when no RemoteCIs need to be disabled."""
-    from dci.db import models2
-
     # Create RemoteCI with recent authentication
     recent_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=10
