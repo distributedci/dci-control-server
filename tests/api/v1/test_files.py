@@ -289,12 +289,12 @@ def test_get_previous_job_in_topic(
 ):
     def get_new_remoteci_context():
         data = {"name": "rname_new", "team_id": team1_id}
-        remoteci = client_user1.post("/api/v1/remotecis", data=data).data
-        remoteci_id = str(remoteci["remoteci"]["id"])
-        api_secret = client_user1.get("/api/v1/remotecis/%s" % remoteci_id).data
-        api_secret = api_secret["remoteci"]["api_secret"]
-
-        remoteci = {"id": remoteci_id, "api_secret": api_secret, "type": "remoteci"}
+        remoteci = client_user1.post("/api/v1/remotecis", data=data).data["remoteci"]
+        remoteci = {
+            "id": remoteci["id"],
+            "api_secret": remoteci["api_secret"],
+            "type": "remoteci",
+        }
         return t_utils.generate_token_based_client(app, remoteci)
 
     # job_1 from remoteci_context
