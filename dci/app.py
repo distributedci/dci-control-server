@@ -17,6 +17,7 @@ from dci.api import v1 as api_v1
 from dci.api import v2 as api_v2
 from dci.common import exceptions
 from dci.common import utils
+from dci.common.redis_client import RedisClient
 from dci.db import models2
 from dci import dci_config
 
@@ -51,6 +52,7 @@ class DciControlServer(flask.Flask):
         self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
         self.messaging = KombuProducer()
+        self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
@@ -181,6 +183,7 @@ def create_app(param=None):
                 pass
         flask.g.store = dci_app.store
         flask.g.sender = dci_app.sender
+        flask.g.redis_client = dci_app.redis_client
 
     @dci_app.teardown_request
     def teardown_request(_):

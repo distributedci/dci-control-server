@@ -28,6 +28,7 @@ pyzmq==19.0.0;python_version<="3.6"  # python-zmq-19.0.0-1.el8.src.rpm epel
 pyzmq;python_version>"3.6"
 kombu==5.1.0
 boto3==1.15.15  # python3-boto3-1.15.15-1.el8.src.rpm epel
+redis
 
 dciauth  # ignore: package from dci use the latest version
 dci-umb  # ignore: package from dci use the latest version
