@@ -76,7 +76,7 @@ def get_all_remotecis(user, t_id=None):
     args = check_and_get_args(flask.request.args.to_dict())
 
     q = flask.g.session.query(models2.Remoteci)
-    if user.is_not_super_admin() and user.is_not_epm() and user.is_not_read_only_user():
+    if user.is_not_super_admin():
         q = q.filter(models2.Remoteci.team_id.in_(user.teams_ids))
 
     if t_id is not None:
