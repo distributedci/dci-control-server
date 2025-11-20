@@ -70,6 +70,16 @@ def test_get_all_remotecis(client_user1, team1_id):
     ]
 
 
+def test_nrt_read_only_user_cant_see_all_remotecis(
+    client_user1, team1_id, client_rh_employee
+):
+    r = client_user1.post(
+        "/api/v1/remotecis", data={"name": "remoteci 1", "team_id": team1_id}
+    )
+    assert r.status_code == 201
+    assert len(client_rh_employee.get("/api/v1/remotecis").data["remotecis"]) == 0
+
+
 def test_get_all_remotecis_with_where(client_user1, team1_id):
     pr = client_user1.post(
         "/api/v1/remotecis", data={"name": "pname1", "team_id": team1_id}
