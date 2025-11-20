@@ -85,7 +85,9 @@ def get_all_teams(user):
 
     q = d.handle_pagination(q, args)
     teams = q.all()
-    teams = list(map(lambda t: t.serialize(), teams))
+    teams = list(
+        map(lambda t: t.serialize(ignore_columns=["remotecis.api_secret"]), teams)
+    )
 
     return flask.jsonify({"teams": teams, "_meta": {"count": nb_teams}})
 
@@ -114,7 +116,7 @@ def get_team_by_id(user, t_id):
         raise dci_exc.DCIException(message="team not found", status_code=404)
 
     return flask.Response(
-        json.dumps({"team": t.serialize()}),
+        json.dumps({"team": t.serialize(ignore_columns=["remotecis.api_secret"])}),
         200,
         headers={"ETag": t.etag},
         content_type="application/json",

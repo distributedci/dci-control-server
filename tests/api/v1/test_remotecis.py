@@ -499,21 +499,78 @@ def test_get_subscribed_remotecis(team1_remoteci_id, client_user1, user1_id):
     assert response.data["remotecis"][0]["id"] == team1_remoteci_id
 
 
-def test_success_ensure_put_api_secret_is_not_leaked(client_user1, team1_id):
-    """Test to ensure API secret is not leaked during update."""
+def test_api_secret_is_not_returned_in_get(client_user1, team1_remoteci_id):
+    assert (
+        "api_secret" not in client_user1.get("/api/v1/remotecis").data["remotecis"][0]
+    )
+    assert (
+        "api_secret"
+        not in client_user1.get(f"/api/v1/remotecis/{team1_remoteci_id}").data[
+            "remoteci"
+        ]
+    )
 
-    pr = client_user1.post(
-        "/api/v1/remotecis",
-        data={"name": "pname", "data": {"a": 1, "b": 2}, "team_id": team1_id},
+
+def test_api_secret_is_not_returned_in_update(client_user1, team1_remoteci):
+    assert (
+        "api_secret"
+        not in client_user1.put(
+            f"/api/v1/remotecis/{team1_remoteci['id']}",
+            data={"name": "new_name"},
+            headers={"If-match": team1_remoteci["etag"]},
+        ).data["remoteci"]
     )
-    pr_etag = pr.headers.get("ETag")
-    ppr = client_user1.put(
-        "/api/v1/remotecis/%s" % pr.data["remoteci"]["id"],
-        data={"name": "nname", "public": True, "data": {"c": 3}},
-        headers={"If-match": pr_etag},
+
+
+def test_api_secret_is_not_returned_in_the_remotecis_the_user_is_subscribed_to(
+    client_user1, team1_remoteci_id, user1_id
+):
+    r = client_user1.post(f"/api/v1/remotecis/{team1_remoteci_id}/users")
+    assert r.status_code == 201
+    for remoteci in client_user1.get("/api/v1/users/me").data["user"]["remotecis"]:
+        assert "api_secret" not in remoteci
+    for remoteci in client_user1.get(f"/api/v1/users/{user1_id}").data["user"][
+        "remotecis"
+    ]:
+        assert "api_secret" not in remoteci
+    for remoteci in client_user1.get(f"/api/v1/users/{user1_id}/remotecis").data[
+        "remotecis"
+    ]:
+        assert "api_secret" not in remoteci
+
+
+def test_api_secret_is_not_returned_in_the_teams_endpoints(
+    client_user1, team1_id, team1_remoteci_id
+):
+    for team in client_user1.get("/api/v1/teams").data["teams"]:
+        for remoteci in team["remotecis"]:
+            assert "api_secret" not in remoteci
+
+    assert team1_remoteci_id is not None
+    for remoteci in client_user1.get(f"/api/v1/teams/{team1_id}").data["team"][
+        "remotecis"
+    ]:
+        assert "api_secret" not in remoteci
+
+
+def test_api_secret_is_returned_in_creation(client_user1, team1_id):
+    assert (
+        "api_secret"
+        in client_user1.post(
+            "/api/v1/remotecis", data={"name": "Remoteci name", "team_id": team1_id}
+        ).data["remoteci"]
     )
-    assert ppr.status_code == 200
-    assert "api_secret" not in ppr.data["remoteci"]
+
+
+def test_api_secret_is_returned_in_refresh_api_secret(client_user1, team1_remoteci):
+    assert (
+        "api_secret"
+        in client_user1.put(
+            f"/api/v1/remotecis/{team1_remoteci['id']}/api_secret",
+            data={},
+            headers={"If-match": team1_remoteci["etag"]},
+        ).data["remoteci"]
+    )
 
 
 def test_disable_inactive_remotecis_never_authenticated(

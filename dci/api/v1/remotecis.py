@@ -93,7 +93,9 @@ def get_all_remotecis(user, t_id=None):
 
     q = d.handle_pagination(q, args)
     remotecis = q.all()
-    remotecis = list(map(lambda r: r.serialize(), remotecis))
+    remotecis = list(
+        map(lambda r: r.serialize(ignore_columns=["api_secret"]), remotecis)
+    )
 
     return flask.jsonify({"remotecis": remotecis, "_meta": {"count": nb_remotecis}})
 
@@ -113,7 +115,7 @@ def get_remoteci_by_id(user, remoteci_id):
         raise dci_exc.Unauthorized()
 
     return flask.Response(
-        json.dumps({"remoteci": r.serialize()}),
+        json.dumps({"remoteci": r.serialize(ignore_columns=["api_secret"])}),
         200,
         headers={"ETag": r.etag},
         content_type="application/json",
