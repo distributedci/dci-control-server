@@ -26,6 +26,7 @@ from dci.common.schemas import (
     create_user_schema,
     update_user_schema,
 )
+from tests import utils
 
 
 def test_create_users(client_admin, team2_id):
@@ -44,9 +45,10 @@ def test_create_users(client_admin, team2_id):
     gu = client_admin.get("/api/v1/users/%s" % pu_id).data
     assert gu["user"]["name"] == "pname"
     assert gu["user"]["timezone"] == "UTC"
+    assert "password" not in gu["user"]
 
 
-def test_create_user_withouta_team(client_admin):
+def test_create_user_without_a_team(client_admin):
     pu = client_admin.post(
         "/api/v1/users",
         data={
@@ -103,8 +105,6 @@ def test_get_teams_of_user(client_admin, user1_id, team2_id, team1_id):
 
 
 def test_get_all_users(client_admin, team2_id):
-    # TODO(yassine): Currently there is already 3 users created in the DB,
-    # this will be fixed later.
     db_users = client_admin.get("/api/v1/users?sort=created_at").data
     db_users = db_users["users"]
     db_users_ids = [db_t["id"] for db_t in db_users]
@@ -145,8 +145,6 @@ def test_where_invalid(client_admin):
 
 
 def test_get_all_users_with_team(client_admin):
-    # TODO(yassine): Currently there is already 3 users created in the DB,
-    # this will be fixed later.
     db_users = client_admin.get("/api/v1/users?embed=team&where=name:admin").data
     assert "users" in db_users
     db_users = db_users["users"]
@@ -230,8 +228,6 @@ def test_get_all_users_with_pagination(client_admin, team2_id):
 
 
 def test_get_all_users_with_sort(client_admin, team2_id):
-    # TODO(yassine): Currently there is already 3 users created in the DB,
-    # this will be fixed later.
     db_users = client_admin.get("/api/v1/users?sort=created_at").data
     db_users = db_users["users"]
 
@@ -655,7 +651,7 @@ def test_get_embed_remotecis(client_user1, team1_remoteci_id, user1_id):
     assert me["remotecis"][0]["id"] == team1_remoteci_id
 
 
-def test_success_ensure_put_me_api_secret_is_not_leaked(client_admin, client_user1):
+def test_success_ensure_put_me_password_is_not_leaked(client_admin, client_user1):
     """Test to ensure API secret is not leaked during update."""
 
     user_data, user_etag = get_user(client_admin, "user1")
@@ -670,7 +666,7 @@ def test_success_ensure_put_me_api_secret_is_not_leaked(client_admin, client_use
     assert "password" not in res.data["user"]
 
 
-def test_success_ensure_put_api_secret_is_not_leaked(client_admin, team2_id):
+def test_success_ensure_put_password_is_not_leaked(client_admin, team2_id):
     pu = client_admin.post(
         "/api/v1/users",
         data={
@@ -854,3 +850,79 @@ def test_admin_can_update_sso_sub_field(client_admin):
     )
     assert request.status_code == 200
     assert request.data["user"]["sso_sub"] == "87654321"
+
+
+def test_a_user_can_log_in_after_his_creation_with_a_password(app, client_admin):
+    email = "user@example.org"
+    password = "user password"
+    client = utils.generate_client(app, (email, password))
+    assert client.get("/api/v1/identity").status_code == 401
+
+    request = client_admin.post(
+        "/api/v1/users",
+        data={
+            "name": "user",
+            "password": password,
+            "fullname": "Fullname",
+            "email": email,
+        },
+    )
+    assert request.status_code == 201
+    assert client.get("/api/v1/identity").status_code == 200
+
+
+def test_a_user_cant_log_in_after_his_creation_without_a_password(app, client_admin):
+    email = "user@example.org"
+    password = ""
+    client = utils.generate_client(app, (email, password))
+    assert client.get("/api/v1/identity").status_code == 401
+
+    request = client_admin.post(
+        "/api/v1/users",
+        data={
+            "name": "user",
+            "fullname": "Fullname",
+            "email": email,
+        },
+    )
+    assert request.status_code == 201
+    assert client.get("/api/v1/identity").status_code == 401
+
+
+def test_a_user_can_log_in_after_his_password_changed(
+    app, client_admin, client_user1, user1
+):
+    assert client_user1.get("/api/v1/identity").status_code == 200
+    new_password = "new password"
+    request = client_admin.put(
+        f"/api/v1/users/{user1['id']}",
+        data={**user1, "password": new_password},
+        headers={"If-match": user1["etag"]},
+    )
+    assert request.status_code == 200
+    assert client_user1.get("/api/v1/identity").status_code == 401
+
+    new_client_user1 = utils.generate_client(app, (user1["email"], new_password))
+    assert new_client_user1.get("/api/v1/identity").status_code == 200
+
+
+def test_create_a_user_with_empty_password_is_forbidden(client_admin, user1):
+    request = client_admin.post(
+        "/api/v1/users",
+        data={
+            "name": "user",
+            "fullname": "Fullname",
+            "email": "user@example.org",
+            "password": "",
+        },
+    )
+    assert request.status_code == 400
+
+
+def test_update_a_user_with_empty_password_is_forbidden(client_admin, user1):
+    request = client_admin.put(
+        f"/api/v1/users/{user1['id']}",
+        data={**user1, "password": ""},
+        headers={"If-match": user1["etag"]},
+    )
+    assert request.status_code == 400

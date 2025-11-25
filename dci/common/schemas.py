@@ -356,7 +356,7 @@ create_user_properties = {
     "email": Properties.email,
     "sso_username": Properties.string,
     "timezone": Properties.string,
-    "password": Properties.string,
+    "password": Properties.non_empty_string,
     "state": with_default(Properties.enum(valid_resource_states), "active"),
 }
 create_user_schema = {
@@ -372,7 +372,7 @@ update_user_properties = {
     "email": Properties.email,
     "sso_sub": with_default(Properties.string, None),
     "timezone": Properties.string,
-    "password": Properties.string,
+    "password": Properties.non_empty_string,
     "team_id": Properties.uuid,
     "state": Properties.enum(valid_resource_states),
 }

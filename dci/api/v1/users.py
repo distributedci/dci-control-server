@@ -214,8 +214,9 @@ def put_user(user, user_id):
 
     values["etag"] = utils.gen_etag()
 
-    if "password" in values:
-        values["password"] = auth.hash_password(values.get("password"))
+    password = values.pop("password", None)
+    if password:
+        values["password"] = auth.hash_password(password)
 
     updated_user = (
         flask.g.session.query(models2.User)

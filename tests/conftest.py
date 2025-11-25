@@ -254,8 +254,13 @@ def user_no_team(client_admin):
 
 
 @pytest.fixture
-def user1_id(client_user1):
-    return client_user1.get("/api/v1/users/me").data["user"]["id"]
+def user1(client_user1):
+    return client_user1.get("/api/v1/users/me").data["user"]
+
+
+@pytest.fixture
+def user1_id(user1):
+    return user1["id"]
 
 
 @pytest.fixture
