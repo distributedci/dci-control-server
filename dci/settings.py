@@ -133,3 +133,10 @@ DCI_REDIS_URL = os.getenv("DCI_REDIS_URL", "redis://localhost:6379/0")
 
 # RemoteCI inactivity threshold (in days)
 REMOTECI_INACTIVITY_DAYS = int(os.getenv("REMOTECI_INACTIVITY_DAYS", "90"))
+
+# Mailing configuration
+DCI_EMAIL_USE_TLS = True
+DCI_EMAIL_SERVER = "smtp.corp.redhat.com"
+DCI_EMAIL_SERVER_PORT = 587
+DCI_EMAIL_ACCOUNT = "no-reply@distributed-ci.io"
+DCI_EMAIL_ALERT = "distributedci+alerts@redhat.com"
