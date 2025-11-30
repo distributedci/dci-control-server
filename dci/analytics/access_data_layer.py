@@ -73,7 +73,7 @@ def get_job_by_id(session, job_id):
         .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
-    return query.one().serialize(ignore_columns=["data"])
+    return query.one().serialize(ignore_columns=["data", "remoteci.api_secret"])
 
 
 def get_components(session, offset, limit, unit, amount):
