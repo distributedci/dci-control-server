@@ -73,6 +73,11 @@ def test_get_jobs(
     assert len(jobs) == 2
 
 
+def test_get_job_by_id(session, team1_job_id):
+    team1_job = a_d_l.get_job_by_id(session, team1_job_id)
+    assert "api_secret" not in team1_job["remoteci"]
+
+
 @mock.patch("dci.api.v1.utils.get_utc_now")
 def test_get_components(m_get_utc_now, session, client_admin, rhel_80_topic_id):
     m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
