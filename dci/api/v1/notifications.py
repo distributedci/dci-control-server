@@ -209,22 +209,18 @@ def publish(payload):
 
 def send_alert_mail(subject, message):
     def _send_mail():
-        email_server = dci_config.CONFIG.get("DCI_EMAIL_SERVER", "smtp.corp.redhat.com")
-        port = dci_config.CONFIG.get("DCI_EMAIL_SERVER_PORT", 587)
-        account = (
-            dci_config.CONFIG.get("DCI_EMAIL_ACCOUNT", "no-reply@distributed-ci.io"),
-        )
+        email_server = dci_config.CONFIG["DCI_EMAIL_SERVER"]
+        port = dci_config.CONFIG["DCI_EMAIL_SERVER_PORT"]
+        account = dci_config.CONFIG["DCI_FROM_EMAIL"]
         smtp_server = smtplib.SMTP(email_server, port)
-        use_tls = dci_config.CONFIG.get("DCI_EMAIL_USE_TLS", True)
+        use_tls = dci_config.CONFIG["DCI_EMAIL_USE_TLS"]
         if use_tls:
             smtp_server.starttls()
 
         email = MIMEText(message)
         email["From"] = "Distributed-CI Notification <%s>" % account
         email["subject"] = subject
-        email["To"] = dci_config.CONFIG.get(
-            "DCI_EMAIL_ALERT", "distributedci+alerts@redhat.com"
-        )
+        email["To"] = dci_config.CONFIG["DCI_ALERT_EMAIL"]
         smtp_server.sendmail(email["From"], email["To"], email.as_string())
         smtp_server.quit()
 
