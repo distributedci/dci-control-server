@@ -49,7 +49,7 @@ def get_email_configuration():
     configuration = {
         "server": os.getenv("DCI_EMAIL_SERVER", "mail.distributed-ci.io"),
         "port": os.getenv("DCI_EMAIL_SERVER_PORT", 587),
-        "account": os.getenv("DCI_EMAIL_ACCOUNT", "no-reply@distributed-ci.io"),
+        "account": os.getenv("DCI_FROM_EMAIL", "no-reply@distributed-ci.io"),
         "password": os.getenv("DCI_EMAIL_PASSWORD"),
     }
 

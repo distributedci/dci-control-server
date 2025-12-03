@@ -16,12 +16,19 @@
 import json
 import flask
 import logging
-import socket
+import smtplib
 
+from dci import dci_config
 from dci.api.v1 import base
 from dci.common import exceptions as dci_exc
 from dci.common import utils
 from dci.db import models2
+
+
+try:
+    from email.MIMEText import MIMEText
+except ImportError:
+    from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +204,27 @@ def component_dispatcher(component):
 
 
 def publish(payload):
+    return flask.g.messaging.publish(payload)
+
+
+def send_alert_mail(subject, message):
+    def _send_mail():
+        email_server = dci_config.CONFIG["DCI_EMAIL_SERVER"]
+        port = dci_config.CONFIG["DCI_EMAIL_SERVER_PORT"]
+        account = dci_config.CONFIG["DCI_FROM_EMAIL"]
+        smtp_server = smtplib.SMTP(email_server, port)
+        use_tls = dci_config.CONFIG["DCI_EMAIL_USE_TLS"]
+        if use_tls:
+            smtp_server.starttls()
+
+        email = MIMEText(message)
+        email["From"] = "Distributed-CI Notification <%s>" % account
+        email["subject"] = subject
+        email["To"] = dci_config.CONFIG["DCI_ALERT_EMAIL"]
+        smtp_server.sendmail(email["From"], email["To"], email.as_string())
+        smtp_server.quit()
+
     try:
-        flask.g.messaging.publish(payload)
-    except (OSError, socket.gaierror, Exception) as e:
-        logger.error("error while trying to publish a message: %s", str(e))
+        _send_mail()
+    except Exception:
+        logger.exception("error while sending notification mail")
