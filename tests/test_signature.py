@@ -19,5 +19,11 @@ from dci.common import signature
 
 def test_gen_secret():
     assert len(signature.gen_secret()) == 64
+    assert len(signature.gen_secret(65)) == 65
     assert len(signature.gen_secret(128)) == 128
     assert signature.gen_secret() != signature.gen_secret()
+
+
+def test_nrt_gen_secret_add_DCI_prefix():
+    assert signature.gen_secret().startswith("DCI.")
+    assert signature.gen_secret(128, "RHDL.").startswith("RHDL.")
