@@ -14,11 +14,32 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import random
-import string
+import secrets
 
 
-def gen_secret(length=64):
-    """Generates a secret of given length"""
-    charset = string.ascii_letters + string.digits
-    return "".join(random.SystemRandom().choice(charset) for _ in range(length))
+def gen_secret(length=64, prefix="DCI."):
+    """
+    Generates a secret using python's 'secrets' module.
+    The secret starts with a stable prefix followed by high-entropy hex data.
+
+    Args:
+        length (int): total length of the final secret (including prefix)
+        prefix (str): stable token prefix used for detection
+
+    Returns:
+        str: generated secret
+    """
+    if length <= len(prefix):
+        raise ValueError("Length must be greater than the prefix length")
+
+    nbytes = (length - len(prefix)) // 2
+    body = secrets.token_hex(nbytes)
+
+    secret = prefix + body
+
+    missing_length = length - len(secret)
+    if missing_length > 0:
+        extra = secrets.token_hex(missing_length)[:missing_length]
+        secret += extra
+
+    return secret
