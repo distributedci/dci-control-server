@@ -23,7 +23,7 @@ from flask import json
 from dci.analytics import access_data_layer as a_d_l
 from dci.api.v1 import api
 from dci.api.v1 import base
-from dci.api.v1 import jobs_events
+from dci import bus
 from dci.api.v1 import notifications
 from dci import decorators
 from dci.common import exceptions as dci_exc
@@ -68,21 +68,18 @@ def create_jobstates(user):
         {"id": utils.gen_uuid(), "created_at": datetime.datetime.utcnow().isoformat()}
     )
 
-    # if one create a 'failed' jobstates and the current state is either
-    # 'run' or 'pre-run' then set the job to 'error' state
     job_id = values.get("job_id")
     job = base.get_resource_orm(models2.Job, job_id)
-    status = values.get("status")
-    if status in ["failure", "error"]:
-        if job.status in ["new", "pre-run"]:
-            values["status"] = "error"
+    new_status = values.get("status")
+    previous_status = job.status
+    if new_status in models2.FINAL_FAILURE_STATUSES:
+        if previous_status in ["new", "pre-run"]:
+            new_status = "error"
 
+    values["status"] = new_status
     created_js = base.create_resource_orm(models2.Jobstate, values)
 
-    is_job_final_state = job.status in models2.FINAL_STATUSES
-
-    # Update job status
-    job.status = status
+    job.status = new_status
     job.duration = get_job_duration(job)
 
     try:
@@ -91,15 +88,16 @@ def create_jobstates(user):
         flask.g.session.rollback()
         raise dci_exc.DCIException(message=str(e), status_code=409)
 
-    # send notification in case of final jobstate status
-    if status in models2.FINAL_STATUSES and not is_job_final_state:
-        job_serialized = serialize_job(job_id)
-        jobs_events.create_event(
-            job_serialized["id"], values["status"], job_serialized["topic_id"]
-        )
-        notifications.job_dispatcher(job_serialized)
-        job = a_d_l.get_job_by_id(flask.g.session, job_id)
+    job = a_d_l.get_job_by_id(flask.g.session, job_id)
+    # todo(gvincent): remove me when analytic consumer use the dci.queues.jobs queue
+    # Send notification in case of final jobstate status
+    if (
+        new_status in models2.FINAL_STATUSES
+        and previous_status not in models2.FINAL_STATUSES
+    ):
         notifications.publish({"event": "job_finished", "job": job})
+    # end of todo
+    bus.send_job_event(job)
 
     result = json.dumps({"jobstate": created_js})
     return flask.Response(result, 201, content_type="application/json")

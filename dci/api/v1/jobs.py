@@ -24,6 +24,7 @@ import sqlalchemy.orm as sa_orm
 from dci.analytics import access_data_layer as a_d_l
 from dci.api.v1 import api
 from dci.api.v1 import base
+from dci import bus
 from dci.api.v1 import components
 from dci.api.v1 import utils as v1_utils
 from dci.api.v1 import jobs_events
@@ -174,8 +175,11 @@ def internal_create_jobs(user, values, components_ids=None):
                 )
 
     job = a_d_l.get_job_by_id(flask.g.session, values["id"])
+    # todo(gvincent): remove me when analytic consumer use the dci.queues.jobs queue and the good exchange name
     logger.info("send notification message: job_started, job_id: %s" % values["id"])
     notifications.publish({"event": "job_started", "job": job})
+    # end of todo
+    bus.send_job_event(job)
 
     return flask.Response(
         json.dumps({"job": values}),
