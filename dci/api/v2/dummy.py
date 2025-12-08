@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2024 Red Hat, Inc
+# Copyright (C) Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,25 +15,16 @@
 # under the License.
 
 import flask
-from flask import json
 
+from dci.api.v2 import api
+from dci.api.v1.notifications import publish
 import logging
 
 logger = logging.getLogger(__name__)
 
-api = flask.Blueprint("api_v2", __name__)
 
+@api.route("/pubmsg", methods=["GET"])
+def pubmsg():
+    publish({"event": "pubmsg", "msg": "toto"})
 
-@api.route("/", strict_slashes=False)
-def index():
-    logger.info("control server is ok...")
-    return flask.Response(
-        json.dumps({"_status": "OK", "message": "Distributed CI.", "version": "2"}),
-        status=200,
-        content_type="application/json",
-    )
-
-
-import dci.api.v2.components  # noqa
-import dci.api.v2.dummy  # noqa
-import dci.api.v2.files  # noqa
+    return flask.Response("Processing", 200, content_type="text/plain")
