@@ -30,6 +30,8 @@ import sys
 import time
 import zmq
 
+from kombu.pools import producers
+
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
 
@@ -108,7 +110,6 @@ class KombuProducer:
             exchange=self._exchange,
             routing_key="dci.analytics.jobs",
         )
-        self._producer = None
 
     def _error_mail(self, exc):
 
@@ -123,16 +124,13 @@ Exception traceback:
 
     def publish(self, message):
         try:
-            if not self._producer:
-                channel = self._connection.channel()
-                self._producer = kombu.Producer(
-                    exchange=self._exchange,
-                    channel=channel,
-                    routing_key="dci.analytics.jobs",
+            with producers[self._connection].acquire(block=True) as producer:
+                return producer.publish(
+                    message,
+                    exchange=self._queue.exchange,
+                    routing_key=self._queue.routing_key,
+                    declare=[self._queue],
                 )
-                self._queue.maybe_bind(self._connection)
-                self._queue.declare()
-            return self._producer.publish(message)
         except (OSError, socket.gaierror, Exception) as e:
             _msg = self._error_mail(str(e))
             notifications.send_alert_mail(
