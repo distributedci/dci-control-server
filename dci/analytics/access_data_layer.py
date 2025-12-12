@@ -47,9 +47,7 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
         .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
-    jobs = [
-        j.serialize(ignore_columns=["data", "remoteci.api_secret"]) for j in query.all()
-    ]
+    jobs = [j.serialize(ignore_columns=["data"]) for j in query.all()]
 
     return jobs
 
@@ -73,7 +71,7 @@ def get_job_by_id(session, job_id):
         .options(sa_orm.joinedload("keys_values", innerjoin=False))
     )
 
-    return query.one().serialize(ignore_columns=["data", "remoteci.api_secret"])
+    return query.one().serialize(ignore_columns=["data"])
 
 
 def get_components(session, offset, limit, unit, amount):

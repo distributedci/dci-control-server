@@ -48,11 +48,12 @@ def create_remotecis(user):
     values = flask.request.json
     check_json_is_valid(create_remoteci_schema, values)
     values.update(v1_utils.common_values_dict())
+    api_secret = signature.gen_secret()
     values.update(
         {
             # XXX(fc): this should be populated as a default value from the
             # model, but we don't return values from the database :(
-            "api_secret": signature.gen_secret(),
+            "api_secret": api_secret,
             "data": values.get("data", {}),
         }
     )
@@ -61,7 +62,7 @@ def create_remotecis(user):
         raise dci_exc.Unauthorized()
 
     remoteci = base.create_resource_orm(models2.Remoteci, values)
-
+    remoteci["api_secret"] = api_secret
     return flask.Response(
         json.dumps({"remoteci": remoteci}),
         201,
@@ -271,13 +272,16 @@ def put_api_secret_remoteci(user, remoteci_id):
     if not user.is_in_team(remoteci.team_id):
         raise dci_exc.Unauthorized()
 
-    base.update_resource_orm(remoteci, {"api_secret": signature.gen_secret()})
+    api_secret = signature.gen_secret()
+    base.update_resource_orm(remoteci, {"api_secret": api_secret})
 
     remoteci = base.get_resource_orm(models2.Remoteci, remoteci_id)
+    remoteci = remoteci.serialize()
+    remoteci["api_secret"] = api_secret
     return flask.Response(
-        json.dumps({"remoteci": remoteci.serialize()}),
+        json.dumps({"remoteci": remoteci}),
         200,
-        headers={"ETag": remoteci.etag},
+        headers={"ETag": remoteci["etag"]},
         content_type="application/json",
     )
 

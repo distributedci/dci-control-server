@@ -294,6 +294,11 @@ class Remoteci(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team", back_populates="remotecis")
 
+    def serialize(self, ignore_columns=[]):
+        if "api_secret" not in ignore_columns:
+            ignore_columns.append("api_secret")
+        return super(Remoteci, self).serialize(ignore_columns=ignore_columns)
+
 
 class Product(dci_declarative.Mixin, Base):
     __tablename__ = "products"

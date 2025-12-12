@@ -267,6 +267,7 @@ def test_get_all_jobs(
 
     for j in db_all_jobs:
         assert "data" not in j
+        assert "api_secret" not in j["remoteci"]
 
     assert db_all_jobs_ids == [job_1_id, job_2_id]
 
