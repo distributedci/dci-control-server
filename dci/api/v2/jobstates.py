@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2024 Red Hat, Inc
+# Copyright (C) 2015-2016 Red Hat, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,25 +17,29 @@
 import flask
 from flask import json
 
-import logging
+from dci.api.v2 import api
+from dci.api.v1 import base
+from dci import decorators
+from dci.common.exceptions import Unauthorized
 
-logger = logging.getLogger(__name__)
-
-api = flask.Blueprint("api_v2", __name__)
+from dci.db import models2
 
 
-@api.route("/", strict_slashes=False)
-def index():
-    logger.info("control server is ok...")
+@api.route("/jobstates/<uuid:js_id>", methods=["GET"])
+@decorators.login_required
+def get_jobstate_by_id(user, js_id):
+    jobstate = base.get_resource_orm(models2.Jobstate, js_id)
+    job = base.get_resource_orm(models2.Job, jobstate.job_id)
+
+    if (
+        user.is_not_in_team(job.team_id)
+        and user.is_not_read_only_user()
+        and user.is_not_epm()
+    ):
+        raise Unauthorized()
+
     return flask.Response(
-        json.dumps({"_status": "OK", "message": "Distributed CI.", "version": "2"}),
-        status=200,
+        json.dumps({"jobstate": jobstate.serialize_v2()}),
+        200,
         content_type="application/json",
     )
-
-
-import dci.api.v2.components  # noqa
-import dci.api.v2.files  # noqa
-import dci.api.v2.jobs  # noqa
-import dci.api.v2.jobstates  # noqa
-import dci.api.v2.tasks  # noqa

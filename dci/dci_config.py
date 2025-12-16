@@ -48,6 +48,7 @@ def get_store():
         "containers": {
             "files": CONFIG["STORE_FILES_CONTAINER"],
             "components": CONFIG["STORE_COMPONENTS_CONTAINER"],
+            "tasks": CONFIG["STORE_TASKS_CONTAINER"],
         }
     }
     if CONFIG["STORE_ENGINE"] == CONFIG["S3_STORE"]:

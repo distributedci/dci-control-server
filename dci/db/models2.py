@@ -610,7 +610,34 @@ class Jobstate(dci_declarative.Mixin, Base):
         sa.ForeignKey("jobs.id", ondelete="CASCADE"),
         nullable=False,
     )
-    files = sa_orm.relationship("File")
+    files = sa_orm.relationship(
+        "File",
+        back_populates="jobstate",
+        lazy="selectin",
+        order_by="File.created_at",
+    )
+    tasks = sa_orm.relationship(
+        "Task",
+        back_populates="jobstate",
+        lazy="selectin",
+        order_by="Task.created_at",
+    )
+
+    def serialize(self, ignore_columns=[]):
+        jobstate = super(Jobstate, self).serialize(ignore_columns=ignore_columns)
+        tasks = jobstate.pop("tasks", [])
+        files = jobstate.get("files", [])
+        merged = tasks + files
+        jobstate["files"] = merged
+        return jobstate
+
+    def serialize_v2(self, ignore_columns=[]):
+        jobstate = super(Jobstate, self).serialize(ignore_columns=ignore_columns)
+        files = jobstate.pop("files", [])
+        tasks = jobstate.get("tasks", [])
+        merged = tasks + files
+        jobstate["tasks"] = merged
+        return jobstate
 
 
 class TestsResult(dci_declarative.Mixin, Base):
@@ -683,6 +710,10 @@ class File(dci_declarative.Mixin, Base):
         sa.ForeignKey("jobstates.id", ondelete="CASCADE"),
         nullable=True,
     )
+    jobstate = sa.orm.relationship(
+        "Jobstate",
+        back_populates="files",
+    )
     team_id = sa.Column(
         pg.UUID(as_uuid=True),
         sa.ForeignKey("teams.id", ondelete="CASCADE"),
@@ -692,6 +723,41 @@ class File(dci_declarative.Mixin, Base):
         pg.UUID(as_uuid=True),
         sa.ForeignKey("jobs.id", ondelete="CASCADE"),
         nullable=True,
+    )
+
+
+TASK_STATUSES = ["completed", "failed", "skipped", "ignored"]
+TASK_STATUSES_ENUM = sa.Enum(*TASK_STATUSES, name="task_statuses")
+
+
+class Task(dci_declarative.Mixin, Base):
+    __tablename__ = "tasks"
+    __table_args__ = (sa.Index("tasks_jobstate_id_idx", "jobstate_id"),)
+
+    id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
+    updated_at = sa.Column(
+        sa.DateTime(),
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
+        nullable=False,
+    )
+    etag = sa.Column(
+        sa.String(40), nullable=False, default=utils.gen_etag, onupdate=utils.gen_etag
+    )
+    name = sa.Column(sa.Text, nullable=False)
+    status = sa.Column(TASK_STATUSES_ENUM, nullable=False)
+    duration = sa.Column(sa.Integer, default=0, nullable=False)
+    state = sa.Column(STATES, default="active", nullable=False)
+    jobstate_id = sa.Column(
+        "jobstate_id",
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("jobstates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    jobstate = sa.orm.relationship(
+        "Jobstate",
+        back_populates="tasks",
     )
 
 

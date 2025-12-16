@@ -27,10 +27,9 @@ from dci.api.v1 import jobs_events
 from dci.api.v1 import notifications
 from dci import decorators
 from dci.common import exceptions as dci_exc
-from dci.common.schemas import check_json_is_valid, jobstate_schema, check_and_get_args
+from dci.common.schemas import check_json_is_valid, jobstate_schema
 from dci.common import utils
 from dci.db import models2
-from dci.db import declarative
 import sqlalchemy.orm as sa_orm
 
 
@@ -105,33 +104,10 @@ def create_jobstates(user):
     return flask.Response(result, 201, content_type="application/json")
 
 
-def get_all_jobstates(user, job_id):
-    """Get all jobstates."""
-    args = check_and_get_args(flask.request.args.to_dict())
-    job = base.get_resource_orm(models2.Job, job_id)
-    if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        if job.team_id not in user.teams_ids:
-            raise dci_exc.Unauthorized()
-
-    query = flask.g.session.query(models2.Jobstate)
-    query = query.filter(models2.Jobstate.job_id == job_id).options(
-        sa_orm.selectinload("files")
-    )
-    query = declarative.handle_args(query, models2.Jobstate, args)
-    nb_jobstates = query.count()
-    query = declarative.handle_pagination(query, args)
-
-    jobstates = [js.serialize() for js in query.all()]
-
-    return flask.jsonify({"jobstates": jobstates, "_meta": {"count": nb_jobstates}})
-
-
 @api.route("/jobstates/<uuid:js_id>", methods=["GET"])
 @decorators.login_required
 def get_jobstate_by_id(user, js_id):
-    js = base.get_resource_orm(
-        models2.Jobstate, js_id, options=[sa_orm.selectinload("files")]
-    )
+    js = base.get_resource_orm(models2.Jobstate, js_id)
     return flask.Response(
         json.dumps({"jobstate": js.serialize()}),
         200,

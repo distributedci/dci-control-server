@@ -115,6 +115,22 @@ def test_get_jobstate_by_id(client_user1, team1_job_id):
     assert created_js.data["jobstate"]["status"] == "running"
 
 
+def test_get_jobstate_with_task_and_file(
+    client_user1, team1_jobstate_id, team1_jobstate_file_id, team1_jobstate_task_id
+):
+    get_jobstate = client_user1.get(f"/api/v1/jobstates/{team1_jobstate_id}")
+    assert get_jobstate.status_code == 200
+    jobstate = get_jobstate.data["jobstate"]
+    assert jobstate["id"] == team1_jobstate_id
+    assert "tasks" not in jobstate
+    assert "files" in jobstate
+
+    files = jobstate["files"]
+    assert len(files) == 2
+    for file in files:
+        assert file["id"] in [team1_jobstate_file_id, team1_jobstate_task_id]
+
+
 def test_get_jobstate_not_found(client_user1):
     result = client_user1.get("/api/v1/jobstates/%s" % uuid.uuid4())
     assert result.status_code == 404

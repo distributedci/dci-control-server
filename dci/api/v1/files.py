@@ -36,11 +36,9 @@ from dci.common import exceptions as dci_exc
 from dci.common.schemas import (
     check_json_is_valid,
     file_upload_certification_schema,
-    check_and_get_args,
 )
 from dci.common import utils
 from dci.db import models2
-from dci.db import declarative
 from dci import dci_config
 from dci.stores import files_utils
 import logging
@@ -212,28 +210,6 @@ def create_files(user):
         raise dci_exc.DCIException(message=str(e), status_code=409)
 
     return flask.Response(json.dumps(result), 201, content_type="application/json")
-
-
-def get_all_files(user, job_id):
-    """Get all files."""
-    args = check_and_get_args(flask.request.args.to_dict())
-    job = base.get_resource_orm(models2.Job, job_id)
-    if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        if job.team_id not in user.teams_ids:
-            raise dci_exc.Unauthorized()
-
-    query = flask.g.session.query(models2.File)
-    query = query.filter(
-        sql.and_(models2.File.job_id == job_id, models2.File.state != "archived")
-    )
-
-    query = declarative.handle_args(query, models2.File, args)
-    nb_files = query.count()
-    query = declarative.handle_pagination(query, args)
-
-    files = [f.serialize() for f in query.all()]
-
-    return json.jsonify({"files": files, "_meta": {"count": nb_files}})
 
 
 @api.route("/files/<uuid:file_id>", methods=["GET"])

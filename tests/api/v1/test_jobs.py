@@ -922,6 +922,17 @@ def test_get_files_by_job_id(client_user1, team1_job_id, team1_job_file_id):
     assert file_from_job.data["_meta"]["count"] == 1
 
 
+def test_get_files_by_job_id_return_jobstate_file(
+    client_user1, team1_job_id, team1_job_file_id, team1_jobstate_file_id
+):
+    file_from_job = client_user1.get("/api/v1/jobs/%s/files" % team1_job_id)
+    assert file_from_job.status_code == 200
+    assert file_from_job.data["_meta"]["count"] == 2
+    files = file_from_job.data["files"]
+    for file in files:
+        assert file["id"] in [team1_job_file_id, team1_jobstate_file_id]
+
+
 def test_get_files_by_job_id_as_epm(client_epm, team1_job_id, team1_job_file_id):
     # get files from job
     file_from_job = client_epm.get("/api/v1/jobs/%s/files" % team1_job_id)
@@ -1098,3 +1109,31 @@ def test_nrt_get_jobs_not_contains_tags(
     jobs_nottag2_ids = [j["id"] for j in jobs_nottag2]
     assert job_id_1 in jobs_nottag2_ids
     assert job_id_2 not in jobs_nottag2_ids
+
+
+def test_job_created_at_and_updated_at_format(client_user1, team1_job_id):
+    def assert_datetime_format(value: str):
+        assert isinstance(value, str)
+        datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
+        dt = datetime.datetime.strptime(value, datetime_format)
+        assert dt.tzinfo is None
+
+    get_job = client_user1.get("/api/v1/jobs/%s" % team1_job_id)
+    assert get_job.status_code == 200
+    job = get_job.data["job"]
+
+    assert_datetime_format(job["created_at"])
+    assert_datetime_format(job["updated_at"])
+
+
+def test_list_jobstates_return_files_and_tasks_with_files_key(
+    client_user1, team1_job_id, team1_jobstate_file_id, team1_jobstate_task_id
+):
+    list_jobstates = client_user1.get(f"/api/v1/jobs/{team1_job_id}/jobstates")
+    assert list_jobstates.status_code == 200
+
+    jobstates = list_jobstates.data["jobstates"]
+    files = jobstates[0]["files"]
+    assert len(files) == 2
+    for file in files:
+        assert file["id"] in [team1_jobstate_file_id, team1_jobstate_task_id]

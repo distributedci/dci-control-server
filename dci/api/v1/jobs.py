@@ -47,7 +47,7 @@ from dci.db import models2
 
 from dci.api.v1 import files
 from dci.api.v1 import permissions
-from dci.api.v1 import jobstates
+from dci.api.v1.jobstates import insert_jobstate
 
 
 logger = logging.getLogger(__name__)
@@ -456,8 +456,33 @@ def remove_component_from_job(user, job_id, cmpt_id):
 @api.route("/jobs/<uuid:job_id>/jobstates", methods=["GET"])
 @decorators.login_required
 def get_jobstates_by_job(user, job_id):
-    base.get_resource_orm(models2.Job, job_id)
-    return jobstates.get_all_jobstates(user, job_id)
+    args = check_and_get_args(flask.request.args.to_dict())
+    job = base.get_resource_orm(models2.Job, job_id)
+
+    if (
+        user.is_not_in_team(job.team_id)
+        and user.is_not_read_only_user()
+        and user.is_not_epm()
+    ):
+        raise dci_exc.Unauthorized()
+
+    query = flask.g.session.query(models2.Jobstate)
+    query = (
+        query.filter(models2.Jobstate.job_id == job_id)
+        .options(sa_orm.selectinload("files"))
+        .options(sa_orm.selectinload("tasks"))
+    )
+    query = declarative.handle_args(query, models2.Jobstate, args)
+    nb_jobstates = query.count()
+    query = declarative.handle_pagination(query, args)
+
+    jobstates = [js.serialize() for js in query.all()]
+    return flask.jsonify(
+        {
+            "jobstates": jobstates,
+            "_meta": {"count": nb_jobstates},
+        }
+    )
 
 
 @api.route("/jobs/<uuid:job_id>", methods=["GET"])
@@ -530,7 +555,7 @@ def update_job_by_id(user, job_id):
     # Update jobstate if needed
     status = values.get("status")
     if status and job.status != status:
-        jobstates.insert_jobstate({"status": status, "job_id": job_id})
+        insert_jobstate({"status": status, "job_id": job_id})
         if status in models2.FINAL_STATUSES:
             jobs_events.create_event(job_id, status, job.topic_id)
 
@@ -545,21 +570,44 @@ def update_job_by_id(user, job_id):
     )
 
 
-@api.route("/jobs/<uuid:j_id>/files", methods=["POST"])
+@api.route("/jobs/<uuid:job_id>/files", methods=["POST"])
 @decorators.login_required
-def add_file_to_jobs(user, j_id):
+def add_file_to_jobs(user, job_id):
     values = flask.request.json
     check_json_is_valid(create_job_schema, values)
-    values.update({"job_id": j_id})
+    values.update({"job_id": job_id})
 
     return files.create_files(user, values)
 
 
-@api.route("/jobs/<uuid:j_id>/files", methods=["GET"])
+@api.route("/jobs/<uuid:job_id>/files", methods=["GET"])
 @decorators.login_required
-def get_all_files_from_jobs(user, j_id):
+def get_all_files_from_jobs(user, job_id):
     """Get all files."""
-    return files.get_all_files(user, j_id)
+    args = check_and_get_args(flask.request.args.to_dict())
+    job = base.get_resource_orm(models2.Job, job_id)
+    if (
+        user.is_not_in_team(job.team_id)
+        and user.is_not_read_only_user()
+        and user.is_not_epm()
+    ):
+        raise dci_exc.Unauthorized()
+
+    query = flask.g.session.query(models2.File)
+    query = query.filter(
+        sql.and_(
+            models2.File.job_id == job_id,
+            models2.File.state != "archived",
+        )
+    )
+
+    query = declarative.handle_args(query, models2.File, args)
+    nb_files = query.count()
+    query = declarative.handle_pagination(query, args)
+
+    files = [f.serialize() for f in query.all()]
+
+    return json.jsonify({"files": files, "_meta": {"count": nb_files}})
 
 
 @api.route("/jobs/<uuid:j_id>/results", methods=["GET"])

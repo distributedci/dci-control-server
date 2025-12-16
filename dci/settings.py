@@ -69,7 +69,7 @@ STORE_ENGINE = os.getenv("STORE_ENGINE", S3_STORE)
 # Generic store
 STORE_FILES_CONTAINER = os.getenv("STORE_FILES_CONTAINER", "dci-files")
 STORE_COMPONENTS_CONTAINER = os.getenv("STORE_COMPONENTS_CONTAINER", "dci-components")
-
+STORE_TASKS_CONTAINER = os.getenv("STORE_TASKS_CONTAINER", "dci-tasks")
 
 # S3/minio Store
 STORE_S3_AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "minioadmin")

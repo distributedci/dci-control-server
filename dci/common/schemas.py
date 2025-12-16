@@ -13,13 +13,12 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
 from dci.common.exceptions import DCIException
 from dci.common.args import parse_args
 from jsonschema import validators, FormatChecker, Draft4Validator
 from jsonschema.exceptions import ValidationError
 
-from dci.db.models2 import JOB_STATUSES, RESOURCE_STATES
+from dci.db.models2 import JOB_STATUSES, TASK_STATUSES, RESOURCE_STATES
 
 
 def allow_none(property):
@@ -732,4 +731,23 @@ update_pipeline_properties = {
 update_pipeline_schema = {
     "type": "object",
     "properties": update_pipeline_properties,
+}
+
+###############################################################################
+#                                                                             #
+#                                  Task schema                                #
+#                                                                             #
+###############################################################################
+
+task_properties = {
+    "name": Properties.string,
+    "jobstate_id": Properties.uuid,
+    "duration": with_default(Properties.positive_or_null_integer, 0),
+    "status": Properties.enum(TASK_STATUSES),
+}
+task_schema = {
+    "type": "object",
+    "properties": task_properties,
+    "required": ["name", "jobstate_id", "status"],
+    "additionalProperties": False,
 }
