@@ -267,9 +267,19 @@ def test_get_all_jobs(
 
     for j in db_all_jobs:
         assert "data" not in j
-        assert "api_secret" not in j["remoteci"]
 
     assert db_all_jobs_ids == [job_1_id, job_2_id]
+
+
+def test_list_jobs_endpoint_dont_send_sensitive_and_data_fields(
+    client_user1, team1_job_id
+):
+    jobs = client_user1.get("/api/v1/jobs").data["jobs"]
+    assert len(jobs) > 0
+    for job in jobs:
+        assert "data" not in job
+        assert "api_secret" not in job["remoteci"]
+        assert "data" not in job["topic"]
 
 
 def test_get_jobs_with_query(
