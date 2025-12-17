@@ -31,8 +31,6 @@ import time
 import traceback
 import zmq
 
-from functools import partial
-from kombu.exceptions import ConnectionLimitExceeded
 from kombu.utils.functional import retry_over_time
 
 from sqlalchemy import exc as sa_exc
@@ -40,10 +38,11 @@ from sqlalchemy.orm import sessionmaker
 
 try:
     import psycogreen.gevent
+    import gevent
 
     psycogreen.gevent.patch_psycopg()
 except ImportError:
-    pass
+    gevent = None
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +104,13 @@ class KombuProducer:
         super(KombuProducer, self).__init__()
         self._connection = kombu.Connection(
             dci_config.CONFIG["AMQP_BROKER_URL"],
-            transport_options={"confirm_publish": True},
+            connect_timeout=5.0,
+            heartbeat=30,
+            transport_options={
+                "confirm_publish": True,
+                "socket_timeout": 5.0,
+                "socket_connect_timeout": 5.0,
+            },
         )
         self._exchange = kombu.Exchange("dci.analytics.exchange", type="direct")
         self._queue = kombu.Queue(
@@ -113,7 +118,8 @@ class KombuProducer:
             exchange=self._exchange,
             routing_key="dci.analytics.jobs",
         )
-        kombu.pools.set_limit(10)
+        kombu.pools.set_limit(20)
+        self._producers = kombu.pools.producers[self._connection]
 
     def _error_mail(self, exc, msg):
 
@@ -131,6 +137,13 @@ Traceback:
 """
 
     def publish(self, message):
+        """Publish a message to RabbitMQ in the background."""
+        if gevent:
+            gevent.spawn(self._publish, message)
+        else:
+            self._publish(message)
+
+    def _publish(self, message):
         def _log_err_callback(exc, interval_range, retries):
             logger.warning(
                 f"Failed connecting to RabbitMQ retry#{retries}: {repr(exc)}"
@@ -139,23 +152,46 @@ Traceback:
 
         try:
             with retry_over_time(
-                kombu.pools.producers[self._connection].acquire,
+                self._producers.acquire,
                 Exception,
                 kwargs={
-                    "timeout": 1.0,
+                    "timeout": 5.0,
                 },
-                interval_start=0.0,
-                interval_step=0.1,
-                max_retries=6,
+                interval_start=2.0,
+                interval_step=2.0,
+                max_retries=5,
                 errback=_log_err_callback,
             ) as producer:
-                return producer.publish(
-                    message,
-                    exchange=self._queue.exchange,
-                    routing_key=self._queue.routing_key,
-                    declare=[self._queue],
-                )
-        except Exception as e:
+                if gevent:
+                    # Use gevent timeout to ensure publish and declare don't hang
+                    with gevent.Timeout(10.0):
+                        res = producer.publish(
+                            message,
+                            exchange=self._exchange,
+                            routing_key=self._queue.routing_key,
+                            declare=[self._queue],
+                            retry=True,
+                            retry_policy={
+                                "interval_start": 2.0,
+                                "interval_step": 2.0,
+                                "max_retries": 5,
+                            },
+                        )
+                else:
+                    res = producer.publish(
+                        message,
+                        exchange=self._exchange,
+                        routing_key=self._queue.routing_key,
+                        declare=[self._queue],
+                        retry=True,
+                        retry_policy={
+                            "interval_start": 2.0,
+                            "interval_step": 2.0,
+                            "max_retries": 5,
+                        },
+                    )
+                return res
+        except BaseException as e:
             _msg = self._error_mail(e, message)
             notifications.send_alert_mail(
                 subject="RabbitMQ transport error",
@@ -221,8 +257,8 @@ def create_app(param=None):
                 flask.g.session = sessionmaker(bind=dci_app.engine)()
                 break
             except Exception:
-                logging.warning(
-                    "failed to connect to the database, " "will retry in 1 second..."
+                logger.warning(
+                    "failed to connect to the database, will retry in 1 second..."
                 )
                 time.sleep(1)
                 pass
