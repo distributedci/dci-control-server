@@ -24,13 +24,16 @@ from dci import dci_config
 
 import flask
 import kombu
+import kombu.pools
 import logging
-import socket
 import sys
 import time
+import traceback
 import zmq
 
-from kombu.pools import producers
+from functools import partial
+from kombu.exceptions import ConnectionLimitExceeded
+from kombu.utils.functional import retry_over_time
 
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
@@ -110,29 +113,50 @@ class KombuProducer:
             exchange=self._exchange,
             routing_key="dci.analytics.jobs",
         )
+        kombu.pools.set_limit(10)
 
-    def _error_mail(self, exc):
+    def _error_mail(self, exc, msg):
 
         return f"""
 You are receiving this email because the DCI control server failed to send a message to RabbitMQ.
 
-Exception traceback:
+Failed message:
 
-{exc}
+{msg}
+
+Traceback:
+
+{traceback.format_exc()}
 
 """
 
     def publish(self, message):
+        def _log_err_callback(exc, interval_range, retries):
+            logger.warning(
+                f"Failed connecting to RabbitMQ retry#{retries}: {repr(exc)}"
+            )
+            return next(interval_range)
+
         try:
-            with producers[self._connection].acquire(block=True) as producer:
+            with retry_over_time(
+                kombu.pools.producers[self._connection].acquire,
+                Exception,
+                kwargs={
+                    "timeout": 1.0,
+                },
+                interval_start=0.0,
+                interval_step=0.1,
+                max_retries=6,
+                errback=_log_err_callback,
+            ) as producer:
                 return producer.publish(
                     message,
                     exchange=self._queue.exchange,
                     routing_key=self._queue.routing_key,
                     declare=[self._queue],
                 )
-        except (OSError, socket.gaierror, Exception) as e:
-            _msg = self._error_mail(str(e))
+        except Exception as e:
+            _msg = self._error_mail(e, message)
             notifications.send_alert_mail(
                 subject="RabbitMQ transport error",
                 message=_msg,
