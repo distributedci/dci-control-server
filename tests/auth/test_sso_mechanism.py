@@ -135,7 +135,7 @@ def test_sso_auth_update_email_employee_with_preferred_username(
     with app.app_context():
         john_doe_token = generate_jwt(
             {
-                "aud": "dci",
+                "aud": "api.dci",
                 "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
                 "typ": "Bearer",
                 "scope": "openid",
@@ -157,7 +157,7 @@ def test_sso_auth_update_email_employee_with_preferred_username(
 
         john_doe_token = generate_jwt(
             {
-                "aud": "dci",
+                "aud": "api.dci",
                 "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
                 "typ": "Bearer",
                 "scope": "openid",
@@ -178,41 +178,11 @@ def test_sso_auth_update_email_employee_with_preferred_username(
         assert jdoe["email"] == "jdoe@redhat.com"
 
 
-def test_user_creation_with_an_old_token(app, client_admin):
-    with app.app_context():
-        john_doe_token = generate_jwt(
-            {
-                "aud": "dci",
-                "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
-                "typ": "Bearer",
-                "scope": "openid",
-                "name": "John Doe",
-                "given_name": "John",
-                "family_name": "Doe",
-                "email": "jdoe@example.org",
-                "username": "jdoe1@example.org",
-            },
-            SSO_PRIVATE_KEY,
-        )
-        john_doe_client = generate_client(app, access_token=john_doe_token)
-        r = john_doe_client.get("/api/v1/identity")
-        assert r.status_code == 200
-
-        jdoe = client_admin.get("/api/v1/users?where=email:jdoe@example.org").data[
-            "users"
-        ][0]
-        assert jdoe["name"] == "jdoe1@example.org"
-        assert jdoe["fullname"] == "John Doe"
-        assert jdoe["sso_username"] == "jdoe1@example.org"
-        assert jdoe["sso_sub"] is None
-        assert jdoe["email"] == "jdoe@example.org"
-
-
 def test_user_creation_with_a_new_token_without_scope_specified(app, client_admin):
     with app.app_context():
         john_doe_token = generate_jwt(
             {
-                "aud": ["dci"],
+                "aud": ["api.dci"],
                 "sub": "f:436a6686-719b-43ab-a01e-5ecd50b0c8fc:jdoe1@example.org",
                 "typ": "Bearer",
                 "scope": "openid",
@@ -242,10 +212,10 @@ def test_user_creation_with_a_new_token_with_apidci_scope_specified(app, client_
     with app.app_context():
         john_doe_token = generate_jwt(
             {
-                "aud": ["api.dci", "dci"],
+                "aud": ["api.dci", "account"],
                 "sub": "87654321",
                 "typ": "Bearer",
-                "scope": "api.dci",
+                "scope": "api.dci roles",
                 "email_verified": True,
                 "name": "John Doe",
                 "preferred_username": "jdoe1@example.org",
