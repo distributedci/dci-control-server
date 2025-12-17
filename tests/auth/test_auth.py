@@ -52,7 +52,7 @@ def test_decode_jwt(m_datetime, access_token_user1):
         1505564918
     ).timetuple()
     m_datetime.utcnow.return_value = m_utcnow
-    decoded_jwt = auth.decode_jwt(access_token_user1, pubkey, "dci")
+    decoded_jwt = auth.decode_jwt(access_token_user1, pubkey, "api.dci")
     assert decoded_jwt["username"] == "user1"
     assert decoded_jwt["email"] == "user1@example.org"
 
