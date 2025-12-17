@@ -68,6 +68,7 @@ def test_get_jobs(
     assert pipeline_id == job1["pipeline"]["id"]
     assert "product" in job1
     assert "api_secret" not in job1["remoteci"]
+    assert "data" not in job1["topic"]
 
     jobs = a_d_l.get_jobs(session, 0, 10, "hours", 1)
     assert len(jobs) == 2
