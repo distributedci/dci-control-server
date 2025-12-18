@@ -63,3 +63,7 @@ acgc4kgDThAjD7VlXad9UHpNMO8=
 """
 
 SSO_REALM = "redhat-external"
+
+DCI_EMAIL_SERVER = "debug_smtpd"
+DCI_EMAIL_SERVER_PORT = 8025
+DCI_EMAIL_USE_TLS = False

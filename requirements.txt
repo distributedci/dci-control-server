@@ -13,6 +13,8 @@ alembic==1.3.1  # python-alembic-1.3.1-1.el8.src.rpm centos-openstack-train
 six==1.14.0  # python-six-1.14.0-2.el8.src.rpm centos-openstack-train
 requests>=2.27.0, <3.0
 gunicorn[gevent]
+gevent[recommended]>=20.0.0
+psycogreen
 
 flask==1.1.1  # python-flask-1.1.1-1.el8.src.rpm centos-openstack-train
 jinja2==2.10.1  # python3-jinja2-2.10.1-5.el8_10.noarch

@@ -1,4 +1,9 @@
+import logging
 import os
+
+import gevent
+
+logger = logging.getLogger(__name__)
 
 # Don't manage workers with gunicorn but by spawning more containers and let haproxy handle balancing
 DEFAULT_NB_WORKERS = 1
@@ -23,3 +28,19 @@ accesslog = "-"
 access_log_format = (
     '%(h)s:%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 )
+
+
+def worker_int(worker):
+    """
+    Called by the signal handler for SIGINT and SIGQUIT.
+    This runs before the worker exits, giving us a chance to wait for
+    in-flight greenlets to complete and reduce message loss.
+    """
+    logger.info(
+        "Worker %s received shutdown signal, waiting up to 5 seconds for in-flight greenlets to complete...",
+        worker.pid,
+    )
+    # Wait for all spawned greenlets to complete, with a 5 second timeout
+    # This gives background message publishing a chance to finish
+    gevent.wait(timeout=5.0)
+    logger.info("Worker %s greenlet cleanup complete", worker.pid)

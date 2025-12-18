@@ -13,6 +13,17 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
+# Gevent setup - must be done before other imports
+from gevent import monkey
+
+monkey.patch_all()
+
+import psycogreen.gevent
+import gevent
+
+psycogreen.gevent.patch_psycopg()
+
 from dci.api import v1 as api_v1
 from dci.api.v1 import notifications
 from dci.api import v2 as api_v2
@@ -35,14 +46,6 @@ from kombu.utils.functional import retry_over_time
 
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
-
-try:
-    import psycogreen.gevent
-    import gevent
-
-    psycogreen.gevent.patch_psycopg()
-except ImportError:
-    gevent = None
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +141,7 @@ Traceback:
 
     def publish(self, message):
         """Publish a message to RabbitMQ in the background."""
-        if gevent:
-            gevent.spawn(self._publish, message)
-        else:
-            self._publish(message)
+        gevent.spawn(self._publish, message)
 
     def _publish(self, message):
         def _log_err_callback(exc, interval_range, retries):
@@ -162,22 +162,8 @@ Traceback:
                 max_retries=5,
                 errback=_log_err_callback,
             ) as producer:
-                if gevent:
-                    # Use gevent timeout to ensure publish and declare don't hang
-                    with gevent.Timeout(10.0):
-                        res = producer.publish(
-                            message,
-                            exchange=self._exchange,
-                            routing_key=self._queue.routing_key,
-                            declare=[self._queue],
-                            retry=True,
-                            retry_policy={
-                                "interval_start": 2.0,
-                                "interval_step": 2.0,
-                                "max_retries": 5,
-                            },
-                        )
-                else:
+                # Use gevent timeout to ensure publish and declare don't hang
+                with gevent.Timeout(10.0):
                     res = producer.publish(
                         message,
                         exchange=self._exchange,
