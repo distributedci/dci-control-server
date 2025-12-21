@@ -1,4 +1,7 @@
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 # Don't manage workers with gunicorn but by spawning more containers and let haproxy handle balancing
 DEFAULT_NB_WORKERS = 1
@@ -23,3 +26,33 @@ accesslog = "-"
 access_log_format = (
     '%(h)s:%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 )
+
+
+def worker_exit(server, worker):
+    app = worker.app.wsgi()
+    app.logger.info(
+        "Worker exiting pid=%s (master pid=%s)",
+        worker.pid,
+        server.pid,
+    )
+    app.stop_publisher()
+
+
+def post_worker_init(worker):
+    app = worker.app.wsgi()
+    app.start_publisher()
+
+
+def worker_int(worker):
+    """
+    Called by the signal handler for SIGINT and SIGQUIT.
+    This runs before the worker exits, wait for last
+    in-flight messages to be processed.
+    """
+    logger.info(
+        "Worker %s received shutdown signal, sending STOP sentinel and wait for the queue to be processed...",
+        worker.pid,
+    )
+    app = worker.app.wsgi()
+    app.stop_publisher()
+    logger.info("Worker %s gracefully complete", worker.pid)

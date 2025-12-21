@@ -204,7 +204,7 @@ def component_dispatcher(component):
 
 
 def publish(payload):
-    return flask.g.messaging.publish(payload)
+    return flask.g.publish(payload)
 
 
 def send_alert_mail(subject, message):

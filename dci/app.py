@@ -25,9 +25,12 @@ from dci import dci_config
 import flask
 import kombu
 import logging
+import queue
 import socket
 import sys
+import threading
 import time
+import traceback
 import zmq
 
 from sqlalchemy import exc as sa_exc
@@ -53,13 +56,37 @@ class DciControlServer(flask.Flask):
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
         self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
-        self.messaging = KombuProducer()
+        self._publish_queue = queue.Queue(maxsize=1000)
+        self._event_stop = threading.Event()
+        self._publisher = KombuPublisher(
+            "kombu_publisher", self._publish_queue, self._event_stop
+        )
         self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
         self.team_epm_id = self._get_team_id(session, "EPM")
         session.close()
+
+    def publish(self, message):
+        try:
+            self._publish_queue.put(message, block=False)
+        except queue.Full:
+            notifications.send_alert_mail(
+                subject="Publish error",
+                message="""
+You are receiving this email because the DCI control server failed to queue a message to be published.
+The in-memory internal queue is full.
+""",
+            )
+            logger.exception("error while trying to queue a message to be published.")
+
+    def start_publisher(self):
+        self._publisher.start()
+
+    def stop_publisher(self):
+        self._publish_queue.put("STOP")
+        self._publish_queue.join()
 
     def _get_zmq_sender(self, zmq_conn):
         global zmq_sender
@@ -95,12 +122,22 @@ class DciControlServer(flask.Flask):
         return team.id
 
 
-class KombuProducer:
-    def __init__(self):
-        super(KombuProducer, self).__init__()
+class KombuPublisher(threading.Thread):
+    def __init__(self, name, queue, event_stop):
+        super().__init__(daemon=True)
+        self.name = name
+        self._publish_queue = queue
+        self._event_stop = event_stop
         self._connection = kombu.Connection(
             dci_config.CONFIG["AMQP_BROKER_URL"],
-            transport_options={"confirm_publish": True},
+            connect_timeout=5.0,
+            heartbeat=30,
+            transport_options={
+                "confirm_publish": True,
+                "confirm_timeout": 5.0,
+                "socket_timeout": 5.0,
+                "socket_connect_timeout": 5.0,
+            },
         )
         self._exchange = kombu.Exchange("dci.analytics.exchange", type="direct")
         self._queue = kombu.Queue(
@@ -110,31 +147,50 @@ class KombuProducer:
         )
         self._producer = None
 
-    def _error_mail(self, exc):
+    def _error_mail(self, message):
 
         return f"""
 You are receiving this email because the DCI control server failed to send a message to RabbitMQ.
 
-Exception traceback:
+Failed message:
 
-{exc}
+{message}
+
+Traceback:
+
+{traceback.format_exc()}
 
 """
 
-    def publish(self, message):
+    def run(self):
         try:
-            if not self._producer:
-                channel = self._connection.channel()
-                self._producer = kombu.Producer(
-                    exchange=self._exchange,
-                    channel=channel,
-                    routing_key="dci.analytics.jobs",
-                )
-                self._queue.maybe_bind(self._connection)
-                self._queue.declare()
-            return self._producer.publish(message)
-        except (OSError, socket.gaierror, Exception) as e:
-            _msg = self._error_mail(str(e))
+            self._producer = kombu.Producer(
+                self._connection,
+                exchange=self._exchange,
+                routing_key="dci.analytics.jobs",
+            )
+            self._queue.maybe_bind(self._connection)
+            self._queue.declare()
+
+            while True:
+                message = self._publish_queue.get()
+                try:
+                    if message == "STOP":
+                        break
+                    self._producer.publish(
+                        message,
+                        retry=True,
+                        retry_policy={
+                            "interval_start": 2.0,
+                            "interval_step": 2.0,
+                            "max_retries": 5,
+                        },
+                    )
+                finally:
+                    self._publish_queue.task_done()
+
+        except (OSError, socket.gaierror, Exception):
+            _msg = self._error_mail(message)
             notifications.send_alert_mail(
                 subject="RabbitMQ transport error",
                 message=_msg,
@@ -190,7 +246,7 @@ def create_app(param=None):
         flask.g.team_admin_id = dci_app.team_admin_id
         flask.g.team_redhat_id = dci_app.team_redhat_id
         flask.g.team_epm_id = dci_app.team_epm_id
-        flask.g.messaging = dci_app.messaging
+        flask.g.publish = dci_app.publish
 
         for i in range(5):
             try:
