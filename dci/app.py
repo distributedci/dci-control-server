@@ -121,7 +121,7 @@ class KombuProducer:
             exchange=self._exchange,
             routing_key="dci.analytics.jobs",
         )
-        kombu.pools.set_limit(20)
+        kombu.pools.set_limit(50)
         self._producers = kombu.pools.producers[self._connection]
 
     def _error_mail(self, exc, msg):
@@ -151,19 +151,21 @@ Traceback:
             return next(interval_range)
 
         try:
+            # Try to get a connection for the pool, wait for 0.5s maximum.
+            # In case of failure, try every 0.5s for a maximum of 10 seconds
             with retry_over_time(
                 self._producers.acquire,
                 Exception,
-                kwargs={
-                    "timeout": 5.0,
-                },
-                interval_start=2.0,
-                interval_step=2.0,
-                max_retries=5,
+                kwargs={"timeout": 0.5},
                 errback=_log_err_callback,
+                interval_start=0.5,
+                interval_max=0.5,
+                timeout=10.0,
             ) as producer:
-                # Use gevent timeout to ensure publish and declare don't hang
+                # Use gevent timeout to ensure publish and declare don't hang forever
                 with gevent.Timeout(10.0):
+                    # Publish message
+                    # In case of failure, retry every 0.5s until above timeout happens
                     res = producer.publish(
                         message,
                         exchange=self._exchange,
@@ -171,9 +173,9 @@ Traceback:
                         declare=[self._queue],
                         retry=True,
                         retry_policy={
-                            "interval_start": 2.0,
-                            "interval_step": 2.0,
-                            "max_retries": 5,
+                            "interval_start": 0.5,
+                            "interval_max": 0.5,
+                            "timeout": 10.0,
                         },
                     )
                 return res
