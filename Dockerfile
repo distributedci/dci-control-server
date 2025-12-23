@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
-LABEL name="DCI API" version="0.1.0"
+LABEL name="DCI API" version="0.1.1"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 COPY sso/RH-IT-Root-CA.crt sso/2022-IT-Root-CA.pem /etc/pki/ca-trust/source/anchors/
@@ -8,14 +8,14 @@ RUN update-ca-trust
 WORKDIR /opt/dci-control-server
 
 # install dependencies first
-COPY requirements.txt requirements_container.txt /opt/dci-control-server/
+COPY requirements.txt /opt/dci-control-server/
 
 RUN microdnf update && \
   microdnf -y install python3-pip python3-wheel libpq && \
   rpm -qa | sort > /tmp/rpms_before && \
   microdnf -y install python3-devel make gcc gcc-c++ postgresql-devel diffutils findutils file && \
   rpm -qa | sort > /tmp/rpms_after && \
-  pip3 --no-cache-dir install --no-binary=psycopg2 -r requirements.txt -r requirements_container.txt && \
+  pip3 --no-cache-dir install --no-binary=psycopg2 -r requirements.txt && \
   comm -13 /tmp/rpms_before /tmp/rpms_after | xargs microdnf remove && \
   rm /tmp/rpms_before /tmp/rpms_after && \
   microdnf -y clean all
