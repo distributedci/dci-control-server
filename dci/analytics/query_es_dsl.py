@@ -110,12 +110,14 @@ def _get_root_prefix(operand):
 
 def _handle_comparison_operator(handle_nested, operator, operand_1, operand_2):
     if handle_nested and "." in operand_1:
+        path = _get_nested_prefix(operand_1)
         return {
             "nested": {
-                "path": _get_nested_prefix(operand_1),
+                "path": path,
                 "query": {
                     "range": {operand_1: {_op_to_es_range_op[operator]: operand_2}}
                 },
+                "inner_hits": {"name": path},
             }
         }
     return {"range": {operand_1: {_op_to_es_range_op[operator]: operand_2}}}
@@ -128,10 +130,12 @@ def _generate_from_operators(parsed_query, handle_nested=False):
 
     if operator == "=":
         if handle_nested and "." in operand_1:
+            path = _get_nested_prefix(operand_1)
             return {
                 "nested": {
-                    "path": _get_nested_prefix(operand_1),
+                    "path": path,
                     "query": {"term": {operand_1: operand_2}},
+                    "inner_hits": {"name": path},
                 }
             }
         return {"term": {operand_1: operand_2}}
@@ -150,32 +154,41 @@ def _generate_from_operators(parsed_query, handle_nested=False):
             }
         }
         if handle_nested and "." in operand_1:
-            return {"nested": {"path": _get_nested_prefix(operand_1), "query": _regexp}}
+            path = _get_nested_prefix(operand_1)
+            return {
+                "nested": {"path": path, "query": _regexp, "inner_hits": {"name": path}}
+            }
         return _regexp
     elif operator == "not_in":
         if handle_nested and "." in operand_1:
+            path = _get_nested_prefix(operand_1)
             return {
                 "nested": {
-                    "path": _get_nested_prefix(operand_1),
+                    "path": path,
                     "query": {"bool": {"must_not": {"terms": {operand_1: operand_2}}}},
+                    "inner_hits": {"name": path},
                 }
             }
         return {"bool": {"must_not": {"terms": {operand_1: operand_2}}}}
     elif operator == "in":
         if handle_nested and "." in operand_1:
+            path = _get_nested_prefix(operand_1)
             return {
                 "nested": {
-                    "path": _get_nested_prefix(operand_1),
+                    "path": path,
                     "query": {"terms": {operand_1: operand_2}},
+                    "inner_hits": {"name": path},
                 }
             }
         return {"terms": {operand_1: operand_2}}
     elif operator == "!=":
         if handle_nested and "." in operand_1:
+            path = _get_nested_prefix(operand_1)
             return {
                 "nested": {
-                    "path": _get_nested_prefix(operand_1),
+                    "path": path,
                     "query": {"bool": {"must_not": {"term": {operand_1: operand_2}}}},
+                    "inner_hits": {"name": path},
                 }
             }
         return {"bool": {"must_not": {"term": {operand_1: operand_2}}}}
@@ -247,6 +260,7 @@ def _generate_es_query(parsed_query, handle_nested=True):
                             + [_generate_es_query(right_operands, handle_nested=False)],
                         }
                     },
+                    "inner_hits": {"name": path},
                 }
             }
         else:
@@ -287,6 +301,7 @@ def _generate_es_query(parsed_query, handle_nested=True):
                 "nested": {
                     "path": path,
                     "query": {"bool": {"filter": _filter}},
+                    "inner_hits": {"name": path},
                 }
             }
         else:

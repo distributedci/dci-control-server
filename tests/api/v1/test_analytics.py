@@ -170,6 +170,7 @@ def test_build_es_query():
                                                 ]
                                             }
                                         },
+                                        "inner_hits": {"name": "components"},
                                     }
                                 },
                                 {
@@ -178,6 +179,7 @@ def test_build_es_query():
                                         "query": {
                                             "term": {"components.type": "f5-spk"}
                                         },
+                                        "inner_hits": {"name": "components"},
                                     }
                                 },
                                 {"terms": {"tags": ["daily"]}},

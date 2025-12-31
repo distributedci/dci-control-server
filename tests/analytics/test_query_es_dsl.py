@@ -205,6 +205,7 @@ def test_build():
                                             ]
                                         }
                                     },
+                                    "inner_hits": {"name": "components"},
                                 }
                             },
                             {
@@ -226,6 +227,7 @@ def test_build():
                                             ]
                                         }
                                     },
+                                    "inner_hits": {"name": "components"},
                                 }
                             },
                         ]
@@ -247,6 +249,7 @@ def test_build():
                         "query": {
                             "term": {"components.type": "cnf-certification-test"}
                         },
+                        "inner_hits": {"name": "components"},
                     }
                 },
                 {
@@ -259,6 +262,7 @@ def test_build():
                                 }
                             }
                         },
+                        "inner_hits": {"name": "team"},
                     }
                 },
             ]
@@ -287,6 +291,7 @@ def test_query_1():
                     ]
                 }
             },
+            "inner_hits": {"name": "components"},
         }
     }
 
@@ -298,6 +303,7 @@ def test_query_2():
         "nested": {
             "path": "components",
             "query": {"term": {"components.type": "cpt_type"}},
+            "inner_hits": {"name": "components"},
         }
     }
 
@@ -320,6 +326,7 @@ def test_query_build_regex():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "components"},
                     }
                 },
                 {
@@ -341,6 +348,7 @@ def test_query_build_regex():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "components"},
                     }
                 },
             ]
@@ -366,6 +374,7 @@ def test_query_build_comparison_operator():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "keys_values"},
                     }
                 },
                 {
@@ -379,6 +388,7 @@ def test_query_build_comparison_operator():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "keys_values"},
                     }
                 },
             ]
@@ -413,6 +423,7 @@ def test_nrt_query_build_nested_regexp():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "components"},
                     }
                 },
                 {
@@ -427,12 +438,14 @@ def test_nrt_query_build_nested_regexp():
                                 }
                             }
                         },
+                        "inner_hits": {"name": "team"},
                     }
                 },
                 {
                     "nested": {
                         "path": "topic",
                         "query": {"term": {"topic.name": "OCP-4.16"}},
+                        "inner_hits": {"name": "topic"},
                     }
                 },
                 {"terms": {"tags": ["daily"]}},
@@ -461,6 +474,7 @@ def test_nrt_query_build_quoted_values():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "team"},
                     }
                 },
             ]
@@ -475,6 +489,7 @@ def test_query_build_nested_field():
     assert ret == {
         "nested": {
             "path": "tests",
+            "inner_hits": {"name": "tests"},
             "query": {
                 "bool": {
                     "filter": [
@@ -498,11 +513,15 @@ def test_query_build_nested_field():
                                                             "tests.testsuites.testscases.name": "my_testcase_1"
                                                         }
                                                     },
+                                                    "inner_hits": {
+                                                        "name": "tests.testsuites.testscases"
+                                                    },
                                                 }
                                             },
                                         ]
                                     }
                                 },
+                                "inner_hits": {"name": "tests.testsuites"},
                             }
                         },
                     ]
@@ -519,7 +538,13 @@ def test_nrt_complex_test_name():
     assert ret == {
         "bool": {
             "filter": [
-                {"nested": {"path": "team", "query": {"term": {"team.name": "lol"}}}},
+                {
+                    "nested": {
+                        "path": "team",
+                        "query": {"term": {"team.name": "lol"}},
+                        "inner_hits": {"name": "team"},
+                    }
+                },
                 {
                     "nested": {
                         "path": "tests",
@@ -528,6 +553,7 @@ def test_nrt_complex_test_name():
                                 "tests.name": "[sig-api-machinery] API_Server WRS-NonHyperShiftHOST-ROSA-ARO-OSD_CCS-Longduration-NonPreRelease-Author:xxia-Medium-25806-Force encryption key rotation for etcd datastore [Slow][Disruptive] [Serial]"
                             }
                         },
+                        "inner_hits": {"name": "tests"},
                     }
                 },
             ]
@@ -546,6 +572,7 @@ def test_nrt_nested_query():
                     "nested": {
                         "path": "topic",
                         "query": {"term": {"topic.name": "OCP-4.19"}},
+                        "inner_hits": {"name": "topic"},
                     }
                 },
                 {
@@ -563,6 +590,7 @@ def test_nrt_nested_query():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "components"},
                     }
                 },
             ]
@@ -584,6 +612,7 @@ def test_not_equal_on_testscases():
                     "nested": {
                         "path": "tests",
                         "query": {"term": {"tests.name": "junit_e2e"}},
+                        "inner_hits": {"name": "tests"},
                     }
                 },
                 {
@@ -613,6 +642,7 @@ def test_not_equal_on_testscases():
                                 ]
                             }
                         },
+                        "inner_hits": {"name": "tests.testsuites.testcases"},
                     }
                 },
             ]
@@ -629,6 +659,7 @@ def test_nrt_nested_first():
                     "nested": {
                         "path": "team",
                         "query": {"term": {"team.name": "Lolipop"}},
+                        "inner_hits": {"name": "team"},
                     }
                 },
                 {"term": {"status": "success"}},
