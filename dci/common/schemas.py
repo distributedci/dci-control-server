@@ -19,6 +19,8 @@ from dci.common.args import parse_args
 from jsonschema import validators, FormatChecker, Draft4Validator
 from jsonschema.exceptions import ValidationError
 
+from dci.db.models2 import JOB_STATUSES, RESOURCE_STATES
+
 
 def allow_none(property):
     result = property.copy()
@@ -129,9 +131,6 @@ def check_json_is_valid(schema, json):
         raise DCIException("Request malformed", {"errors": errors, "error": errors[0]})
 
 
-valid_resource_states = ["active", "inactive", "archived"]
-
-
 def clean_json_with_schema(schema, values):
     check_json_is_valid(schema, values)
     return {k: values[k] for k in schema["properties"].keys() if k in values}
@@ -179,7 +178,7 @@ create_job_properties = {
     "comment": with_default(Properties.string, ""),
     "previous_job_id": with_default(Properties.uuid, None),
     "update_previous_job_id": with_default(Properties.uuid, None),
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "topic_id": with_default(Properties.uuid, None),
     "tags": with_default(Properties.array, []),
     "data": with_default(Properties.json, {}),
@@ -198,19 +197,8 @@ create_job_schema = {
 
 update_job_properties = {
     "comment": Properties.string,
-    "status": Properties.enum(
-        [
-            "new",
-            "pre-run",
-            "running",
-            "post-run",
-            "success",
-            "failure",
-            "killed",
-            "error",
-        ]
-    ),
-    "state": Properties.enum(valid_resource_states),
+    "status": Properties.enum(JOB_STATUSES),
+    "state": Properties.enum(RESOURCE_STATES),
     "tags": Properties.array,
     "status_reason": Properties.string,
     "configuration": Properties.string,
@@ -228,7 +216,7 @@ schedule_job_schema = {
         "components_ids": with_default(Properties.array, []),
         "comment": with_default(Properties.string, None),
         "previous_job_id": with_default(Properties.uuid, None),
-        "state": with_default(Properties.enum(valid_resource_states), "active"),
+        "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
         "tags": with_default(Properties.array, []),
         "data": with_default(Properties.json, {}),
         "configuration": with_default(Properties.string, None),
@@ -289,7 +277,7 @@ create_product_properties = {
     "name": Properties.string,
     "label": with_default(Properties.string, None),
     "description": with_default(Properties.string, None),
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
 }
 create_product_schema = {
     "type": "object",
@@ -301,7 +289,7 @@ update_product_properties = {
     "name": Properties.string,
     "label": Properties.string,
     "description": Properties.string,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
 }
 update_product_schema = {"type": "object", "properties": update_product_properties}
 
@@ -327,7 +315,7 @@ add_team_to_product_schema = {
 create_test_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "data": with_default(Properties.json, {}),
 }
 create_test_schema = {
@@ -340,7 +328,7 @@ create_test_schema = {
 update_test_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "data": Properties.json,
 }
 update_test_schema = {"type": "object", "properties": update_test_properties}
@@ -357,7 +345,7 @@ create_user_properties = {
     "sso_username": Properties.string,
     "timezone": Properties.string,
     "password": Properties.non_empty_string,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
 }
 create_user_schema = {
     "type": "object",
@@ -374,7 +362,7 @@ update_user_properties = {
     "timezone": Properties.string,
     "password": Properties.non_empty_string,
     "team_id": Properties.uuid,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
 }
 update_user_schema = {"type": "object", "properties": update_user_properties}
 
@@ -402,7 +390,7 @@ update_current_user_schema = {
 create_feeder_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "data": with_default(Properties.json, {}),
 }
 create_feeder_schema = {
@@ -415,7 +403,7 @@ create_feeder_schema = {
 update_feeder_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "data": Properties.json,
 }
 update_feeder_schema = {"type": "object", "properties": update_feeder_properties}
@@ -429,7 +417,7 @@ update_feeder_schema = {"type": "object", "properties": update_feeder_properties
 create_remoteci_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "data": with_default(Properties.json, {}),
     "public": with_default(Properties.boolean, False),
 }
@@ -443,7 +431,7 @@ create_remoteci_schema = {
 update_remoteci_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "data": Properties.json,
     "public": Properties.boolean,
 }
@@ -467,7 +455,7 @@ create_component_properties = {
     "type": Properties.string,
     "topic_id": Properties.uuid,
     "team_id": Properties.uuid,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "data": with_default(Properties.json, {}),
     "tags": with_default(Properties.array, []),
     "released_at": Properties.isoformat_date,
@@ -490,7 +478,7 @@ update_component_properties = {
     "url": Properties.string,
     "type": Properties.string,
     "topic_id": Properties.uuid,
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "data": Properties.json,
     "tags": Properties.array,
     "released_at": Properties.isoformat_date,
@@ -537,7 +525,7 @@ create_topic_properties = {
     "data": with_default(Properties.json, {}),
     "product_id": Properties.uuid,
     "next_topic_id": with_default(Properties.uuid, None),
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "component_types": with_default(Properties.array, []),
     "component_types_optional": with_default(Properties.array, []),
     "export_control": with_default(Properties.boolean, False),
@@ -554,7 +542,7 @@ update_topic_properties = {
     "data": Properties.json,
     "product_id": Properties.uuid,
     "next_topic_id": allow_none(Properties.uuid),
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "component_types": Properties.array,
     "component_types_optional": Properties.array,
     "export_control": Properties.boolean,
@@ -569,7 +557,7 @@ update_topic_schema = {"type": "object", "properties": update_topic_properties}
 create_team_properties = {
     "name": Properties.string,
     "country": with_default(Properties.string, None),
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
     "external": with_default(Properties.boolean, False),
     "has_pre_release_access": with_default(Properties.boolean, False),
 }
@@ -583,7 +571,7 @@ create_team_schema = {
 update_team_properties = {
     "name": Properties.string,
     "country": allow_none(Properties.string),
-    "state": Properties.enum(valid_resource_states),
+    "state": Properties.enum(RESOURCE_STATES),
     "external": Properties.boolean,
     "has_pre_release_access": Properties.boolean,
 }
@@ -728,7 +716,7 @@ analytics_jobs = {
 create_pipeline_properties = {
     "name": Properties.string,
     "team_id": Properties.uuid,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
 }
 create_pipeline_schema = {
     "type": "object",
@@ -739,7 +727,7 @@ create_pipeline_schema = {
 
 update_pipeline_properties = {
     "name": Properties.string,
-    "state": with_default(Properties.enum(valid_resource_states), "active"),
+    "state": with_default(Properties.enum(RESOURCE_STATES), "active"),
 }
 update_pipeline_schema = {
     "type": "object",

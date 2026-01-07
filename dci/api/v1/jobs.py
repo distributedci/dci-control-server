@@ -490,7 +490,7 @@ def get_job_by_id(user, job_id):
             for f in flask.g.session.query(models2.File)
             .filter(
                 sql.and_(
-                    models2.File.jobstate_id == None,  # noqa
+                    models2.File.jobstate_id.is_(None),
                     models2.File.job_id == job_id,
                     models2.File.state != "archived",
                 )

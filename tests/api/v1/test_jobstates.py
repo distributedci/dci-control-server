@@ -170,10 +170,9 @@ def test_create_jobstate_as_user(mocked_disp, client_user1, team1_job_id):
 
 
 @mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_get_jobstate_as_user(mocked_disp, client_user1, team1_jobstate, team1_job_id):
-    # jobstate = user.get('/api/v1/jobstates/%s' % jobstate_id)
-    # assert jobstate.status_code == 404
-
+def test_get_jobstate_as_user(
+    mocked_disp, client_user1, team1_jobstate_id, team1_job_id
+):
     jobstate = client_user1.post(
         "/api/v1/jobstates",
         data={"job_id": team1_job_id, "comment": "kikoolol", "status": "running"},
@@ -193,6 +192,3 @@ def test_delete_jobstate_as_user(mocked_disp, client_user1, team1_job_id):
 
     jobstate_delete = client_user1.delete("/api/v1/jobstates/%s" % js_user_id)
     assert jobstate_delete.status_code == 204
-
-    # jobstate_delete = user.delete('/api/v1/jobstates/%s' % jobstate_id)
-    # assert jobstate_delete.status_code == 401
