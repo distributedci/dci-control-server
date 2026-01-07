@@ -31,8 +31,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 
-import datetime
-from dci.common import utils
+from dci.common import time, utils
 
 
 def upgrade():
@@ -46,14 +45,14 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(),
-            default=datetime.datetime.utcnow,
+            default=time.get_utc_now,
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(),
-            onupdate=datetime.datetime.utcnow,
-            default=datetime.datetime.utcnow,
+            onupdate=time.get_utc_now,
+            default=time.get_utc_now,
             nullable=False,
         ),
         sa.Column(

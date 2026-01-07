@@ -22,7 +22,7 @@ import uuid
 import datetime
 from dci import dci_config
 from dci.common import exceptions as dci_exc
-from dci.common import utils
+from dci.common import utils, time
 from dci.db import models2
 from dci.stores import files_utils
 from dci.stores.s3 import S3
@@ -496,7 +496,7 @@ def test_job_duration(session, client_admin, team1_job_id):
     assert job["status"] == "new"
     # update the job with a created_at 5 seconds in the past
     job = session.query(models2.Job).filter(models2.Job.id == team1_job_id).one()
-    job.created_at = datetime.datetime.utcnow() - datetime.timedelta(0, 5)
+    job.created_at = time.get_utc_now() - datetime.timedelta(0, 5)
     session.commit()
 
     data = {"job_id": team1_job_id, "status": "running"}
@@ -663,7 +663,7 @@ def test_get_jobstates_by_job_id_sorted(
         .filter(models2.Jobstate.id == jobstate_ids[2])
         .one()
     )
-    jobstate.created_at = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    jobstate.created_at = time.get_utc_now() - datetime.timedelta(days=1)
     session.commit()
 
     job = client_user1.get("/api/v1/jobs/%s" % team1_job_id)
@@ -1096,3 +1096,18 @@ def test_nrt_get_jobs_not_contains_tags(
     jobs_nottag2_ids = [j["id"] for j in jobs_nottag2]
     assert job_id_1 in jobs_nottag2_ids
     assert job_id_2 not in jobs_nottag2_ids
+
+
+def test_job_created_at_and_updated_at_format(client_user1, team1_job_id):
+    def assert_datetime_format(value: str):
+        assert isinstance(value, str)
+        datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
+        dt = datetime.datetime.strptime(value, datetime_format)
+        assert dt.tzinfo is None
+
+    get_job = client_user1.get("/api/v1/jobs/%s" % team1_job_id)
+    assert get_job.status_code == 200
+    job = get_job.data["job"]
+
+    assert_datetime_format(job["created_at"])
+    assert_datetime_format(job["updated_at"])

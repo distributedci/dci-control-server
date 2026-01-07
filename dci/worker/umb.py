@@ -1,8 +1,8 @@
-import datetime
 import json
 import os
 import logging
 
+from dci.common import time
 from dci_umb.sender import send
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,9 @@ def _build_generic_message(job, component, result, now):
     }
 
 
-def build_umb_messages(event, now=datetime.datetime.utcnow()):
+def build_umb_messages(event, now=None):
+    if now is None:
+        now = time.get_utc_now()
     logger.debug("Received event to send on UMB: %s" % event)
     messages = []
     job = event["job"]

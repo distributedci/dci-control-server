@@ -13,7 +13,6 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import datetime
 import json
 import logging
 from functools import wraps
@@ -21,7 +20,7 @@ from functools import wraps
 import flask
 
 import dci.auth_mechanism as am
-from dci.common import exceptions as dci_exc
+from dci.common import exceptions as dci_exc, time
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +80,7 @@ def log(f):
                 **{
                     "user_id": user.id,
                     "action": f.__name__,
-                    "created_at": datetime.datetime.utcnow().isoformat(),
+                    "created_at": time.get_utc_now().isoformat(),
                 }
             )
             flask.g.session.add(log)

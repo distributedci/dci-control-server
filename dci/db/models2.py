@@ -13,10 +13,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import datetime
-
 from dci.common import signature
 from dci.common import utils
+from dci.common import time
 from dci.db import declarative as dci_declarative
 
 import sqlalchemy as sa
@@ -91,13 +90,11 @@ class User(dci_declarative.Mixin, Base):
     __tablename__ = "users"
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -169,13 +166,11 @@ class Team(dci_declarative.Mixin, Base):
     __table_args__ = (sa.UniqueConstraint("name", name="teams_name_key"),)
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -227,13 +222,11 @@ class Topic(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -265,13 +258,11 @@ class Remoteci(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -304,13 +295,11 @@ class Product(dci_declarative.Mixin, Base):
     __tablename__ = "products"
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -334,13 +323,11 @@ class Feeder(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -364,9 +351,7 @@ class Log(Base):
     __tablename__ = "logs"
     __table_args__ = (sa.Index("logs_user_id_idx", "user_id"),)
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     user_id = sa.Column("user_id", pg.UUID(as_uuid=True), nullable=False)
     action = sa.Column(sa.Text, nullable=False)
 
@@ -396,13 +381,11 @@ class Componentfile(dci_declarative.Mixin, Base):
     __table_args__ = (sa.Index("component_files_component_id_idx", "component_id"),)
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -450,21 +433,17 @@ class Component(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
         sa.String(40), nullable=False, default=utils.gen_etag, onupdate=utils.gen_etag
     )
-    released_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    released_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     name = sa.Column(sa.String(255), nullable=False)
     type = sa.Column(sa.String(255), nullable=False)
     canonical_project_name = sa.Column(sa.String)
@@ -506,13 +485,11 @@ class Job(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -600,9 +577,7 @@ class Jobstate(dci_declarative.Mixin, Base):
     __table_args__ = (sa.Index("jobstates_job_id_idx", "job_id"),)
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     status = sa.Column(STATUSES, nullable=False)
     comment = sa.Column(sa.Text)
     job_id = sa.Column(
@@ -621,13 +596,11 @@ class TestsResult(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     name = sa.Column(sa.String(255), nullable=False)
@@ -660,13 +633,11 @@ class File(dci_declarative.Mixin, Base):
     )
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
@@ -699,9 +670,7 @@ class JobEvent(dci_declarative.Mixin, Base):
     __tablename__ = "jobs_events"
     __table_args__ = (sa.Index("jobs_events_job_id_idx", "job_id"),)
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     job_id = sa.Column("job_id", pg.UUID(as_uuid=True), nullable=False)
     topic_id = sa.Column("topic_id", pg.UUID(as_uuid=True), nullable=False)
     status = sa.Column("status", FINAL_STATUSES_ENUM)
@@ -710,13 +679,11 @@ class JobEvent(dci_declarative.Mixin, Base):
 class Counter(dci_declarative.Mixin, Base):
     __tablename__ = "counter"
     name = sa.Column(sa.String(255), primary_key=True, nullable=False)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     sequence = sa.Column(sa.Integer, default=0)
@@ -729,13 +696,11 @@ class Pipeline(dci_declarative.Mixin, Base):
     __tablename__ = "pipelines"
 
     id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
-    created_at = sa.Column(
-        sa.DateTime(), default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     updated_at = sa.Column(
         sa.DateTime(),
-        onupdate=datetime.datetime.utcnow,
-        default=datetime.datetime.utcnow,
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
         nullable=False,
     )
     etag = sa.Column(
