@@ -55,7 +55,6 @@ class DciControlServer(flask.Flask):
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
         self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
-        self.messaging = KombuProducer()
         self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
@@ -192,7 +191,7 @@ def create_app(param=None):
         flask.g.team_admin_id = dci_app.team_admin_id
         flask.g.team_redhat_id = dci_app.team_redhat_id
         flask.g.team_epm_id = dci_app.team_epm_id
-        flask.g.messaging = dci_app.messaging
+        flask.g.messaging = KombuProducer()
 
         for i in range(5):
             try:
