@@ -37,6 +37,19 @@ class S3(stores.Store):
         self.buckets = conf.get("buckets")
         self.s3_config = self.get_s3_config()
         self.s3 = self.get_s3()
+        self.create_buckets()
+
+    def create_buckets(self):
+        try:
+            existing_buckets = [b["Name"] for b in self.s3.list_buckets()["Buckets"]]
+            for bucket in self.buckets:
+                if bucket in existing_buckets:
+                    logger.debug(f"Bucket '{bucket}' exists, skipping.")
+                else:
+                    self.s3.create_bucket(Bucket=bucket)
+                    logger.debug(f"Bucket '{bucket}' created.")
+        except Exception:
+            logger.exception("error while creating buckets")
 
     def get_s3_config(self):
         s3_config = Config()
