@@ -13,6 +13,15 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
+# Gevent setup - must be done before other imports
+from gevent import monkey
+
+monkey.patch_all()
+import psycogreen.gevent
+
+psycogreen.gevent.patch_psycopg()
+
 from dci.api import v1 as api_v1
 from dci.api.v1 import notifications
 from dci.api import v2 as api_v2
@@ -32,13 +41,6 @@ import zmq
 
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
-
-try:
-    import psycogreen.gevent
-
-    psycogreen.gevent.patch_psycopg()
-except ImportError:
-    pass
 
 logger = logging.getLogger(__name__)
 
