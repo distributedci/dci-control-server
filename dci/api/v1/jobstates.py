@@ -14,8 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import datetime
-from dci.common.time import get_job_duration
+from dci.common import time
 
 import flask
 from flask import json
@@ -39,7 +38,7 @@ def insert_jobstate(values):
         id=utils.gen_uuid(),
         job_id=values["job_id"],
         status=values["status"],
-        created_at=datetime.datetime.utcnow().isoformat(),
+        created_at=time.get_utc_now().isoformat(),
     )
     flask.g.session.add(job_state)
     flask.g.session.commit()
@@ -65,7 +64,7 @@ def create_jobstates(user):
     values = flask.request.json
     check_json_is_valid(jobstate_schema, values)
     values.update(
-        {"id": utils.gen_uuid(), "created_at": datetime.datetime.utcnow().isoformat()}
+        {"id": utils.gen_uuid(), "created_at": time.get_utc_now().isoformat()}
     )
 
     # if one create a 'failed' jobstates and the current state is either
@@ -83,7 +82,7 @@ def create_jobstates(user):
 
     # Update job status
     job.status = status
-    job.duration = get_job_duration(job)
+    job.duration = time.get_job_duration(job)
 
     try:
         flask.g.session.commit()

@@ -15,6 +15,7 @@
 # under the License.
 
 from dci.analytics import access_data_layer as a_d_l
+from dci.common import time
 
 import datetime
 import mock
@@ -30,9 +31,7 @@ def test_get_jobs(
     rhel_80_component_id,
     team1_id,
 ):
-    m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
-        hours=2
-    )
+    m_get_utc_now.return_value = time.get_utc_now() - datetime.timedelta(hours=2)
 
     pipeline = hmac_client_team1.post(
         "/api/v1/pipelines",
@@ -81,9 +80,7 @@ def test_get_job_by_id(session, team1_job_id):
 
 @mock.patch("dci.api.v1.utils.get_utc_now")
 def test_get_components(m_get_utc_now, session, client_admin, rhel_80_topic_id):
-    m_get_utc_now.return_value = datetime.datetime.utcnow() - datetime.timedelta(
-        hours=2
-    )
+    m_get_utc_now.return_value = time.get_utc_now() - datetime.timedelta(hours=2)
     for i in range(5):
         client_admin.post(
             "/api/v1/components",

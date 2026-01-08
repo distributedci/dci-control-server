@@ -14,11 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import base64
-import datetime
 import gc
 import io
 import xml.etree.ElementTree
-from dci.common.time import get_job_duration
+from dci.common import time
 
 try:
     from xmlrpclib import ServerProxy
@@ -107,7 +106,7 @@ def _calculate_and_save_test_results(values, junit_file, job):
     tr = models2.TestsResult()
     tr.id = utils.gen_uuid()
     tr.created_at = values["created_at"]
-    tr.updated_at = datetime.datetime.utcnow().isoformat()
+    tr.updated_at = time.get_utc_now().isoformat()
     tr.file_id = values["id"]
     tr.job_id = job.id
     tr.name = values["name"]
@@ -179,8 +178,8 @@ def create_files(user):
     values.update(
         {
             "id": file_id,
-            "created_at": datetime.datetime.utcnow().isoformat(),
-            "updated_at": datetime.datetime.utcnow().isoformat(),
+            "created_at": time.get_utc_now().isoformat(),
+            "updated_at": time.get_utc_now().isoformat(),
             "team_id": job.team_id,
             "md5": None,
             "size": s_file.get("content-length", s_file.get("ContentLength")),
@@ -194,7 +193,7 @@ def create_files(user):
 
     # Update job duration if it's jobstate's file
     if values.get("jobstate_id"):
-        base.update_resource_orm(job, {"duration": get_job_duration(job)})
+        base.update_resource_orm(job, {"duration": time.get_job_duration(job)})
     gc.collect()
 
     if new_file["mime"] == "application/junit":
