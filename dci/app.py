@@ -13,6 +13,15 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
+# Gevent setup - must be done before other imports
+from gevent import monkey
+
+monkey.patch_all()
+import psycogreen.gevent
+
+psycogreen.gevent.patch_psycopg()
+
 from dci.api import v1 as api_v1
 from dci.api.v1 import notifications
 from dci.api import v2 as api_v2
@@ -33,13 +42,6 @@ import zmq
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import sessionmaker
 
-try:
-    import psycogreen.gevent
-
-    psycogreen.gevent.patch_psycopg()
-except ImportError:
-    pass
-
 logger = logging.getLogger(__name__)
 
 zmq_sender = None
@@ -53,7 +55,6 @@ class DciControlServer(flask.Flask):
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
         self.sender = self._get_zmq_sender(self.config["ZMQ_CONN"])
         self.store = dci_config.get_store()
-        self.messaging = KombuProducer()
         self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
@@ -190,7 +191,7 @@ def create_app(param=None):
         flask.g.team_admin_id = dci_app.team_admin_id
         flask.g.team_redhat_id = dci_app.team_redhat_id
         flask.g.team_epm_id = dci_app.team_epm_id
-        flask.g.messaging = dci_app.messaging
+        flask.g.messaging = KombuProducer()
 
         for i in range(5):
             try:
