@@ -1112,3 +1112,51 @@ def test_job_created_at_and_updated_at_format(client_user1, team1_job_id):
 
     assert_datetime_format(job["created_at"])
     assert_datetime_format(job["updated_at"])
+
+
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_job_notifications_on_update_after_final_status(
+    mock_kp, hmac_client_team1, team1_job_id
+):
+    m_publish = mock_kp.return_value
+    m_publish.publish_jobs_updated = mock.MagicMock()
+    m_publish.publish_jobs_finished = mock.MagicMock()
+    res = hmac_client_team1.get("/api/v1/jobs/%s" % team1_job_id)
+    job = res.data["job"]
+
+    status_reason = {"status_reason": "Invalid tasks"}
+    hmac_client_team1.put(
+        "/api/v1/jobs/%s" % team1_job_id,
+        data=status_reason,
+        headers={"If-match": job["etag"]},
+    )
+    m_publish.publish_jobs_updated.assert_not_called()
+    m_publish.publish_jobs_updated.reset_mock()
+
+    t_utils.create_file(hmac_client_team1, team1_job_id, "name")
+    m_publish.publish_jobs_updated.assert_not_called()
+    m_publish.publish_jobs_finished.assert_not_called()
+    m_publish.publish_jobs_updated.reset_mock()
+    m_publish.publish_jobs_finished.reset_mock()
+
+    js_data = {"job_id": team1_job_id, "status": "success"}
+    hmac_client_team1.post("/api/v1/jobstates", data=js_data)
+    m_publish.publish_jobs_updated.assert_not_called()
+    m_publish.publish_jobs_finished.assert_called()
+    m_publish.publish_jobs_updated.reset_mock()
+    m_publish.publish_jobs_finished.reset_mock()
+
+    res = hmac_client_team1.get("/api/v1/jobs/%s" % team1_job_id)
+    job = res.data["job"]
+
+    status_reason = {"status_reason": "Invalid tasks"}
+    hmac_client_team1.put(
+        "/api/v1/jobs/%s" % team1_job_id,
+        data=status_reason,
+        headers={"If-match": job["etag"]},
+    )
+    m_publish.publish_jobs_updated.assert_called_once()
+    m_publish.publish_jobs_updated.reset_mock()
+
+    t_utils.create_file(hmac_client_team1, team1_job_id, "name")
+    m_publish.publish_jobs_updated.assert_called_once()
