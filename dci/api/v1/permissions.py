@@ -120,6 +120,6 @@ def can_delete_component(user, component):
     component_team_id = component.team_id
     if component_team_id is not None:
         if user.is_not_in_team(component_team_id):
-            dci_exc.Unauthorized()
+            raise dci_exc.Unauthorized()
     elif user.is_not_super_admin() and user.is_not_feeder() and user.is_not_epm():
         raise dci_exc.Unauthorized()
