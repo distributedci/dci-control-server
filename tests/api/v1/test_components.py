@@ -1776,3 +1776,29 @@ def test_a_user_cant_access_another_user_component(
     assert r.data["components"][0]["id"] == user_component["id"]
 
     assert client_user2.get("/api/v1/components").data["components"] == []
+
+
+def test_user_cannot_delete_other_teams_component(
+    client_user1, client_user2, rhel_80_topic_id, team1_id, team2_id
+):
+    # user2 creates a component owned by team2
+    data = {
+        "name": "pname",
+        "type": "gerrit_review",
+        "url": "http://example.com/",
+        "team_id": team2_id,
+        "topic_id": rhel_80_topic_id,
+        "state": "active",
+    }
+    pc = client_user2.post("/api/v1/components", data=data)
+    assert pc.status_code == 201
+    pc_id = pc.data["component"]["id"]
+    etag = pc.data["component"]["etag"]
+
+    # user1 (team1) should not be able to delete team2's component
+    r = client_user1.delete("/api/v1/components/%s" % pc_id, headers={"If-match": etag})
+    assert r.status_code == 401
+
+    # verify the component still exists
+    r = client_user2.get("/api/v1/components/%s" % pc_id)
+    assert r.status_code == 200
