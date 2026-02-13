@@ -325,3 +325,38 @@ def test_sso_auth_get_current_user(
         flask.g.session = session
         request = sso_client_user1.get("/api/v1/users/me?embed=team,remotecis")
         assert request.status_code == 200
+
+
+@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@mock.patch("dci.auth_mechanism.sso.get_public_key_from_token")
+def test_nrt_sso_auth_old_valid_pubkey_expired_token_raises_dci_exception(
+    m_get_public_key_from_token,
+    m_datetime,
+    sso_client_user1,
+    app,
+    session,
+    team_admin_id,
+):
+    """
+    Test scenario:
+    Client sends a JWT token which is both:
+    - signed with a valid public key which we don't know about
+    - *but* signature is expired anyways
+
+    This should return a 401 status code
+    """
+    sso_public_key = dci_config.CONFIG["SSO_PUBLIC_KEY"]
+    dci_config.CONFIG["SSO_PUBLIC_KEY"] = "= non valid sso public key here ="
+    m_utcnow = mock.MagicMock()
+    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
+        1881681817
+    ).timetuple()
+    m_datetime.utcnow.return_value = m_utcnow
+    m_get_public_key_from_token.return_value = sso_public_key
+    with app.app_context():
+        flask.g.team_admin_id = team_admin_id
+        flask.g.session = session
+        teams = sso_client_user1.get("/api/v1/users/me")
+        assert teams.status_code == 401
+        assert teams.data["message"] == "JWT token expired, please refresh."
+    assert dci_config.CONFIG["SSO_PUBLIC_KEY"] == sso_public_key

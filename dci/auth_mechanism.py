@@ -19,6 +19,7 @@ import uuid
 from sqlalchemy import exc as sa_exc
 from sqlalchemy import sql
 from sqlalchemy import orm
+from tenacity import retry, retry_if_exception_type, stop_after_attempt
 
 from dci.api.v1 import base, sso
 from dci.auth import check_passwords_equal, decode_jwt
@@ -227,27 +228,34 @@ class OpenIDCAuth(BaseMechanism):
                 logging.debug(public_key)
                 conf["SSO_PUBLIC_KEY"] = public_key
 
-        if not conf.get("SSO_PUBLIC_KEY"):
-            __get_and_set_sso_public_key()
+        def __refresh_sso_public_key_if_retried(retry_state):
+            if retry_state.outcome.failed:
+                logging.info(
+                    "JWT token decode error: %s, will refresh sso public key and retry decode"
+                    % str(retry_state.outcome.exception())
+                )
+                __get_and_set_sso_public_key()
+
+        @retry(
+            reraise=True,
+            stop=stop_after_attempt(2),
+            retry=retry_if_exception_type(
+                exception_types=(jwt_exc.DecodeError, TypeError, ValueError)
+            ),
+            after=__refresh_sso_public_key_if_retried,
+        )
+        def __decode_token_with_refresh(token):
+            if not conf.get("SSO_PUBLIC_KEY"):
+                __get_and_set_sso_public_key()
+
+            return decode_jwt(token, conf["SSO_PUBLIC_KEY"], conf["SSO_AUDIENCES"])
 
         try:
-            decoded_token = decode_jwt(
-                token, conf["SSO_PUBLIC_KEY"], conf["SSO_AUDIENCES"]
-            )
+            decoded_token = __decode_token_with_refresh(token)
         except (jwt_exc.DecodeError, TypeError, ValueError) as e:
-            logging.debug(
-                "JWT token decode error: %s, will refresh sso public key and retry decode"
-                % str(e)
+            raise dci_exc.DCIException(
+                "JWT token decode error: %s" % str(e), status_code=401
             )
-            try:
-                __get_and_set_sso_public_key()
-                decoded_token = decode_jwt(
-                    token, conf["SSO_PUBLIC_KEY"], conf["SSO_AUDIENCES"]
-                )
-            except (jwt_exc.DecodeError, TypeError, ValueError) as e2:
-                raise dci_exc.DCIException(
-                    "JWT token decode error: %s" % str(e2), status_code=401
-                )
         except jwt_exc.ExpiredSignatureError:
             raise dci_exc.DCIException(
                 "JWT token expired, please refresh.", status_code=401
