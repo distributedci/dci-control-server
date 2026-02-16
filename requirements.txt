@@ -33,3 +33,5 @@ redis
 
 dciauth  # ignore: package from dci use the latest version
 dci-umb  # ignore: package from dci use the latest version
+
+tenacity
