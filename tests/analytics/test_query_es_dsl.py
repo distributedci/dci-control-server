@@ -666,3 +666,35 @@ def test_nrt_nested_first():
             ]
         }
     }
+
+
+def test_query_with_empty_value():
+    ret = qed.build("(name='Lolipop') and (comment='')")
+    assert ret == {
+        "bool": {"filter": [{"term": {"name": "Lolipop"}}, {"term": {"comment": ""}}]}
+    }
+
+
+def test_query_with_not_operator():
+    ret = qed.build("not(name='lolipop') and (comment='') and not(team.name='mdr')")
+    assert ret == {
+        "bool": {
+            "filter": [
+                {"bool": {"must_not": [{"term": {"name": "lolipop"}}]}},
+                {"term": {"comment": ""}},
+                {
+                    "bool": {
+                        "must_not": [
+                            {
+                                "nested": {
+                                    "inner_hits": {"name": "team"},
+                                    "path": "team",
+                                    "query": {"term": {"team.name": "mdr"}},
+                                }
+                            }
+                        ]
+                    }
+                },
+            ]
+        }
+    }
