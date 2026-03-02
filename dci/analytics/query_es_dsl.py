@@ -17,26 +17,6 @@
 import pyparsing as pp
 
 _field = pp.Word(pp.alphanums + "_" + ".")
-_word = pp.Word(
-    pp.alphanums
-    + " "
-    + "_"
-    + "-"
-    + "%"
-    + "."
-    + ":"
-    + "\\"
-    + "*"
-    + "?"
-    + "+"
-    + "{"
-    + "}"
-    + "["
-    + "]"
-    + "/"
-    + "("
-    + ")"
-)
 _integer = pp.Word(pp.nums).setParseAction(lambda tokens: int(tokens[0]))
 
 
@@ -50,7 +30,7 @@ def _int_or_float(v):
 _integer_or_float = pp.Word(pp.nums + "." + "-").setParseAction(
     lambda tokens: _int_or_float(tokens[0])
 )
-_value_with_quotes = pp.Suppress(pp.Literal("'")) + _word + pp.Suppress(pp.Literal("'"))
+_value_with_quotes = pp.QuotedString("'", unquoteResults=True)
 _value = _integer_or_float | _value_with_quotes
 
 _value_for_list = pp.Word(pp.alphanums + "_" + "." + "-" + ":" + " ")
@@ -87,8 +67,10 @@ _logical_operation = (
 )
 
 query = pp.Forward()
+_not_operation = pp.Group(pp.Keyword("not") + _lp + pp.Group(query) + _rp)
 query << (
     (_lp + pp.Group(query) + _rp + pp.ZeroOrMore(_logical_operators + query))
+    | _not_operation + pp.ZeroOrMore(_logical_operators + query)
     | _logical_operation
 )
 
@@ -124,6 +106,17 @@ def _handle_comparison_operator(handle_nested, operator, operand_1, operand_2):
 
 
 def _generate_from_operators(parsed_query, handle_nested=False):
+    if len(parsed_query) == 2 and parsed_query[0] == "not":
+        return {
+            "bool": {
+                "must_not": [
+                    _generate_from_operators(
+                        parsed_query[1], handle_nested=handle_nested
+                    )
+                ]
+            }
+        }
+
     operand_1 = parsed_query[0]
     operator = parsed_query[1]
     operand_2 = parsed_query[2]
