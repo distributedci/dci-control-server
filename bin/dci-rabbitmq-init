@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+"""
+Create the DCI exchange and queues in RabbitMQ.
+Run this once (e.g. at deploy time) so that the API and workers can use them.
+"""
+
+from dci import dci_config
+from dci import dci_kombu
+import kombu
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    amqp_url = dci_config.CONFIG["AMQP_BROKER_URL"]
+    logger.info("Connecting to RabbitMQ at %s", amqp_url.split("@")[-1] if "@" in amqp_url else amqp_url)
+
+    try:
+        with kombu.Connection(amqp_url) as conn:
+            exchange = kombu.Exchange("dci.exchange", type="topic")
+            conn.connect()
+            logger.info("Connected !")
+            for q in dci_kombu.QUEUE_NAMES_ROUTING_KEYS:
+                queue = kombu.Queue(
+                    name=q["name"],
+                    exchange=exchange,
+                    routing_key=q["routing_key"],
+                )
+                queue.maybe_bind(conn)
+                queue.declare()
+                logger.info("Declared queue %s (routing_key=%s)", q["name"], q["routing_key"])
+        logger.info("RabbitMQ init completed successfully.")
+        return 0
+    except Exception as e:
+        logger.exception("RabbitMQ init failed: %s", e)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

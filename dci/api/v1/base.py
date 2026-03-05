@@ -22,21 +22,21 @@ from dci.common import exceptions as dci_exc
 from dci.common import utils
 
 
-def get_resources_orm(table, filters=[], options=[]):
+def get_resources_orm(table, filters=None, options=None):
     query = flask.g.session.query(table)
     try:
         getattr(table, "state")
         query = query.filter(table.state != "archived")
     except AttributeError:
         pass
-    for filter in filters:
-        query = query.filter(filter)
-    for option in options:
-        query = query.options(option)
+    if filters:
+        query = query.filter(*filters)
+    if options:
+        query = query.options(*options)
     return query.all()
 
 
-def get_resource_orm(table, id, etag=None, options=[]):
+def get_resource_orm(table, id, etag=None, options=None):
     try:
         query = flask.g.session.query(table).filter(table.id == id)
         try:
@@ -47,8 +47,8 @@ def get_resource_orm(table, id, etag=None, options=[]):
 
         if etag:
             query = query.filter(table.etag == etag)
-        for option in options:
-            query = query.options(option)
+        if options:
+            query = query.options(*options)
         return query.one()
     except orm.exc.NoResultFound:
         resource_name = table.__tablename__[0:-1]

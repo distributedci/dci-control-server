@@ -102,9 +102,9 @@ def test_create_task_file_update_job_duration(m_datetime_j, client_user1, team1_
     assert team1_job["duration"] == 86410
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_regressions_successfix(
-    mocked_disp, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",
@@ -390,7 +390,7 @@ def test_purge_failure(client_admin, client_user1, team1_job_id, team1_id):
     assert len(to_purge["files"]) == 2
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_get_junit_file(_, client_user1, team1_job):
     junit_id = t_utils.create_file(
         client_user1,
@@ -480,7 +480,7 @@ def test_nrt_dont_returned_deleted_files_in_get_job(client_user1, team1_job_id):
     assert job["files"][0]["id"] == file2["id"]
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_nrt_get_an_empty_junit_file(_, client_user1, team1_job_id):
     content = ""
     junit_id = t_utils.create_file(
@@ -496,8 +496,8 @@ def test_nrt_get_an_empty_junit_file(_, client_user1, team1_job_id):
     assert len(testsuites) == 0
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_retrieve_junit(job_dispatcher_mock, client_admin, team1_job_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_retrieve_junit(_, client_admin, team1_job_id):
     headers = {
         "DCI-NAME": "junit_file.xml",
         "DCI-JOB-ID": team1_job_id,
@@ -522,10 +522,8 @@ def test_retrieve_junit(job_dispatcher_mock, client_admin, team1_job_id):
     assert res.headers["Content-Type"] == "application/junit"
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
-def test_create_file_fill_tests_results_table(
-    job_dispatcher_mock, engine, client_admin, team1_job_id
-):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job_id):
     with open("tests/data/tempest-results.xml", "r") as f:
         content_file = f.read()
 
@@ -553,9 +551,9 @@ def test_create_file_fill_tests_results_table(
     assert test_result["time"] == 1319
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_tests_results_table_with_multiple_testsuites(
-    job_dispatcher_mock, engine, client_admin, team1_job_id
+    _, engine, client_admin, team1_job_id
 ):
     with open("tests/data/junit_with_multiple_testsuite.xml", "r") as f:
         content_file = f.read()
@@ -584,9 +582,9 @@ def test_tests_results_table_with_multiple_testsuites(
     assert test_result["time"] == 24
 
 
-@mock.patch("dci.api.v1.notifications.job_dispatcher")
+@mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_invalid_xml(
-    mocked_disp, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",

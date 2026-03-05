@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) Red Hat, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+from dci.common import notifications
+from dci import dci_config
+from dci import dci_kombu
+from dci.worker import access_data_layer as a_d_l
+from dci.worker import mail_worker as m_w
+
+from kombu import Connection, Exchange, Queue
+from kombu.mixins import ConsumerMixin
+
+import logging
+import os
+import smtplib
+import sys
+from sqlalchemy.orm import sessionmaker
+
+try:
+    from email.MIMEText import MIMEText
+except ImportError:
+    from email.mime.text import MIMEText
+
+AMQP_BROKER_URL = os.getenv("AMQP_BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")
+LOGGING_LEVEL = logging.INFO
+
+
+def _get_smtp_server(server, port, account, password):
+    server = smtplib.SMTP(server, port)
+    server.starttls()
+    if account and password:
+        server.login(account, password)
+    return server
+
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
+
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(LOGGING_LEVEL)
+    console_handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(LOGGING_LEVEL)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+
+    kombu_logger = logging.getLogger("kombu")
+    kombu_logger.setLevel(LOGGING_LEVEL)
+    kombu_logger.handlers.clear()
+    kombu_logger.addHandler(console_handler)
+
+    kombu_transport_logger = logging.getLogger("kombu.transport")
+    kombu_transport_logger.setLevel(LOGGING_LEVEL)
+    kombu_transport_logger.handlers.clear()
+    kombu_transport_logger.addHandler(console_handler)
+
+
+class Worker(ConsumerMixin):
+    def __init__(self, connection, queue_jobs_finished, queue_components_created, queue_components_updated, session_db):
+        self.connection = connection
+        self._session_db = session_db
+        self._queue_jobs_finished = queue_jobs_finished
+        self._queue_components_created = queue_components_created
+        self._queue_components_updated = queue_components_updated
+
+    def get_consumers(self, Consumer, channel):
+        return [
+            Consumer(queues=[self._queue_jobs_finished], callbacks=[self.on_job_finished]),
+            Consumer(queues=[self._queue_components_created], callbacks=[self.on_component_created]),
+            Consumer(queues=[self._queue_components_updated], callbacks=[self.on_component_updated]),
+        ]
+
+    def on_job_finished(self, payload, message):
+        try:
+            job_id = payload["job_id"]
+            logging.info("received message dci.jobs.finished, processing job %s", job_id)
+            job = m_w.get_serialized_job(self._session_db, job_id)
+            emails = a_d_l.get_emails_from_remoteci(self._session_db, job["remoteci_id"])
+            job_event = notifications.get_job_event(job, emails)
+            if job_event:
+                email_configuration = m_w.get_email_configuration()
+                server = _get_smtp_server(**email_configuration)
+                email = m_w.build_job_email(email_configuration["account"], job_event)
+                m_w.send_mails(server, job_event["emails"], email)
+                server.quit()
+            logging.info("Worker processed successfully the message.")
+        except Exception as e:
+            logging.exception("An error has occurred when processing the event: %s", e)
+        message.ack()
+
+    def on_component_created(self, payload, message):
+        try:
+            component_id = payload["component_id"]
+            logging.info("received message dci.components.created, processing component %s", component_id)
+            component = m_w.get_serialized_component(self._session_db, component_id)
+            emails = a_d_l.get_emails_subscribed_to_topic(component["topic_id"], self._session_db)
+            component_event = notifications.get_component_event(component, emails)
+            if component_event and component_event["state"] == "active":
+                email_configuration = m_w.get_email_configuration()
+                server = _get_smtp_server(**email_configuration)
+                email = m_w.build_component_email(email_configuration["account"], component_event)
+                m_w.send_mails(server, component_event["emails"], email)
+                server.quit()
+            logging.info("Worker processed successfully the message.")
+        except Exception as e:
+            logging.exception("An error has occurred when processing the event: %s", e)
+        message.ack()
+
+    def on_component_updated(self, payload, message):
+        try:
+            component_id = payload["component_id"]
+            previous_state = payload["previous_state"]
+            state = payload["state"]
+            logging.info("received message dci.components.updated, processing component %s", component_id)
+            component = m_w.get_serialized_component(self._session_db, component_id)
+            emails = a_d_l.get_emails_subscribed_to_topic(component["topic_id"], self._session_db)
+            component_event = notifications.get_component_event(component, emails)
+            if component_event and state == "active" and previous_state != "active":
+                email_configuration = m_w.get_email_configuration()
+                server = _get_smtp_server(**email_configuration)
+                email = m_w.build_component_email(email_configuration["account"], component_event)
+                m_w.send_mails(server, component_event["emails"], email)
+                server.quit()
+            logging.info("Worker processed successfully the message.")
+        except Exception as e:
+            logging.exception("An error has occurred when processing the event: %s", e)
+        message.ack()
+
+
+def get_session_db():
+    config = dci_config.generate_conf()
+    engine = dci_config.get_engine(config["SQLALCHEMY_DATABASE_URI"])
+    return sessionmaker(bind=engine)()
+
+
+if __name__ == '__main__':
+
+    setup_logging()
+    session_db = get_session_db()
+
+    exchange = Exchange(dci_kombu.DCI_EXCHANGE, type="topic")
+    queue_jobs_finished = Queue(dci_kombu.QUEUE_JOBS_FINISHED, exchange, routing_key=dci_kombu.RK_JOBS_FINISHED)
+    queue_components_created = Queue(dci_kombu.QUEUE_COMPONENTS_CREATED, exchange, routing_key=dci_kombu.RK_COMPONENTS_CREATED)
+    queue_components_updated = Queue(dci_kombu.QUEUE_COMPONENTS_UPDATED, exchange, routing_key=dci_kombu.RK_COMPONENTS_UPDATED)
+
+    logging.info("exchange: dci.exchange, type: topic")
+    logging.info(f"queue: {dci_kombu.QUEUE_JOBS_FINISHED}, routing_key: {dci_kombu.RK_JOBS_FINISHED}")
+    logging.info(f"queue: {dci_kombu.QUEUE_COMPONENTS_CREATED}, routing_key: {dci_kombu.RK_COMPONENTS_CREATED}")
+    logging.info(f"queue: {dci_kombu.QUEUE_COMPONENTS_UPDATED}, routing_key: {dci_kombu.RK_COMPONENTS_UPDATED}")
+
+    with Connection(AMQP_BROKER_URL, heartbeat=4) as conn:
+        worker = Worker(
+            conn,
+            queue_jobs_finished,
+            queue_components_created,
+            queue_components_updated,
+            session_db,
+        )
+        worker.run()
