@@ -15,7 +15,7 @@
 # under the License.
 
 from dci.common import exceptions as dci_exc
-from dci.db import query_dsl
+from dci.db import query_dsl, type_conversion
 
 import pyparsing as pp
 from sqlalchemy import func, String
@@ -144,7 +144,10 @@ def handle_args(query, model_object, args):
             elif isinstance(m_column.type, ARRAY):
                 query = query.filter(m_column.contains([value]))
             else:
-                query = query.filter(m_column == value)
+                converted_value = type_conversion.convert_value_to_column_type(
+                    value, m_column.type
+                )
+                query = query.filter(m_column == converted_value)
     elif args.get("query"):
         try:
             parsed_query = query_dsl.parse(args.get("query"))

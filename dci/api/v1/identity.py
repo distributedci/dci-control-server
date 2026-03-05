@@ -15,7 +15,8 @@
 # under the License.
 import flask
 from flask import json
-from sqlalchemy import sql
+
+from sqlalchemy import sql, update
 
 from dci.api.v1 import api
 from dci.api.v1 import base
@@ -25,17 +26,6 @@ from dci.common.schemas import clean_json_with_schema, update_current_user_schem
 from dci.common import utils
 from dci.db import models2
 from dci import decorators
-
-
-# TODO: replace this properly with JSONEncoder
-def _encode_dict(_dict):
-    res = {}
-    for d in _dict:
-        _values = {}
-        for i in _dict[d]:
-            _values[str(i)] = _dict[d][i]
-        res[str(d)] = _values
-    return res
 
 
 @api.route("/identity", methods=["GET"])
@@ -52,7 +42,7 @@ def get_identity(identity):
                     "fullname": identity.fullname,
                     "email": identity.email,
                     "timezone": identity.timezone,
-                    "teams": _encode_dict(identity.teams),
+                    "teams": identity.teams,
                 }
             }
         ),
@@ -91,9 +81,14 @@ def put_identity(user):
     )
 
     try:
-        flask.g.session.query(models2.User).filter(
-            sql.and_(models2.User.id == user.id, models2.User.etag == if_match_etag)
-        ).update(new_values)
+        query = (
+            update(models2.User)
+            .where(
+                sql.and_(models2.User.id == user.id, models2.User.etag == if_match_etag)
+            )
+            .values(new_values)
+        )
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()

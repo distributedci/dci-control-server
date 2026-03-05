@@ -23,6 +23,7 @@ on DCI environment variable.
 import os
 
 import sqlalchemy
+from sqlalchemy import select
 from sqlalchemy_utils import functions as sa_funcs
 from sqlalchemy.orm import sessionmaker
 
@@ -39,9 +40,8 @@ DCI_PASSWORD_HASH = auth.hash_password(DCI_PASSWORD)
 
 def init_db(session):
     def db_insert_with_name(session, model_item, **kwargs):
-        resource = (
-            session.query(model_item).filter(model_item.name == kwargs["name"]).first()
-        )
+        query = select(model_item).where(model_item.name == kwargs["name"])
+        resource = session.execute(query).scalar()
         if resource:
             return resource
 
@@ -66,10 +66,10 @@ def init_db(session):
         email="admin@example.org",
     )
 
-    super_admin.team.append(team_admin)
-    session.add(super_admin)
-
-    session.commit()
+    if team_admin not in super_admin.team:
+        super_admin.team.append(team_admin)
+        session.add(super_admin)
+        session.commit()
 
 
 def main():

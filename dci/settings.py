@@ -33,7 +33,7 @@ DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", "5432"))
 DB_NAME = os.getenv("DB_NAME", "dci")
 DEFAULT_SQLALCHEMY_DATABASE_URI = (
-    "postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}".format(
+    "postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}".format(
         db_user=DB_USER,
         db_password=DB_PASSWORD,
         db_host=DB_HOST,
@@ -42,7 +42,7 @@ DEFAULT_SQLALCHEMY_DATABASE_URI = (
     )
 )
 SQLALCHEMY_DATABASE_URI = os.getenv(
-    "SQLALCHEMY_DATABASE_URI", DEFAULT_SQLALCHEMY_DATABASE_URI
+    "SQLALCHEMY_DATABASE_URI_PSYCOPG3", DEFAULT_SQLALCHEMY_DATABASE_URI
 )
 
 # The following two lines will output the SQL statements
@@ -52,9 +52,6 @@ SQLALCHEMY_DATABASE_URI = os.getenv(
 SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "False").strip().capitalize() == "True"
 SQLALCHEMY_RECORD_QUERIES = (
     os.getenv("SQLALCHEMY_RECORD_QUERIES", "False").strip().capitalize() == "True"
-)
-SQLALCHEMY_NATIVE_UNICODE = (
-    os.getenv("SQLALCHEMY_NATIVE_UNICODE", "True").strip().capitalize() == "True"
 )
 SQLALCHEMY_POOL_SIZE = int(os.getenv("SQLALCHEMY_POOL_SIZE", "5"))
 SQLALCHEMY_MAX_OVERFLOW = int(os.getenv("SQLALCHEMY_MAX_OVERFLOW", "25"))
@@ -77,14 +74,6 @@ STORE_S3_AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin"
 STORE_S3_AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 STORE_S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
 STORE_S3_SIGNATURE_VERSION = os.getenv("AWS_SIGNATURE_VERSION", "s3v4")
-
-# ZMQ Connection
-ZMQ_HOST = os.getenv("ZMQ_HOST", "127.0.0.1")
-ZMQ_PORT = int(os.getenv("ZMQ_PORT", "5557"))
-DEFAULT_ZMQ_CONN = "tcp://{zmq_host}:{zmq_port}".format(
-    zmq_host=ZMQ_HOST, zmq_port=ZMQ_PORT
-)
-ZMQ_CONN = os.getenv("ZMQ_CONN", DEFAULT_ZMQ_CONN)
 
 # AMQP Connection
 AMQP_BROKER_URL = os.getenv("AMQP_BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")

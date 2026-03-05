@@ -16,40 +16,40 @@
 
 import flask
 
-from sqlalchemy import orm
+from sqlalchemy import orm, select, delete
 from sqlalchemy import exc
 from dci.common import exceptions as dci_exc
 from dci.common import utils
 
 
 def get_resources_orm(table, filters=None, options=None):
-    query = flask.g.session.query(table)
+    query = select(table)
     try:
         getattr(table, "state")
-        query = query.filter(table.state != "archived")
+        query = query.where(table.state != "archived")
     except AttributeError:
         pass
     if filters:
-        query = query.filter(*filters)
+        query = query.where(*filters)
     if options:
         query = query.options(*options)
-    return query.all()
+    return flask.g.session.execute(query).scalars().all()
 
 
 def get_resource_orm(table, id, etag=None, options=None):
     try:
-        query = flask.g.session.query(table).filter(table.id == id)
+        query = select(table).where(table.id == id)
         try:
             getattr(table, "state")
-            query = query.filter(table.state != "archived")
+            query = query.where(table.state != "archived")
         except AttributeError:
             pass
 
         if etag:
-            query = query.filter(table.etag == etag)
+            query = query.where(table.etag == etag)
         if options:
             query = query.options(*options)
-        return query.one()
+        return flask.g.session.execute(query).scalar_one()
     except orm.exc.NoResultFound:
         resource_name = table.__tablename__[0:-1]
         raise dci_exc.DCIException(
@@ -97,7 +97,7 @@ def create_resource_orm(table, data):
 
 
 def get_archived_resources_query(table):
-    return flask.g.session.query(table).filter(table.state == "archived")
+    return select(table).where(table.state == "archived")
 
 
 def get_to_purge_archived_resources(user, table):
@@ -106,8 +106,9 @@ def get_to_purge_archived_resources(user, table):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
+    query = get_archived_resources_query(table)
     archived_resources = [
-        r.serialize() for r in get_archived_resources_query(table).all()
+        r.serialize() for r in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify(
@@ -125,7 +126,8 @@ def purge_archived_resources(user, table):
         raise dci_exc.Unauthorized()
 
     try:
-        get_archived_resources_query(table).delete()
+        query = delete(table).where(table.state == "archived")
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()
@@ -137,8 +139,11 @@ def get_resources_to_purge_orm(user, table):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
-    query = flask.g.session.query(table).filter(table.state == "archived")
-    archived_resources = [resource.serialize() for resource in query.all()]
+    query = select(table).where(table.state == "archived")
+    archived_resources = [
+        resource.serialize()
+        for resource in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify(
         {
@@ -152,7 +157,8 @@ def purge_archived_resources_orm(user, table):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
-    flask.g.session.query(table).filter(table.state == "archived").delete()
+    query = delete(table).where(table.state == "archived")
+    flask.g.session.execute(query)
     try:
         flask.g.session.commit()
     except Exception as e:

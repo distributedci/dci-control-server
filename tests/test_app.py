@@ -49,14 +49,12 @@ def test_cors_headers(client_admin):
 
 
 def test_db_migration():
-    db_uri = (
-        "postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}".format(
-            db_user=dci_config.CONFIG["DB_USER"],
-            db_password=dci_config.CONFIG["DB_PASSWORD"],
-            db_host=dci_config.CONFIG["DB_HOST"],
-            db_port=dci_config.CONFIG["DB_PORT"],
-            db_name="test_db_migration",
-        )
+    db_uri = "postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}".format(
+        db_user=dci_config.CONFIG["DB_USER"],
+        db_password=dci_config.CONFIG["DB_PASSWORD"],
+        db_host=dci_config.CONFIG["DB_HOST"],
+        db_port=dci_config.CONFIG["DB_PORT"],
+        db_name="test_db_migration",
     )
 
     if sqlalchemy_utils.functions.database_exists(db_uri):

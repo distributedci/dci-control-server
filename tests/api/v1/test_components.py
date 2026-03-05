@@ -666,7 +666,7 @@ def test_nrt_get_component_by_id_return_list_of_jobs_if_rh_employee(
 
 
 def test_get_component_not_found(client_admin):
-    result = client_admin.get("/api/v1/components/ptdr")
+    result = client_admin.get("/api/v1/components/f9e8d7c6-b5a4-4321-9876-543210fedcba")
     assert result.status_code == 404
 
 

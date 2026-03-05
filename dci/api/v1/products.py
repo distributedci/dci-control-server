@@ -17,7 +17,7 @@
 import flask
 from flask import json
 
-from sqlalchemy import exc as sa_exc
+from sqlalchemy import exc as sa_exc, select, update, func
 import sqlalchemy.orm as sa_orm
 from sqlalchemy import sql
 
@@ -94,26 +94,27 @@ def update_product(user, product_id):
 def get_all_products(user):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    q = (
-        flask.g.session.query(models2.Product)
-        .filter(models2.Product.state != "archived")
-        .options(sa_orm.selectinload("topics"))
+    query = (
+        select(models2.Product)
+        .where(models2.Product.state != "archived")
+        .options(sa_orm.selectinload(models2.Product.topics))
     )
-    q = d.handle_args(q, models2.Product, args)
+    query = d.handle_args(query, models2.Product, args)
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
         _JPT = models2.JOIN_PRODUCTS_TEAMS
-        q = q.join(
+        query = query.join(
             _JPT,
             sql.and_(
                 _JPT.c.product_id == models2.Product.id,
                 _JPT.c.team_id.in_(user.teams_ids),
             ),
         )
-    q = q.distinct()
-    nb_products = q.count()
-    q = d.handle_pagination(q, args)
-    products = q.all()
+    query = query.distinct()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_products = flask.g.session.execute(count_query).scalar()
+    query = d.handle_pagination(query, args)
+    products = flask.g.session.execute(query).scalars().all()
     products = list(map(lambda p: p.serialize(), products))
 
     return flask.jsonify({"products": products, "_meta": {"count": nb_products}})
@@ -123,11 +124,11 @@ def get_all_products(user):
 @decorators.login_required
 def get_product_by_id(user, product_id):
     try:
-        q = (
-            flask.g.session.query(models2.Product)
-            .filter(models2.Product.state != "archived")
-            .filter(models2.Product.id == product_id)
-            .options(sa_orm.selectinload("topics"))
+        query = (
+            select(models2.Product)
+            .where(models2.Product.state != "archived")
+            .where(models2.Product.id == product_id)
+            .options(sa_orm.selectinload(models2.Product.topics))
         )
         if (
             user.is_not_super_admin()
@@ -135,14 +136,14 @@ def get_product_by_id(user, product_id):
             and user.is_not_epm()
         ):
             _JPT = models2.JOIN_PRODUCTS_TEAMS
-            q = q.join(
+            query = query.join(
                 _JPT,
                 sql.and_(
                     _JPT.c.product_id == models2.Product.id,
                     _JPT.c.team_id.in_(user.teams_ids),
                 ),
             )
-        p = q.one()
+        p = flask.g.session.execute(query).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="product not found", status_code=404)
 
@@ -165,15 +166,16 @@ def delete_product_by_id(user, product_id):
 
     base.get_resource_orm(models2.Product, product_id)
 
-    deleted_product = (
-        flask.g.session.query(models2.Product)
-        .filter(models2.Product.id == product_id)
-        .filter(models2.Product.etag == if_match_etag)
-        .update({"state": "archived"})
+    query = (
+        update(models2.Product)
+        .where(models2.Product.id == product_id)
+        .where(models2.Product.etag == if_match_etag)
+        .values({"state": "archived"})
     )
+    result = flask.g.session.execute(query)
     flask.g.session.commit()
 
-    if not deleted_product:
+    if result.rowcount == 0:
         flask.g.session.rollback()
         raise dci_exc.DCIException(message="delete failed, check etag", status_code=409)
 
@@ -192,32 +194,35 @@ def add_team_to_product(user, product_id):
         raise dci_exc.Unauthorized()
 
     try:
-        p = (
-            flask.g.session.query(models2.Product)
-            .filter(models2.Product.state != "archived")
-            .filter(models2.Product.id == product_id)
-            .one()
+        query_product = (
+            select(models2.Product)
+            .where(models2.Product.state != "archived")
+            .where(models2.Product.id == product_id)
         )
+        p = flask.g.session.execute(query_product).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="product not found", status_code=404)
 
     try:
-        t = (
-            flask.g.session.query(models2.Team)
-            .filter(models2.Team.state != "archived")
-            .filter(models2.Team.id == team_id)
-            .one()
+        query_team = (
+            select(models2.Team)
+            .where(models2.Team.state != "archived")
+            .where(models2.Team.id == team_id)
         )
+        t = flask.g.session.execute(query_team).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="team not found", status_code=404)
 
-    try:
-        p.teams.append(t)
-        flask.g.session.add(p)
-        flask.g.session.commit()
-    except sa_exc.IntegrityError:
-        flask.g.session.rollback()
-        raise dci_exc.DCIException(message="conflict when adding team", status_code=409)
+    if t not in p.teams:
+        try:
+            p.teams.append(t)
+            flask.g.session.add(p)
+            flask.g.session.commit()
+        except sa_exc.IntegrityError:
+            flask.g.session.rollback()
+            raise dci_exc.DCIException(
+                message="conflict when adding team", status_code=409
+            )
 
     result = json.dumps({"product_id": p.id, "team_id": t.id})
     return flask.Response(result, 201, content_type="application/json")
@@ -230,22 +235,22 @@ def delete_team_from_product(user, product_id, team_id):
         raise dci_exc.Unauthorized()
 
     try:
-        p = (
-            flask.g.session.query(models2.Product)
-            .filter(models2.Product.state != "archived")
-            .filter(models2.Product.id == product_id)
-            .one()
+        query_product = (
+            select(models2.Product)
+            .where(models2.Product.state != "archived")
+            .where(models2.Product.id == product_id)
         )
+        p = flask.g.session.execute(query_product).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="product not found", status_code=404)
 
     try:
-        t = (
-            flask.g.session.query(models2.Team)
-            .filter(models2.Team.state != "archived")
-            .filter(models2.Team.id == team_id)
-            .one()
+        query_team = (
+            select(models2.Team)
+            .where(models2.Team.state != "archived")
+            .where(models2.Team.id == team_id)
         )
+        t = flask.g.session.execute(query_team).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="team not found", status_code=404)
 
@@ -270,13 +275,13 @@ def get_all_teams_from_product(user, product_id):
         raise dci_exc.Unauthorized()
 
     query = (
-        flask.g.session.query(models2.Team)
-        .filter(models2.Team.state != "archived")
+        select(models2.Team)
+        .where(models2.Team.state != "archived")
         .join(models2.Team.products)
-        .filter(models2.Product.id == product_id)
-        .filter(models2.Product.state != "archived")
+        .where(models2.Product.id == product_id)
+        .where(models2.Product.state != "archived")
     )
-    teams = [t.serialize() for t in query.all()]
+    teams = [t.serialize() for t in flask.g.session.execute(query).scalars().all()]
 
     return flask.jsonify({"teams": teams, "_meta": {"count": len(teams)}})
 

@@ -14,11 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from freezegun import freeze_time
 from dci import auth
 from dci import dci_config
-
-import mock
-import datetime
+from tests.sso_tokens import SSO_TOKENS_VALID_DATETIME
 
 
 def test_api_with_unauthorized_credentials(client_unauthorized, rhel_80_topic_id):
@@ -43,15 +42,9 @@ def test_admin_required_fail_when_not_admin(client_user1):
     assert client_user1.post("/api/v1/teams", data={"name": "team"}).status_code == 401
 
 
-# mock datetime so that the token is now considered as expired
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
-def test_decode_jwt(m_datetime, access_token_user1):
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
+def test_decode_jwt(access_token_user1):
     pubkey = dci_config.CONFIG["SSO_PUBLIC_KEY"]
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1505564918
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     decoded_jwt = auth.decode_jwt(access_token_user1, pubkey, "api.dci")
     assert decoded_jwt["username"] == "user1"
     assert decoded_jwt["email"] == "user1@example.org"
@@ -71,9 +64,7 @@ def test_jwk_to_pem():
         "x5t": "ZJQIZXhuQm6qkQIItxGt5EC7lrE",
         "x5t#S256": "7O0oHs6s4NkwL2TvggfPmOtiHD_Z5R300jJSA94nkfM",
     }
-    assert (
-        auth.jwk_to_pem(jwk)
-        == b"""-----BEGIN PUBLIC KEY-----
+    assert auth.jwk_to_pem(jwk) == b"""-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA6ZafME0khw+kLle3zAqE
 R+Nmyd3QdVCqMoZbJo2kquq4nhP26uY1ldSTw3P0OucmbLCUz0OY25aPMJCWKiRQ
 rlrnYOLzFpYxxGTlon8U3ZGrPrc+hTJkGV0u9YpPWOSrfO+nXKHOBp33w+o1Kii+
@@ -88,4 +79,3 @@ ccbSE/gBR91Z33gIk5t1SlTThZsTH7k846NUb9IIBrnuvD+cA75IajDRSu/XdXYp
 gdrmGGP1kN7df1WCrLioHTECAwEAAQ==
 -----END PUBLIC KEY-----
 """
-    )

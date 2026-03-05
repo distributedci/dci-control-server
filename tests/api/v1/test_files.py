@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 import base64
 
 import flask
+from freezegun import freeze_time
 import mock
 import pytest
 
@@ -73,33 +74,35 @@ def test_create_files_jobstate_id_and_job_id_missing(client_admin):
     assert file.status_code == 400
 
 
-@mock.patch("dci.common.time.datetime")
-def test_create_task_file_update_job_duration(m_datetime_j, client_user1, team1_job):
+def test_create_task_file_update_job_duration(client_user1, team1_job):
     job_created_at = team1_job["created_at"]
     d_j_created_at = datetime.strptime(job_created_at, "%Y-%m-%dT%H:%M:%S.%f")
 
-    # check jobstate creation updating job duration
-    m_datetime_j.datetime.utcnow.return_value = d_j_created_at + timedelta(
-        seconds=86405
-    )
-    data = {"job_id": team1_job["id"], "status": "running"}
-    jobstate = client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]
-    team1_job = client_user1.get("/api/v1/jobs/%s" % team1_job["id"]).data["job"]
-    assert team1_job["duration"] == 86405
+    plus_five_seconds = timedelta(seconds=5)
+    with freeze_time(d_j_created_at + plus_five_seconds):
+        data = {"job_id": team1_job["id"], "status": "running"}
+        jobstate = client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]
 
-    # check task file creation update job duration
-    m_datetime_j.datetime.utcnow.return_value = d_j_created_at + timedelta(
-        seconds=86410
-    )
-    t_utils.create_task_file(
-        client_user1,
-        jobstate["id"],
-        "Rally",
-        tests_data.jobtest_one,
-        "ansible/output",
-    )
-    team1_job = client_user1.get("/api/v1/jobs/%s" % team1_job["id"]).data["job"]
-    assert team1_job["duration"] == 86410
+    team1_job_refreshed = client_user1.get(f"/api/v1/jobs/{team1_job['id']}").data[
+        "job"
+    ]
+    assert team1_job_refreshed["duration"] == 5
+
+    five_minutes = 5 * 60
+    plus_5_minutes = timedelta(seconds=five_minutes)
+    with freeze_time(d_j_created_at + plus_5_minutes):
+        t_utils.create_task_file(
+            client_user1,
+            jobstate["id"],
+            "Rally",
+            tests_data.jobtest_one,
+            "ansible/output",
+        )
+
+    team1_job_refreshed = client_user1.get(f"/api/v1/jobs/{team1_job['id']}").data[
+        "job"
+    ]
+    assert team1_job_refreshed["duration"] == five_minutes
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
@@ -179,7 +182,7 @@ def test_get_file_by_id(client_user1, team1_job_id):
 
 
 def test_get_file_not_found(client_user1):
-    result = client_user1.get("/api/v1/files/ptdr")
+    result = client_user1.get("/api/v1/files/d7c3a5e4-8f2b-4c9a-b1e6-3d4f5a6b7c8d")
     assert result.status_code == 404
 
 
@@ -536,19 +539,20 @@ def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job
     }
     client_admin.post("/api/v1/files", headers=headers, data=content_file)
 
-    query = sql.select([models2.TestsResult])
-    tests_results = engine.execute(query).fetchall()
-    test_result = dict(tests_results[0])
+    query = sql.select(models2.TestsResult)
+    with engine.connect() as conn:
+        tests_results = conn.execute(query).fetchall()
 
     assert len(tests_results) == 1
-    assert UUID(str(test_result["id"]), version=4)
-    assert test_result["name"] == "tempest-results.xml"
-    assert test_result["total"] == 131
-    assert test_result["skips"] == 13
-    assert test_result["failures"] == 1
-    assert test_result["errors"] == 0
-    assert test_result["success"] == 117
-    assert test_result["time"] == 1319
+    test_result = tests_results[0]
+    assert UUID(str(test_result.id), version=4)
+    assert test_result.name == "tempest-results.xml"
+    assert test_result.total == 131
+    assert test_result.skips == 13
+    assert test_result.failures == 1
+    assert test_result.errors == 0
+    assert test_result.success == 117
+    assert test_result.time == 1319
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
@@ -567,19 +571,21 @@ def test_tests_results_table_with_multiple_testsuites(
     }
     client_admin.post("/api/v1/files", headers=headers, data=content_file)
 
-    query = sql.select([models2.TestsResult])
-    tests_results = engine.execute(query).fetchall()
-    test_result = dict(tests_results[0])
+    query = sql.select(models2.TestsResult)
+    with engine.connect() as conn:
+        tests_results = conn.execute(query).fetchall()
 
     assert len(tests_results) == 1
-    assert UUID(str(test_result["id"]), version=4)
-    assert test_result["name"] == "junit_with_multiple_testsuite.xml"
-    assert test_result["total"] == 6
-    assert test_result["skips"] == 1
-    assert test_result["failures"] == 1
-    assert test_result["errors"] == 1
-    assert test_result["success"] == 3
-    assert test_result["time"] == 24
+
+    test_result = tests_results[0]
+    assert UUID(str(test_result.id), version=4)
+    assert test_result.name == "junit_with_multiple_testsuite.xml"
+    assert test_result.total == 6
+    assert test_result.skips == 1
+    assert test_result.failures == 1
+    assert test_result.errors == 1
+    assert test_result.success == 3
+    assert test_result.time == 24
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")

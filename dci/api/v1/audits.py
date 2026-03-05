@@ -15,6 +15,7 @@
 # under the License.
 
 import flask
+from sqlalchemy import select, func
 
 from dci.api.v1 import api
 from dci import decorators
@@ -30,12 +31,13 @@ from dci.common.schemas import check_and_get_args
 def get_logs(user):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    query = flask.g.session.query(models2.Log)
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
+    query = select(models2.Log)
     query = declarative.handle_args(query, models2.Log, args)
-    nb_logs = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_logs = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
     audits = [
@@ -45,6 +47,6 @@ def get_logs(user):
             "user_id": audit.user_id,
             "action": audit.action,
         }
-        for audit in query.all()
+        for audit in flask.g.session.execute(query).scalars().all()
     ]
     return flask.jsonify({"audits": audits, "_meta": {"count": nb_logs}})

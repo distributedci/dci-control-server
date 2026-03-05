@@ -15,7 +15,7 @@
 # under the License.
 import flask
 from flask import json
-from sqlalchemy import exc as sa_exc
+from sqlalchemy import exc as sa_exc, select, func, update
 import sqlalchemy.orm as sa_orm
 
 from dci.api.v1 import api
@@ -89,16 +89,17 @@ def get_all_users(user):
     if user.is_not_super_admin() and user.is_not_epm():
         raise dci_exc.Unauthorized()
 
-    q = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.state != "archived")
-        .options(sa_orm.selectinload("team"))
-        .options(sa_orm.selectinload("remotecis"))
+    query = (
+        select(models2.User)
+        .where(models2.User.state != "archived")
+        .options(sa_orm.selectinload(models2.User.team))
+        .options(sa_orm.selectinload(models2.User.remotecis))
     )
-    q = d.handle_args(q, models2.User, args)
-    nb_users = q.count()
-    q = d.handle_pagination(q, args)
-    users = q.all()
+    query = d.handle_args(query, models2.User, args)
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_users = flask.g.session.execute(count_query).scalar()
+    query = d.handle_pagination(query, args)
+    users = flask.g.session.execute(query).scalars().all()
     users = list(
         map(
             lambda u: u.serialize(ignore_columns=["password", "remotecis.api_secret"]),
@@ -114,14 +115,14 @@ def user_by_id(user, user_id):
         raise dci_exc.Unauthorized()
     base.get_resource_orm(models2.User, user_id)
 
-    u = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.state != "archived")
-        .filter(models2.User.id == user_id)
-        .options(sa_orm.selectinload("team"))
-        .options(sa_orm.selectinload("remotecis"))
-        .one()
+    query = (
+        select(models2.User)
+        .where(models2.User.state != "archived")
+        .where(models2.User.id == user_id)
+        .options(sa_orm.selectinload(models2.User.team))
+        .options(sa_orm.selectinload(models2.User.remotecis))
     )
+    u = flask.g.session.execute(query).scalar_one()
     if not u:
         raise dci_exc.DCIException(message="user not found", status_code=404)
 
@@ -175,22 +176,24 @@ def put_current_user(user):
         }
     )
 
-    updated_user = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.id == user.id)
-        .filter(models2.User.etag == if_match_etag)
-        .update(new_values)
+    query = (
+        update(models2.User)
+        .where(models2.User.id == user.id)
+        .where(models2.User.etag == if_match_etag)
+        .values(new_values)
     )
+    result = flask.g.session.execute(query)
     flask.g.session.commit()
 
-    if not updated_user:
+    if result.rowcount == 0:
         flask.g.session.rollback()
         raise dci_exc.DCIException(
             message="update failed, either user not found or etag not matched",
             status_code=409,
         )
 
-    u = flask.g.session.query(models2.User).filter(models2.User.id == user.id).one()
+    query = select(models2.User).where(models2.User.id == user.id)
+    u = flask.g.session.execute(query).scalar_one()
     if not u:
         raise dci_exc.DCIException(message="unable to return user", status_code=400)
 
@@ -218,22 +221,24 @@ def put_user(user, user_id):
     if password:
         values["password"] = auth.hash_password(password)
 
-    updated_user = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.id == user_id)
-        .filter(models2.User.etag == if_match_etag)
-        .update(values)
+    query = (
+        update(models2.User)
+        .where(models2.User.id == user_id)
+        .where(models2.User.etag == if_match_etag)
+        .values(values)
     )
+    result = flask.g.session.execute(query)
     flask.g.session.commit()
 
-    if not updated_user:
+    if result.rowcount == 0:
         flask.g.session.rollback()
         raise dci_exc.DCIException(
             message="update failed, either user not found or etag not matched",
             status_code=409,
         )
 
-    u = flask.g.session.query(models2.User).filter(models2.User.id == user_id).one()
+    query = select(models2.User).where(models2.User.id == user_id)
+    u = flask.g.session.execute(query).scalar_one()
     if not u:
         raise dci_exc.DCIException(message="unable to return user", status_code=400)
 
@@ -255,15 +260,16 @@ def delete_user_by_id(user, user_id):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
-    deleted_user = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.id == user_id)
-        .filter(models2.User.etag == if_match_etag)
-        .update({"state": "archived"})
+    query = (
+        update(models2.User)
+        .where(models2.User.id == user_id)
+        .where(models2.User.etag == if_match_etag)
+        .values({"state": "archived"})
     )
+    result = flask.g.session.execute(query)
     flask.g.session.commit()
 
-    if not deleted_user:
+    if result.rowcount == 0:
         raise dci_exc.DCIException(
             message="delete failed, either user already deleted or etag not matched",
             status_code=409,
@@ -282,13 +288,13 @@ def get_subscribed_remotecis(identity, user_id):
     ):
         raise dci_exc.Unauthorized()
 
-    q = (
-        flask.g.session.query(models2.User)
-        .filter(models2.User.id == user_id)
-        .filter(models2.User.state != "archived")
-        .options(sa_orm.selectinload("remotecis"))
+    query = (
+        select(models2.User)
+        .where(models2.User.id == user_id)
+        .where(models2.User.state != "archived")
+        .options(sa_orm.selectinload(models2.User.remotecis))
     )
-    user = q.one()
+    user = flask.g.session.execute(query).scalar_one()
     user = user.serialize(ignore_columns=["remotecis.api_secret"])
 
     return flask.Response(

@@ -19,18 +19,22 @@ from dci.common import exceptions as dci_exc
 from dci.db import models2
 
 import flask
-from sqlalchemy import sql
+from sqlalchemy import sql, select, func
 
 
 def is_teams_associated_to_product(team_ids, product_id):
-    q_get_product_team = sql.select([models2.JOIN_PRODUCTS_TEAMS]).where(
-        sql.and_(
-            models2.JOIN_PRODUCTS_TEAMS.c.team_id.in_(team_ids),
-            models2.JOIN_PRODUCTS_TEAMS.c.product_id == product_id,
+    q_get_product_team = (
+        select(func.count())
+        .select_from(models2.JOIN_PRODUCTS_TEAMS)
+        .where(
+            sql.and_(
+                models2.JOIN_PRODUCTS_TEAMS.c.team_id.in_(team_ids),
+                models2.JOIN_PRODUCTS_TEAMS.c.product_id == product_id,
+            )
         )
     )
     result = flask.g.db_conn.execute(q_get_product_team)
-    return result.rowcount > 0
+    return result.scalar() > 0
 
 
 def has_access_to_topic(user, topic):
@@ -65,9 +69,7 @@ def verify_access_to_topic(user, topic):
 
 
 def get_user_product_ids(user):
-    query = flask.g.session.query(models2.Product).filter(
-        models2.Product.state != "archived"
-    )
+    query = select(models2.Product).where(models2.Product.state != "archived")
     query = query.join(
         models2.JOIN_PRODUCTS_TEAMS,
         sql.and_(
@@ -75,7 +77,7 @@ def get_user_product_ids(user):
             models2.JOIN_PRODUCTS_TEAMS.c.team_id.in_(user.teams_ids),
         ),
     )
-    return [product.id for product in query.all()]
+    return [product.id for product in flask.g.session.execute(query).scalars().all()]
 
 
 def get_user_topic_ids(user):
@@ -93,9 +95,8 @@ def get_components_access_teams_ids(teams_ids):
     components_access_teams_ids = []
     JTCA = models2.JOIN_TEAMS_COMPONENTS_ACCESS
     for team_id in teams_ids:
-        query = flask.g.session.query(JTCA)
-        query = query.filter(JTCA.c.team_id == team_id)
-        teams_components_access = query.all()
+        query = select(JTCA).where(JTCA.c.team_id == team_id)
+        teams_components_access = flask.g.session.execute(query).all()
         if teams_components_access:
             for tca in teams_components_access:
                 components_access_teams_ids.append(tca.access_team_id)

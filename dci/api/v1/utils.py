@@ -19,6 +19,7 @@ from OpenSSL import crypto
 from dci.common import utils
 from dci.common.time import get_utc_now
 from dci.db import models2
+from sqlalchemy import select
 
 
 def createKeyPair(type=crypto.TYPE_RSA, bits=2048):
@@ -91,15 +92,15 @@ def user_topic_ids(session, user):
         or user.is_epm()
         or user.is_feeder()
     ):
-        query = session.query(models2.Topic.id)
+        query = select(models2.Topic.id)
     else:
         query = (
-            session.query(models2.Topic.id)
+            select(models2.Topic.id)
             .join(models2.Topic.teams)
-            .filter(models2.Team.state != "archived")
-            .filter(models2.Team.id.in_(user.teams_ids))
+            .where(models2.Team.state != "archived")
+            .where(models2.Team.id.in_(user.teams_ids))
         )
-    return [str(t.id) for t in query.all()]
+    return [str(t) for t in session.execute(query).scalars().all()]
 
 
 def common_values_dict():

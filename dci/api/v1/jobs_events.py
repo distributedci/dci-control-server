@@ -16,6 +16,7 @@
 
 import flask
 from flask import json
+from sqlalchemy import select, func, delete
 
 from dci.api.v1 import base
 from dci.api.v1 import api
@@ -42,17 +43,20 @@ def get_jobs_events_from_sequence(user, sequence):
         raise dci_exc.Unauthorized()
 
     query = (
-        flask.g.session.query(models2.JobEvent)
+        select(models2.JobEvent)
         .select_from(models2.JobEvent)
         .join(models2.Job, models2.Job.id == models2.JobEvent.job_id)
-        .filter(models2.JobEvent.id >= sequence)
+        .where(models2.JobEvent.id >= sequence)
     )
 
     query = declarative.handle_args(query, models2.JobEvent, args)
-    nb_jobs_events = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_jobs_events = flask.g.session.execute(count_query).scalar()
 
     query = declarative.handle_pagination(query, args)
-    jobs_events = [je.serialize() for je in query.all()]
+    jobs_events = [
+        je.serialize() for je in flask.g.session.execute(query).scalars().all()
+    ]
 
     return json.jsonify(
         {"jobs_events": jobs_events, "_meta": {"count": nb_jobs_events}}
@@ -65,9 +69,8 @@ def purge_jobs_events_from_sequence(user, sequence):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
     try:
-        flask.g.session.query(models2.JobEvent).filter(
-            models2.JobEvent.id >= sequence
-        ).delete()
+        query = delete(models2.JobEvent).where(models2.JobEvent.id >= sequence)
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()
@@ -97,11 +100,8 @@ def get_current_sequence(user):
         )
 
     def get_sequence():
-        return (
-            flask.g.session.query(models2.Counter)
-            .filter(models2.Counter.name == "jobs_events")
-            .first()
-        )
+        query = select(models2.Counter).where(models2.Counter.name == "jobs_events")
+        return flask.g.session.execute(query).scalar()
 
     je_sequence = get_sequence()
     if not je_sequence:
@@ -122,14 +122,11 @@ def put_current_sequence(user):
     # get If-Match header
     if_match_etag = utils.check_and_get_etag(flask.request.headers)
     values = clean_json_with_schema(counter_schema, flask.request.json)
-    counter = (
-        flask.g.session.query(models2.Counter)
-        .filter(
-            models2.Counter.name == "jobs_events",
-            models2.Counter.etag == if_match_etag,
-        )
-        .first()
+    query = select(models2.Counter).where(
+        models2.Counter.name == "jobs_events",
+        models2.Counter.etag == if_match_etag,
     )
+    counter = flask.g.session.execute(query).scalar()
     if not counter:
         raise dci_exc.DCIConflict("jobs_events", "sequence")
     counter.sequence = values["sequence"]

@@ -33,6 +33,7 @@ from dci.common import utils
 from dci.db import declarative
 from dci.db import models2
 import sqlalchemy.orm as sa_orm
+from sqlalchemy import select, func
 
 
 @api.route("/pipelines", methods=["POST"])
@@ -57,7 +58,7 @@ def get_pipeline_by_id(user, p_id):
     p = base.get_resource_orm(
         models2.Pipeline,
         p_id,
-        options=[sa_orm.selectinload("team")],
+        options=[sa_orm.selectinload(models2.Pipeline.team)],
     )
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
@@ -76,19 +77,22 @@ def get_pipeline_by_id(user, p_id):
 def get_pipelines(user):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    query = flask.g.session.query(models2.Pipeline)
+    query = select(models2.Pipeline)
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        query = query.filter(models2.Pipeline.team_id.in_(user.teams_ids))
-    query = query.filter(models2.Pipeline.state != "archived")
-    query = query.from_self()
+        query = query.where(models2.Pipeline.team_id.in_(user.teams_ids))
+    query = query.where(models2.Pipeline.state != "archived")
     query = declarative.handle_args(query, models2.Pipeline, args)
-    query = query.options(sa_orm.joinedload("team", innerjoin=True))
+    query = query.options(sa_orm.joinedload(models2.Pipeline.team, innerjoin=True))
 
-    nb_pipelines = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_pipelines = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    pipelines = [j.serialize(ignore_columns=["data"]) for j in query.all()]
+    pipelines = [
+        j.serialize(ignore_columns=["data"])
+        for j in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"pipelines": pipelines, "_meta": {"count": nb_pipelines}})
 
@@ -98,24 +102,24 @@ def get_pipelines(user):
 def get_jobs_from_pipeline(user, p_id):
     p = base.get_resource_orm(models2.Pipeline, p_id)
 
-    query = flask.g.session.query(models2.Job)
+    query = select(models2.Job)
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
         if p.team_id not in user.teams_ids:
             raise dci_exc.Unauthorized()
-        query = query.filter(models2.Job.team_id.in_(user.teams_ids))
+        query = query.where(models2.Job.team_id.in_(user.teams_ids))
 
-    query = query.filter(models2.Job.pipeline_id == p.id)
-    query = query.filter(models2.Job.state != "archived")
-    query = query.order_by(models2.Job.created_at.asc())
     query = (
-        query.options(sa_orm.selectinload("results"))
-        .options(sa_orm.joinedload("remoteci", innerjoin=True))
-        .options(sa_orm.selectinload("components"))
-        .options(sa_orm.joinedload("team", innerjoin=True))
+        query.where(models2.Job.pipeline_id == p.id)
+        .where(models2.Job.state != "archived")
+        .order_by(models2.Job.created_at.asc())
+        .options(sa_orm.selectinload(models2.Job.results))
+        .options(sa_orm.joinedload(models2.Job.remoteci, innerjoin=True))
+        .options(sa_orm.selectinload(models2.Job.components))
+        .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
     )
 
-    jobs = [j.serialize() for j in query.all()]
+    jobs = [j.serialize() for j in flask.g.session.execute(query).scalars().all()]
 
     return flask.jsonify({"jobs": jobs, "_meta": {"count": len(jobs)}})
 

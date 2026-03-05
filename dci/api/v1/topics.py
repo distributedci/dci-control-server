@@ -16,7 +16,7 @@
 import flask
 from flask import json
 import sqlalchemy.orm as sa_orm
-from sqlalchemy import sql
+from sqlalchemy import sql, select, func, update, delete
 
 from dci.api.v1 import api
 from dci.api.v1 import base
@@ -66,8 +66,8 @@ def get_topic_by_id(user, topic_id):
         models2.Topic,
         topic_id,
         options=[
-            sa_orm.joinedload("product", innerjoin=True),
-            sa_orm.selectinload("next_topic"),
+            sa_orm.joinedload(models2.Topic.product, innerjoin=True),
+            sa_orm.selectinload(models2.Topic.next_topic),
         ],
     )
     topic_serialized = topic.serialize()
@@ -92,24 +92,25 @@ def get_topic_by_id(user, topic_id):
 @decorators.login_required
 def get_all_topics(user):
     args = check_and_get_args(flask.request.args.to_dict())
-    q = (
-        flask.g.session.query(models2.Topic)
-        .filter(models2.Topic.state != "archived")
-        .options(sa_orm.joinedload("product", innerjoin=True))
-        .options(sa_orm.selectinload("next_topic"))
+    query = (
+        select(models2.Topic)
+        .where(models2.Topic.state != "archived")
+        .options(sa_orm.joinedload(models2.Topic.product, innerjoin=True))
+        .options(sa_orm.selectinload(models2.Topic.next_topic))
     )
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
         product_ids = permissions.get_user_product_ids(user)
-        q = q.filter(models2.Topic.product_id.in_(product_ids))
+        query = query.where(models2.Topic.product_id.in_(product_ids))
         if user.has_not_pre_release_access():
-            q = q.filter(models2.Topic.export_control == True)  # noqa
+            query = query.where(models2.Topic.export_control == True)  # noqa
 
-    q = d.handle_args(q, models2.Topic, args)
-    nb_topics = q.count()
-    q = d.handle_pagination(q, args)
+    query = d.handle_args(query, models2.Topic, args)
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_topics = flask.g.session.execute(count_query).scalar()
+    query = d.handle_pagination(query, args)
 
-    topics = q.all()
+    topics = flask.g.session.execute(query).scalars().all()
     topics = list(map(lambda t: t.serialize(), topics))
 
     return flask.jsonify({"topics": topics, "_meta": {"count": nb_topics}})
@@ -150,9 +151,12 @@ def delete_topic_by_id(user, topic_id):
 
     try:
         topic.state = "archived"
-        flask.g.session.query(models2.Component).filter(
-            models2.Component.topic_id == topic_id
-        ).update({"state": "archived"}, synchronize_session=False)
+        query = (
+            update(models2.Component)
+            .where(models2.Component.topic_id == topic_id)
+            .values({"state": "archived"})
+        )
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()
@@ -194,11 +198,11 @@ def get_all_subscribed_users_from_topic(user, topic_id):
     base.get_resource_orm(models2.Topic, topic_id)
 
     query = (
-        flask.g.session.query(models2.User)
+        select(models2.User)
         .join(models2.UserTopic)
-        .filter(models2.UserTopic.topic_id == topic_id)
+        .where(models2.UserTopic.topic_id == topic_id)
     )
-    users = [u.serialize() for u in query.all()]
+    users = [u.serialize() for u in flask.g.session.execute(query).scalars().all()]
 
     return flask.jsonify({"users": users, "_meta": {"count": len(users)}})
 
@@ -207,13 +211,12 @@ def get_all_subscribed_users_from_topic(user, topic_id):
 @decorators.login_required
 def unsubscribed_user_from_topic(user, topic_id):
     base.get_resource_orm(models2.Topic, topic_id)
-    query = flask.g.session.query(models2.UserTopic)
-    query = query.filter(
+    query = delete(models2.UserTopic).where(
         sql.and_(
             models2.UserTopic.topic_id == topic_id, models2.UserTopic.user_id == user.id
         )
     )
-    query = query.delete()
+    flask.g.session.execute(query)
 
     try:
         flask.g.session.commit()
@@ -228,11 +231,11 @@ def unsubscribed_user_from_topic(user, topic_id):
 @decorators.login_required
 def get_all_subscribed_topics(user):
     query = (
-        flask.g.session.query(models2.Topic)
+        select(models2.Topic)
         .join(models2.UserTopic)
-        .filter(models2.UserTopic.user_id == user.id)
+        .where(models2.UserTopic.user_id == user.id)
     )
-    topics = [t.serialize() for t in query.all()]
+    topics = [t.serialize() for t in flask.g.session.execute(query).scalars().all()]
 
     return flask.jsonify({"topics": topics, "_meta": {"count": len(topics)}})
 

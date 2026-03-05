@@ -16,6 +16,7 @@
 
 import flask
 from flask import json
+from sqlalchemy import select, func
 
 from dci.api.v1 import api
 from dci.api.v1 import base
@@ -70,17 +71,20 @@ def create_feeders(user):
 def get_all_feeders(user, t_id=None):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    query = flask.g.session.query(models2.Feeder)
+    query = select(models2.Feeder)
     if user.is_not_super_admin() and user.is_not_epm():
-        query = query.filter(models2.Feeder.team_id.in_(user.teams_ids))
+        query = query.where(models2.Feeder.team_id.in_(user.teams_ids))
 
-    query = query.filter(models2.Feeder.state != "archived")
+    query = query.where(models2.Feeder.state != "archived")
 
     query = declarative.handle_args(query, models2.Feeder, args)
-    nb_feeders = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_feeders = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    feeders = [feeder.serialize() for feeder in query.all()]
+    feeders = [
+        feeder.serialize() for feeder in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"feeders": feeders, "_meta": {"count": nb_feeders}})
 

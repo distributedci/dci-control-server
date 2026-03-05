@@ -15,7 +15,7 @@
 # under the License.
 import flask
 from flask import json
-from sqlalchemy import exc as sa_exc
+from sqlalchemy import exc as sa_exc, select, func, update
 import sqlalchemy.orm as sa_orm
 
 from dci.api.v1 import api
@@ -72,19 +72,20 @@ def create_teams(user):
 def get_all_teams(user):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    q = flask.g.session.query(models2.Team)
+    query = select(models2.Team)
 
     if user.is_not_super_admin() and user.is_not_epm() and user.is_not_read_only_user():
-        q = q.filter(models2.Team.id.in_(user.teams_ids))
+        query = query.where(models2.Team.id.in_(user.teams_ids))
 
-    q = q.filter(models2.Team.state != "archived").options(
-        sa_orm.selectinload("remotecis")
+    query = query.where(models2.Team.state != "archived").options(
+        sa_orm.selectinload(models2.Team.remotecis)
     )
-    q = d.handle_args(q, models2.Team, args)
-    nb_teams = q.count()
+    query = d.handle_args(query, models2.Team, args)
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_teams = flask.g.session.execute(count_query).scalar()
 
-    q = d.handle_pagination(q, args)
-    teams = q.all()
+    query = d.handle_pagination(query, args)
+    teams = flask.g.session.execute(query).scalars().all()
     teams = list(
         map(lambda t: t.serialize(ignore_columns=["remotecis.api_secret"]), teams)
     )
@@ -105,13 +106,13 @@ def get_team_by_id(user, t_id):
         raise dci_exc.Unauthorized()
 
     try:
-        t = (
-            flask.g.session.query(models2.Team)
-            .filter(models2.Team.state != "archived")
-            .filter(models2.Team.id == t_id)
-            .options(sa_orm.selectinload("remotecis"))
-            .one()
+        query = (
+            select(models2.Team)
+            .where(models2.Team.state != "archived")
+            .where(models2.Team.id == t_id)
+            .options(sa_orm.selectinload(models2.Team.remotecis))
         )
+        t = flask.g.session.execute(query).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="team not found", status_code=404)
 
@@ -160,22 +161,24 @@ def put_team(user, t_id):
 
     values["etag"] = utils.gen_etag()
 
-    updated_team = (
-        flask.g.session.query(models2.Team)
-        .filter(models2.Team.id == t_id)
-        .filter(models2.Team.etag == if_match_etag)
-        .update(values)
+    query = (
+        update(models2.Team)
+        .where(models2.Team.id == t_id)
+        .where(models2.Team.etag == if_match_etag)
+        .values(values)
     )
+    result = flask.g.session.execute(query)
     flask.g.session.commit()
 
-    if not updated_team:
+    if result.rowcount == 0:
         flask.g.session.rollback()
         raise dci_exc.DCIException(
             message="update failed, either team not found or etag not matched",
             status_code=409,
         )
 
-    t = flask.g.session.query(models2.Team).filter(models2.Team.id == t_id).one()
+    query = select(models2.Team).where(models2.Team.id == t_id)
+    t = flask.g.session.execute(query).scalar_one()
     if not t:
         raise dci_exc.DCIException(message="unable to return team", status_code=400)
 
@@ -197,14 +200,15 @@ def delete_team_by_id(user, t_id):
     if user.is_not_super_admin():
         raise dci_exc.Unauthorized()
 
-    updated_rows = (
-        flask.g.session.query(models2.Team)
-        .filter(models2.Team.id == t_id)
-        .filter(models2.Team.etag == if_match_etag)
-        .update({"state": "archived"})
+    query = (
+        update(models2.Team)
+        .where(models2.Team.id == t_id)
+        .where(models2.Team.etag == if_match_etag)
+        .values({"state": "archived"})
     )
+    result = flask.g.session.execute(query)
 
-    if not updated_rows:
+    if result.rowcount == 0:
         flask.g.session.rollback()
         raise dci_exc.DCIException(
             message="delete failed, either team already deleted or etag not matched",
@@ -217,9 +221,10 @@ def delete_team_by_id(user, t_id):
 
     try:
         for model in [models2.File, models2.Remoteci, models2.Job]:
-            flask.g.session.query(model).filter(model.team_id == t_id).update(
-                {"state": "archived"}
+            query = (
+                update(model).where(model.team_id == t_id).values({"state": "archived"})
             )
+            flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()

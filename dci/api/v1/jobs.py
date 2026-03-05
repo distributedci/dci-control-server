@@ -18,7 +18,7 @@ import flask
 from flask import json
 import logging
 from sqlalchemy import exc as sa_exc
-from sqlalchemy import sql
+from sqlalchemy import sql, select, func, update
 import sqlalchemy.orm as sa_orm
 
 from dci.api.v1 import api
@@ -46,7 +46,6 @@ from dci.db import models2
 from dci.api.v1 import files
 from dci.api.v1 import permissions
 from dci.api.v1 import jobstates
-
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +118,7 @@ def internal_create_jobs(user, values, components_ids=None):
             "previous_job_id": previous_job_id,
         }
     )
-    values = utils._filter_empty_tags(values)
+    values = utils.filter_empty_tags(values)
     components_access_teams_ids = permissions.get_components_access_teams_ids(
         user.teams_ids
     )
@@ -327,36 +326,39 @@ def get_all_jobs(user, topic_id=None):
     # get the diverse parameters
     args = check_and_get_args(flask.request.args.to_dict())
 
-    query = flask.g.session.query(models2.Job)
+    query = select(models2.Job)
 
     # If not admin nor rh employee then restrict the view to the team
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        query = query.filter(models2.Job.team_id.in_(user.teams_ids))
+        query = query.where(models2.Job.team_id.in_(user.teams_ids))
 
     # If topic_id not None, then filter by topic_id
     if topic_id is not None:
-        query = query.filter(models2.Job.topic_id == topic_id)
+        query = query.where(models2.Job.topic_id == topic_id)
 
     # Get only the non archived jobs
-    query = query.filter(models2.Job.state != "archived")
-    query = query.from_self()
+    query = query.where(models2.Job.state != "archived")
     query = declarative.handle_args(query, models2.Job, args)
 
     # Load associated ressources
     query = (
-        query.options(sa_orm.selectinload("results"))
-        .options(sa_orm.joinedload("remoteci", innerjoin=True))
-        .options(sa_orm.selectinload("components"))
-        .options(sa_orm.joinedload("topic", innerjoin=True))
-        .options(sa_orm.joinedload("team", innerjoin=True))
-        .options(sa_orm.joinedload("pipeline", innerjoin=False))
-        .options(sa_orm.joinedload("keys_values", innerjoin=False))
+        query.options(sa_orm.selectinload(models2.Job.results))
+        .options(sa_orm.joinedload(models2.Job.remoteci, innerjoin=True))
+        .options(sa_orm.selectinload(models2.Job.components))
+        .options(sa_orm.joinedload(models2.Job.topic, innerjoin=True))
+        .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
+        .options(sa_orm.joinedload(models2.Job.pipeline, innerjoin=False))
+        .options(sa_orm.joinedload(models2.Job.keys_values, innerjoin=False))
     )
 
-    nb_jobs = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_jobs = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    jobs = [j.serialize(ignore_columns=["data", "topic.data"]) for j in query.all()]
+    jobs = [
+        j.serialize(ignore_columns=["data", "topic.data"])
+        for j in flask.g.session.execute(query).unique().scalars().all()
+    ]
 
     return flask.jsonify({"jobs": jobs, "_meta": {"count": nb_jobs}})
 
@@ -364,18 +366,18 @@ def get_all_jobs(user, topic_id=None):
 @api.route("/jobs/<uuid:job_id>/components", methods=["GET"])
 @decorators.login_required
 def get_components_from_job(user, job_id):
-    query = flask.g.session.query(models2.Job)
+    query = select(models2.Job)
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        query = query.filter(models2.Job.team_id.in_(user.teams_ids))
+        query = query.where(models2.Job.team_id.in_(user.teams_ids))
 
     try:
-        j = (
-            query.filter(models2.Job.state != "archived")
-            .filter(models2.Job.id == job_id)
-            .options(sa_orm.selectinload("components"))
-            .one()
+        query = (
+            query.where(models2.Job.state != "archived")
+            .where(models2.Job.id == job_id)
+            .options(sa_orm.selectinload(models2.Job.components))
         )
+        j = flask.g.session.execute(query).scalar_one()
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="job not found", status_code=404)
 
@@ -459,39 +461,37 @@ def get_jobstates_by_job(user, job_id):
 @api.route("/jobs/<uuid:job_id>", methods=["GET"])
 @decorators.login_required
 def get_job_by_id(user, job_id):
-    query = flask.g.session.query(models2.Job)
-    query = query.filter(models2.Job.id == job_id)
+    query = select(models2.Job)
+    query = query.where(models2.Job.id == job_id)
 
     # If not admin nor rh employee then restrict the view to the team
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
-        query = query.filter(models2.Job.team_id.in_(user.teams_ids))
+        query = query.where(models2.Job.team_id.in_(user.teams_ids))
 
     # Get only non archived job
-    query = query.filter(models2.Job.state != "archived")
+    query = query.where(models2.Job.state != "archived")
     query = (
-        query.options(sa_orm.joinedload("remoteci", innerjoin=True))
-        .options(sa_orm.joinedload("topic", innerjoin=True))
-        .options(sa_orm.joinedload("team", innerjoin=True))
-        .options(sa_orm.selectinload("results"))
-        .options(sa_orm.selectinload("components"))
-        .options(sa_orm.selectinload("jobstates"))
-        .options(sa_orm.joinedload("pipeline", innerjoin=False))
-        .options(sa_orm.joinedload("keys_values", innerjoin=False))
+        query.options(sa_orm.joinedload(models2.Job.remoteci, innerjoin=True))
+        .options(sa_orm.joinedload(models2.Job.topic, innerjoin=True))
+        .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
+        .options(sa_orm.selectinload(models2.Job.results))
+        .options(sa_orm.selectinload(models2.Job.components))
+        .options(sa_orm.selectinload(models2.Job.jobstates))
+        .options(sa_orm.joinedload(models2.Job.pipeline, innerjoin=False))
+        .options(sa_orm.joinedload(models2.Job.keys_values, innerjoin=False))
     )
     try:
-        job = query.one()
+        job = flask.g.session.execute(query).unique().scalar_one()
         job = job.serialize()
-        files = [
-            f.serialize()
-            for f in flask.g.session.query(models2.File)
-            .filter(
-                sql.and_(
-                    models2.File.jobstate_id == None,  # noqa
-                    models2.File.job_id == job_id,
-                    models2.File.state != "archived",
-                )
+        files_query = select(models2.File).where(
+            sql.and_(
+                models2.File.jobstate_id == None,  # noqa
+                models2.File.job_id == job_id,
+                models2.File.state != "archived",
             )
-            .all()
+        )
+        files = [
+            f.serialize() for f in flask.g.session.execute(files_query).scalars().all()
         ]
         job["files"] = files
 
@@ -521,7 +521,7 @@ def update_job_by_id(user, job_id):
     if user.is_not_in_team(job.team_id) and user.is_not_epm():
         raise dci_exc.Unauthorized()
 
-    values = utils._filter_empty_tags(values)
+    values = utils.filter_empty_tags(values)
 
     # Update jobstate if needed
     status = values.get("status")
@@ -574,9 +574,8 @@ def get_all_results_from_jobs(user, j_id):
 
     # get testscases from tests_results
     try:
-        query = flask.g.session.query(models2.TestsResult)
-        query = query.filter(models2.TestsResult.job_id == job.id)
-        all_tests_results = query.all()
+        query = select(models2.TestsResult).where(models2.TestsResult.job_id == job.id)
+        all_tests_results = flask.g.session.execute(query).scalars().all()
     except Exception as e:
         logger.error(str(e))
         raise dci_exc.DCIException("error while getting the results: %s" % str(e))
@@ -617,9 +616,12 @@ def delete_job_by_id(user, j_id):
 
     try:
         job.state = "archived"
-        query = flask.g.session.query(models2.File)
-        query = query.filter(models2.File.job_id == j_id)
-        query = query.update({"state": "archived"})
+        query = (
+            update(models2.File)
+            .where(models2.File.job_id == j_id)
+            .values({"state": "archived"})
+        )
+        flask.g.session.execute(query)
         flask.g.session.add(job)
         flask.g.session.commit()
     except Exception as e:

@@ -17,7 +17,7 @@
 import flask
 import uuid
 from sqlalchemy import exc as sa_exc
-from sqlalchemy import sql
+from sqlalchemy import sql, select
 from sqlalchemy import orm
 from tenacity import retry, retry_if_exception_type, stop_after_attempt
 
@@ -53,13 +53,13 @@ class BaseMechanism(object):
 
     def get_user(self, model_constraint):
         try:
-            return (
-                flask.g.session.query(models2.User)
-                .filter(models2.User.state == "active")
-                .options(orm.selectinload("team"))
-                .filter(model_constraint)
-                .one()
+            query = (
+                select(models2.User)
+                .where(models2.User.state == "active")
+                .options(orm.selectinload(models2.User.team))
+                .where(model_constraint)
             )
+            return flask.g.session.execute(query).scalar_one()
         except orm.exc.NoResultFound:
             return None
 
@@ -186,11 +186,13 @@ class HmacMechanism(BaseMechanism):
         if identity_model is None:
             return None
 
-        query = flask.g.session.query(identity_model)
-        query = query.filter(identity_model.id == client_info["client_id"])
-        query = query.filter(identity_model.state == "active")
-        query = query.options(orm.selectinload("team"))
-        identity = query.one_or_none()
+        query = (
+            select(identity_model)
+            .where(identity_model.id == client_info["client_id"])
+            .where(identity_model.state == "active")
+            .options(orm.selectinload(identity_model.team))
+        )
+        identity = flask.g.session.execute(query).scalar_one_or_none()
 
         if not identity:
             return None
@@ -240,7 +242,12 @@ class OpenIDCAuth(BaseMechanism):
             reraise=True,
             stop=stop_after_attempt(2),
             retry=retry_if_exception_type(
-                exception_types=(jwt_exc.DecodeError, TypeError, ValueError)
+                exception_types=(
+                    jwt_exc.DecodeError,
+                    jwt_exc.InvalidKeyError,
+                    TypeError,
+                    ValueError,
+                )
             ),
             after=__refresh_sso_public_key_if_retried,
         )

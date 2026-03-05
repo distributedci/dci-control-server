@@ -15,10 +15,10 @@
 # under the License.
 
 from dci.common import exceptions as dci_exc
+from dci.db import type_conversion
 
 import pyparsing as pp
 from sqlalchemy import sql
-
 
 _field = pp.Word(pp.alphanums + "_")
 _value = pp.Word(pp.alphanums + "_" + "-" + " " + "%" + "." + ":" + "/")
@@ -89,6 +89,8 @@ def _build(sa_query, parsed_query, model_object):
     if field not in columns:
         raise dci_exc.DCIException("Invalid field: %s" % field)
     m_column = getattr(model_object, field)
+
+    value = type_conversion.convert_value_to_column_type(value, m_column.type)
 
     res = None
     if op == "eq":

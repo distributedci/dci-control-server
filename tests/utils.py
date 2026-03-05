@@ -31,7 +31,6 @@ import six
 import dci.auth as auth
 from dci.db import models2
 import dci.dci_config as config
-from dci.common import utils
 from dciauth.v2.headers import generate_headers
 
 import os
@@ -74,7 +73,7 @@ def generate_client(app, credentials=None, access_token=None):
             content_type = headers.get("Content-Type")
             data = kwargs.get("data")
             if data and content_type == "application/json":
-                kwargs["data"] = flask.json.dumps(data, cls=utils.JSONEncoder)
+                kwargs["data"] = flask.json.dumps(data)
             response = func(*args, **kwargs)
 
             data = response.data
@@ -99,7 +98,7 @@ def generate_token_based_client(app, resource):
     def client_open_decorator(func):
         def wrapper(*args, **kwargs):
             payload = kwargs.get("data")
-            data = flask.json.dumps(payload, cls=utils.JSONEncoder) if payload else ""
+            data = flask.json.dumps(payload) if payload else ""
             url = urlparse(args[0])
             params = dict(parse_qsl(url.query))
             headers = kwargs.get("headers", {})
@@ -123,7 +122,10 @@ def generate_token_based_client(app, resource):
             if data:
                 kwargs["data"] = data
             response = func(*args, **kwargs)
-            data = flask.json.loads(response.data or "{}")
+            content_type = response.headers.get("Content-Type")
+            data = response.data
+            if data and content_type == "application/json":
+                data = flask.json.loads(data)
             return Response(response.status_code, data, response.headers)
 
         return wrapper
@@ -134,7 +136,7 @@ def generate_token_based_client(app, resource):
 
 
 def generate_jwt(payload, private_key):
-    return jwt.encode(payload, private_key, algorithm="RS256").decode("utf-8")
+    return jwt.encode(payload, private_key, algorithm="RS256")
 
 
 def _post_file(client, headers, content):

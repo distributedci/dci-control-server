@@ -15,7 +15,7 @@
 # under the License.
 
 
-from sqlalchemy import orm as sa_orm
+from sqlalchemy import orm as sa_orm, select
 
 from dci.common import exceptions as dci_exc
 from dci.db import models2
@@ -23,18 +23,18 @@ from dci.db import models2
 
 def get_resource_orm(session, table, id, etag=None, options=None):
     try:
-        query = session.query(table).filter(table.id == id)
+        query = select(table).where(table.id == id)
         try:
             getattr(table, "state")
-            query = query.filter(table.state != "archived")
+            query = query.where(table.state != "archived")
         except AttributeError:
             pass
 
         if etag:
-            query = query.filter(table.etag == etag)
+            query = query.where(table.etag == etag)
         if options:
             query = query.options(*options)
-        return query.one()
+        return session.execute(query).scalar_one()
     except sa_orm.exc.NoResultFound:
         resource_name = table.__tablename__[:-1]
         raise dci_exc.DCIException(
@@ -45,11 +45,11 @@ def get_resource_orm(session, table, id, etag=None, options=None):
 def get_emails_subscribed_to_topic(session, topic_id):
     try:
         query = (
-            session.query(models2.User.email)
+            select(models2.User.email)
             .join(models2.UserTopic)
-            .filter(models2.UserTopic.topic_id == topic_id)
+            .where(models2.UserTopic.topic_id == topic_id)
         )
-        return [um[0] for um in query.all()]
+        return [um[0] for um in session.execute(query).all()]
     except dci_exc.DCIException:
         return []
 
@@ -68,10 +68,10 @@ def get_serialized_job(session, job_id):
         models2.Job,
         job_id,
         options=[
-            sa_orm.joinedload("topic", innerjoin=True),
-            sa_orm.joinedload("remoteci", innerjoin=True),
-            sa_orm.selectinload("components"),
-            sa_orm.selectinload("results"),
+            sa_orm.joinedload(models2.Job.topic, innerjoin=True),
+            sa_orm.joinedload(models2.Job.remoteci, innerjoin=True),
+            sa_orm.selectinload(models2.Job.components),
+            sa_orm.selectinload(models2.Job.results),
         ],
     )
     return job.serialize()
@@ -83,7 +83,7 @@ def get_serialized_component(session, component_id):
         models2.Component,
         component_id,
         options=[
-            sa_orm.joinedload("topic", innerjoin=True),
+            sa_orm.joinedload(models2.Component.topic, innerjoin=True),
         ],
     )
     return component.serialize()

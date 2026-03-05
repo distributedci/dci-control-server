@@ -1,5 +1,5 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal
-LABEL name="DCI API" version="0.1.0"
+FROM registry.access.redhat.com/ubi10/ubi-minimal
+LABEL name="DCI API" version="1.0.0"
 LABEL maintainer="DCI Team <distributed-ci@redhat.com>"
 
 COPY sso/RH-IT-Root-CA.crt sso/2022-IT-Root-CA.pem /etc/pki/ca-trust/source/anchors/
@@ -8,17 +8,13 @@ RUN update-ca-trust
 WORKDIR /opt/dci-control-server
 
 # install dependencies first
-COPY requirements.txt /opt/dci-control-server/
+COPY requirements.txt .
 
-RUN microdnf update && \
-  microdnf -y install python3-pip python3-wheel libpq && \
-  rpm -qa | sort > /tmp/rpms_before && \
-  microdnf -y install python3-devel make gcc gcc-c++ postgresql-devel diffutils findutils file && \
-  rpm -qa | sort > /tmp/rpms_after && \
-  pip3 --no-cache-dir install --no-binary=psycopg2 -r requirements.txt && \
-  comm -13 /tmp/rpms_before /tmp/rpms_after | xargs microdnf remove && \
-  rm /tmp/rpms_before /tmp/rpms_after && \
-  microdnf -y clean all
+RUN microdnf -y upgrade && \
+    microdnf -y install python3 python3-pip && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --requirement requirements.txt && \
+    microdnf -y clean all
 
 # install source after
 COPY entrypoint-devenv.sh entrypoint.sh /usr/local/sbin/
