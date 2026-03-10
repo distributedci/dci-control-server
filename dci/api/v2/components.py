@@ -61,8 +61,19 @@ def get_component_file_from_rhdl(filepath, component):
         timeout=CONFIG["REQUESTS_TIMEOUT"],
     )
     if redirect.status_code != 302:
+        error_message = redirect.content
+        try:
+            content_json = redirect.json()
+            if isinstance(content_json, dict) and "message" in content_json:
+                error_message = content_json["message"]
+            else:
+                error_message = content_json
+        except (requests.exceptions.JSONDecodeError, ValueError):
+            if isinstance(error_message, bytes):
+                error_message = error_message.decode("utf-8", errors="replace")
+
         raise dci_exc.DCIException(
-            message=redirect.content, status_code=redirect.status_code
+            message=error_message, status_code=redirect.status_code
         )
 
     return flask.Response(None, 302, headers={"Location": redirect.headers["Location"]})

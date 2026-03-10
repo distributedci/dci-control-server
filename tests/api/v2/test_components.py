@@ -104,3 +104,126 @@ def test_get_files_list_from_rhdl_renames_files_list(
     assert r.status_code == 302
     assert r.headers["Location"] is not None
     assert responses.assert_call_count(rhdl_files_list_url, 1) is True
+
+
+@responses.activate
+def test_get_component_file_from_rhdl_handles_404_with_bytes_message(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    """Regression test for bytes serialization issue.
+
+    When RHDL API returns a 404 error with a JSON error message as bytes,
+    the DCIException should properly handle the bytes content and return
+    a valid JSON response instead of raising a TypeError during JSON
+    serialization.
+
+    This reproduces the production traceback:
+    TypeError: Object of type bytes is not JSON serializable
+    """
+    rhdl_api_url = dci_config.CONFIG["RHDL_API_URL"]
+    rhdl_file_url = (
+        f"{rhdl_api_url}/components/{rhel_80_component['name']}/files/images_list.yaml"
+    )
+
+    # Simulate RHDL API returning 404 with JSON error message as bytes
+    # This is what happens in production when a file is not found
+    error_response_body = (
+        b'{\n  "status_code": "404",\n  '
+        b'"message": "Error while heading file \'RHEL-10.2-updates-20260306.0/images_list.yaml\': '
+        b'An error occurred"\n}\n'
+    )
+
+    responses.add(
+        method=responses.GET,
+        url=rhdl_file_url,
+        status=404,
+        body=error_response_body,
+        content_type="application/json",
+    )
+
+    # This should not raise TypeError during JSON serialization
+    r = hmac_client_team1.get(
+        f"/api/v2/components/{rhel_80_component['id']}/files/images_list.yaml"
+    )
+
+    # Should return 404 with a valid JSON response (not TypeError)
+    assert r.status_code == 404
+    # The response should be a valid JSON object
+    response_data = r.data
+    assert "status_code" in response_data
+    assert "message" in response_data
+    # Verify the message was extracted from the nested JSON
+    assert (
+        response_data["message"]
+        == "Error while heading file 'RHEL-10.2-updates-20260306.0/images_list.yaml': An error occurred"
+    )
+
+
+@responses.activate
+def test_get_component_file_from_rhdl_handles_500_with_bytes_message(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    """Test that 500 errors with bytes content are also handled properly."""
+    rhdl_api_url = dci_config.CONFIG["RHDL_API_URL"]
+    rhdl_file_url = (
+        f"{rhdl_api_url}/components/{rhel_80_component['name']}/files/test.txt"
+    )
+
+    error_response_body = b'{"status_code": "500", "message": "Internal server error"}'
+
+    responses.add(
+        method=responses.GET,
+        url=rhdl_file_url,
+        status=500,
+        body=error_response_body,
+        content_type="application/json",
+    )
+
+    r = hmac_client_team1.get(
+        f"/api/v2/components/{rhel_80_component['id']}/files/test.txt"
+    )
+
+    assert r.status_code == 500
+    response_data = r.data
+    assert "status_code" in response_data
+    assert "message" in response_data
+    assert response_data["message"] == "Internal server error"
+
+
+@responses.activate
+def test_get_component_file_from_rhdl_handles_404_json_without_message_field(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    """Test that 404 errors with JSON but no 'message' field are handled.
+
+    When the RHDL response is JSON but doesn't contain a 'message' field,
+    the entire JSON object should be included in the error response.
+    """
+    rhdl_api_url = dci_config.CONFIG["RHDL_API_URL"]
+    rhdl_file_url = (
+        f"{rhdl_api_url}/components/{rhel_80_component['name']}/files/missing.txt"
+    )
+
+    error_response_body = b'{"status_code": "404", "error": "File not found"}'
+
+    responses.add(
+        method=responses.GET,
+        url=rhdl_file_url,
+        status=404,
+        body=error_response_body,
+        content_type="application/json",
+    )
+
+    r = hmac_client_team1.get(
+        f"/api/v2/components/{rhel_80_component['id']}/files/missing.txt"
+    )
+
+    assert r.status_code == 404
+    response_data = r.data
+    assert "status_code" in response_data
+    assert "message" in response_data
+    # When RHDL JSON has no "message" field, the entire JSON is used
+    assert response_data["message"] == {"status_code": "404", "error": "File not found"}
