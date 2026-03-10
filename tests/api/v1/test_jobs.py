@@ -29,7 +29,6 @@ from dci.stores.s3 import S3
 from tests.data import JUNIT
 import tests.utils as t_utils
 
-
 AWSS3 = "dci.stores.s3.S3"
 
 

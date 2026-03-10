@@ -34,44 +34,44 @@ def test_get_stats(
     )
     assert client_admin.get("/api/v1/stats").data["stats"] == [
         {
-            "product": {"id": rhel_product["id"], "name": rhel_product["name"]},
-            "percentageOfSuccess": 50,
-            "nbOfSuccessfulJobs": 1,
-            "nbOfJobs": 2,
             "jobs": [
                 {
+                    "created_at": team1_job["created_at"],
                     "id": team1_job["id"],
                     "remoteci_name": "user remoteci",
-                    "created_at": team1_job["created_at"],
                     "status": "success",
                     "team_name": "team1",
                 },
                 {
+                    "created_at": team_admin_job["created_at"],
                     "id": team_admin_job["id"],
                     "remoteci_name": "admin remoteci",
-                    "created_at": team_admin_job["created_at"],
                     "status": "failure",
                     "team_name": "admin",
                 },
             ],
+            "nbOfJobs": 2,
+            "nbOfSuccessfulJobs": 1,
+            "percentageOfSuccess": 50,
+            "product": {"id": rhel_product["id"], "name": rhel_product["name"]},
             "topic": {"id": rhel_80_topic["id"], "name": "RHEL-8.0"},
         }
     ]
     assert client_user1.get("/api/v1/stats").data["stats"] == [
         {
-            "product": {"id": rhel_product["id"], "name": rhel_product["name"]},
-            "percentageOfSuccess": 100,
-            "nbOfSuccessfulJobs": 1,
-            "nbOfJobs": 1,
             "jobs": [
                 {
+                    "created_at": team1_job["created_at"],
                     "id": team1_job["id"],
                     "remoteci_name": "user remoteci",
-                    "created_at": team1_job["created_at"],
                     "status": "success",
                     "team_name": "team1",
                 }
             ],
+            "nbOfJobs": 1,
+            "nbOfSuccessfulJobs": 1,
+            "percentageOfSuccess": 100,
+            "product": {"id": rhel_product["id"], "name": rhel_product["name"]},
             "topic": {"id": rhel_80_topic["id"], "name": "RHEL-8.0"},
         }
     ]

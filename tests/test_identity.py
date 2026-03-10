@@ -18,7 +18,6 @@ from uuid import UUID
 
 from dci.identity import Identity
 
-
 all_teams = [
     {"id": UUID("eaa68feb-0e23-4dee-9737-7538af531024")},
     {"id": UUID("2975580b-1915-41b7-9672-c16ccbcc6fc1")},

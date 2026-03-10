@@ -57,9 +57,9 @@ class Properties(object):
     key_value_csv = {"type": "string", "is_key_value_csv": True}
     positive_integer = {"type": "integer", "minimum": 1}
     positive_or_null_integer = {"type": "integer", "minimum": 0}
-    string_integer = {"type": "string", "pattern": "^([+-]?[1-9]\d*|0)$"}
-    positive_string_integer = {"type": "string", "pattern": "^[1-9]\d*$"}
-    positive_or_null_string_integer = {"type": "string", "pattern": "^\d+$"}
+    string_integer = {"type": "string", "pattern": r"^([+-]?[1-9]\d*|0)$"}
+    positive_string_integer = {"type": "string", "pattern": r"^[1-9]\d*$"}
+    positive_or_null_string_integer = {"type": "string", "pattern": r"^\d+$"}
     isoformat_date = {"type": "string", "format": "date-time"}
 
     @staticmethod

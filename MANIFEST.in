@@ -6,4 +6,3 @@ include tox.ini
 include scripts/start_db.sh
 include bin/dci-runtestserver
 include dci/alembic/alembic.ini
-include dci/systemd/dci-worker.service

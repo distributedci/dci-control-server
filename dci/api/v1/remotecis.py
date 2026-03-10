@@ -17,7 +17,7 @@ import datetime
 import flask
 from flask import json
 import logging
-from sqlalchemy import exc as sa_exc, update, or_, and_
+from sqlalchemy import exc as sa_exc, update, or_, and_, select, func
 import sqlalchemy.orm as sa_orm
 
 from dci.api.v1 import api
@@ -76,24 +76,25 @@ def create_remotecis(user):
 def get_all_remotecis(user, t_id=None):
     args = check_and_get_args(flask.request.args.to_dict())
 
-    q = flask.g.session.query(models2.Remoteci)
+    query = select(models2.Remoteci)
     if user.is_not_super_admin():
-        q = q.filter(models2.Remoteci.team_id.in_(user.teams_ids))
+        query = query.where(models2.Remoteci.team_id.in_(user.teams_ids))
 
     if t_id is not None:
-        q = q.filter(models2.Remoteci.team_id == t_id)
+        query = query.where(models2.Remoteci.team_id == t_id)
 
-    q = (
-        q.filter(models2.Remoteci.state != "archived")
-        .options(sa_orm.joinedload("team", innerjoin=True))
-        .options(sa_orm.selectinload("users"))
+    query = (
+        query.where(models2.Remoteci.state != "archived")
+        .options(sa_orm.joinedload(models2.Remoteci.team, innerjoin=True))
+        .options(sa_orm.selectinload(models2.Remoteci.users))
     )
 
-    q = d.handle_args(q, models2.Remoteci, args)
-    nb_remotecis = q.count()
+    query = d.handle_args(query, models2.Remoteci, args)
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_remotecis = flask.g.session.execute(count_query).scalar()
 
-    q = d.handle_pagination(q, args)
-    remotecis = q.all()
+    query = d.handle_pagination(query, args)
+    remotecis = flask.g.session.execute(query).scalars().all()
     remotecis = list(
         map(lambda r: r.serialize(ignore_columns=["api_secret"]), remotecis)
     )
@@ -108,8 +109,8 @@ def get_remoteci_by_id(user, remoteci_id):
         models2.Remoteci,
         remoteci_id,
         options=[
-            sa_orm.joinedload("team", innerjoin=True),
-            sa_orm.selectinload("users"),
+            sa_orm.joinedload(models2.Remoteci.team, innerjoin=True),
+            sa_orm.selectinload(models2.Remoteci.users),
         ],
     )
     if user.is_not_in_team(r.team_id) and user.is_not_read_only_user():
@@ -161,9 +162,12 @@ def delete_remoteci_by_id(user, remoteci_id):
     base.update_resource_orm(remoteci, {"state": "archived", "users": []})
 
     try:
-        flask.g.session.query(models2.Job).filter(
-            models2.Job.remoteci_id == remoteci_id
-        ).update({"state": "archived"})
+        query = (
+            update(models2.Job)
+            .where(models2.Job.remoteci_id == remoteci_id)
+            .values({"state": "archived"})
+        )
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()
@@ -194,7 +198,9 @@ def get_remoteci_data(user, remoteci_id):
 @decorators.login_required
 def add_user_to_remoteci(user, remoteci_id):
     r = base.get_resource_orm(
-        models2.Remoteci, remoteci_id, options=[sa_orm.selectinload("users")]
+        models2.Remoteci,
+        remoteci_id,
+        options=[sa_orm.selectinload(models2.Remoteci.users)],
     )
     u = base.get_resource_orm(models2.User, user.id)
 
@@ -218,7 +224,9 @@ def add_user_to_remoteci(user, remoteci_id):
 @decorators.login_required
 def get_all_users_from_remotecis(user, remoteci_id):
     r = base.get_resource_orm(
-        models2.Remoteci, remoteci_id, options=[sa_orm.selectinload("users")]
+        models2.Remoteci,
+        remoteci_id,
+        options=[sa_orm.selectinload(models2.Remoteci.users)],
     )
     if user.is_not_in_team(r.team_id) and user.is_not_epm():
         raise dci_exc.Unauthorized()
@@ -231,7 +239,9 @@ def get_all_users_from_remotecis(user, remoteci_id):
 @decorators.login_required
 def delete_user_from_remoteci(user, remoteci_id, u_id):
     r = base.get_resource_orm(
-        models2.Remoteci, remoteci_id, options=[sa_orm.selectinload("users")]
+        models2.Remoteci,
+        remoteci_id,
+        options=[sa_orm.selectinload(models2.Remoteci.users)],
     )
     u = base.get_resource_orm(models2.User, u_id)
 

@@ -121,6 +121,11 @@ def test_where_with_different_column_types(client_user1):
     assert request.status_code == 200
 
 
+def test_nrt_where_with_bigint_column(client_user1, team1_job_id):
+    request = client_user1.get(f"/api/v1/jobs/{team1_job_id}/files?query=eq(size,785)")
+    assert request.status_code == 200
+
+
 def test_where_with_forbidden_column_names(client_user1):
     request = client_user1.get("/api/v1/jobs?where=data:eyJhdXRoIjogInNlY3JldCJ9")
     assert request.status_code == 400

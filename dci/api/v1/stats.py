@@ -56,7 +56,7 @@ def _format_stats(unsorted_jobs):
                 "team_name": job["team_name"],
                 "remoteci_name": job["remoteci_name"],
                 "status": job["status"],
-                "created_at": job["created_at"],
+                "created_at": job["created_at"].isoformat(),
             }
         )
         topics[topic_id] = topic
@@ -74,8 +74,7 @@ def _build_team_query(user):
 @api.route("/stats", methods=["GET"])
 @decorators.login_required
 def get_stats(user):
-    sql = text(
-        """
+    sql = text("""
 SELECT DISTINCT ON (topics.name, jobs.remoteci_id)
     jobs.id,
     jobs.status,
@@ -101,10 +100,8 @@ ORDER BY
     topics.name,
     jobs.remoteci_id,
     jobs.created_at DESC;
-""".format(
-            team_query=_build_team_query(user)
-        )
-    )
+""".format(team_query=_build_team_query(user)))
 
-    jobs = flask.g.db_conn.execute(sql)
+    result = flask.g.db_conn.execute(sql)
+    jobs = [dict(row) for row in result.mappings()]
     return flask.jsonify({"stats": _format_stats(jobs)})

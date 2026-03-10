@@ -29,7 +29,6 @@ from dci.dci_config import CONFIG
 from dci.db import models2
 from dciauth.signature import HmacAuthBase
 
-
 logger = logging.getLogger(__name__)
 
 

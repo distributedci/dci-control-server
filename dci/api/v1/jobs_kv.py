@@ -17,7 +17,7 @@
 import flask
 from flask import json
 import logging
-from sqlalchemy import sql
+from sqlalchemy import sql, delete
 
 from dci.api.v1 import api
 from dci.api.v1 import base
@@ -30,7 +30,6 @@ from dci.common.schemas import (
 )
 from dci.common import utils
 from dci.db import models2
-
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +76,13 @@ def delete_kv_from_job(user, job_id):
     job.etag = utils.gen_etag()
 
     try:
-        flask.g.session.query(models2.JobKeyValue).filter(
+        query = delete(models2.JobKeyValue).where(
             sql.and_(
                 models2.JobKeyValue.job_id == job_id,
                 models2.JobKeyValue.key == values["key"],
             )
-        ).delete()
+        )
+        flask.g.session.execute(query)
         flask.g.session.commit()
     except Exception as e:
         flask.g.session.rollback()

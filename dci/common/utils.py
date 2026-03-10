@@ -13,20 +13,12 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
-import datetime
 import hashlib
-import uuid
 import logging
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import six
-from sqlalchemy.engine import result
-from werkzeug.routing import BaseConverter, ValidationError
+import uuid
+
+from flask.json.provider import DefaultJSONProvider
 
 from dci.common import exceptions
 
@@ -40,29 +32,23 @@ def read(file_path, chunk_size=None, mode="rb"):
             yield chunk
 
 
-class UUIDConverter(BaseConverter):
-    def to_python(self, value):
-        try:
-            return uuid.UUID(value)
-        except ValueError:
-            raise ValidationError()
-
-    def to_url(self, values):
-        return str(values)
+def _stringify_keys(obj):
+    if isinstance(obj, dict):
+        return {str(k): _stringify_keys(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_stringify_keys(v) for v in obj]
+    return obj
 
 
-class JSONEncoder(json.JSONEncoder):
-    """Default JSON encoder."""
+class DCIJSONProvider(DefaultJSONProvider):
+    def dumps(self, obj, **kwargs):
+        obj = _stringify_keys(obj)
+        return super().dumps(obj, **kwargs)
 
     def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-        elif isinstance(o, result.RowProxy):
-            return dict(o)
-        elif isinstance(o, result.ResultProxy):
-            return list(o)
-        elif isinstance(o, uuid.UUID):
-            return str(o)
+        if hasattr(o, "serialize") and callable(o.serialize):
+            return o.serialize()
+        return super().default(o)
 
 
 def gen_uuid():
@@ -91,7 +77,7 @@ def check_and_get_etag(headers):
     return if_match_etag
 
 
-def _filter_empty_tags(values):
+def filter_empty_tags(values):
     if "tags" in values and values["tags"]:
         values["tags"] = [tag for tag in values["tags"] if tag and str(tag).strip()]
     return values

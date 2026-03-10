@@ -20,7 +20,7 @@ import os
 import flask
 from flask import json
 import logging
-from sqlalchemy import sql
+from sqlalchemy import sql, select, delete, func
 
 from dci.api.v1 import api
 from dci.api.v1 import base
@@ -43,7 +43,6 @@ from dci.db import declarative
 from dci.db import migration_components
 from dci.stores import files_utils
 import sqlalchemy.orm as sa_orm
-
 
 logger = logging.getLogger(__name__)
 
@@ -130,8 +129,8 @@ def get_all_components(user, topics_ids):
     if len(args["sort"]) == 0:
         args["sort"] = ["-released_at"]
 
-    query = flask.g.session.query(models2.Component)
-    query = query.filter(
+    query = select(models2.Component)
+    query = query.where(
         sql.and_(
             models2.Component.topic_id.in_(topics_ids),
             models2.Component.state != "archived",
@@ -142,7 +141,7 @@ def get_all_components(user, topics_ids):
         components_access_teams_ids = permissions.get_components_access_teams_ids(
             user.teams_ids
         )
-        query = query.filter(
+        query = query.where(
             sql.or_(
                 models2.Component.team_id.in_(user.teams_ids),
                 models2.Component.team_id.in_(components_access_teams_ids),
@@ -151,10 +150,14 @@ def get_all_components(user, topics_ids):
         )
 
     query = declarative.handle_args(query, models2.Component, args)
-    nb_components = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_components = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    components = [component.serialize() for component in query.all()]
+    components = [
+        component.serialize()
+        for component in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"components": components, "_meta": {"count": nb_components}})
 
@@ -170,26 +173,29 @@ def get_components(user):
 @decorators.login_required
 def get_component_by_id(user, c_id):
     component = base.get_resource_orm(
-        models2.Component, c_id, options=[sa_orm.selectinload("files")]
+        models2.Component, c_id, options=[sa_orm.selectinload(models2.Component.files)]
     )
 
     component_jobs_query = (
-        flask.g.session.query(models2.Job)
-        .filter(models2.Job.state != "archived")
+        select(models2.Job)
+        .where(models2.Job.state != "archived")
         .join(models2.JOIN_JOBS_COMPONENTS)
-        .filter(
+        .where(
             models2.JOIN_JOBS_COMPONENTS.c.component_id == component.id,
         )
     )
 
     if user.is_not_super_admin() and user.is_not_read_only_user() and user.is_not_epm():
         permissions.verify_access_to_component(user, component)
-        component_jobs_query = component_jobs_query.filter(
+        component_jobs_query = component_jobs_query.where(
             models2.Job.team_id.in_(user.teams_ids)
         )
 
     serialized_component = component.serialize()
-    serialized_component["jobs"] = [j.serialize() for j in component_jobs_query.all()]
+    serialized_component["jobs"] = [
+        j.serialize()
+        for j in flask.g.session.execute(component_jobs_query).scalars().all()
+    ]
     return flask.Response(
         json.dumps({"component": serialized_component}),
         200,
@@ -216,19 +222,22 @@ def list_components_files(user, c_id):
     permissions.verify_access_to_component(user, component)
     args = check_and_get_args(flask.request.args.to_dict())
 
-    query = flask.g.session.query(models2.Componentfile)
-    query = query.filter(
+    query = select(models2.Componentfile)
+    query = query.where(
         sql.and_(
             models2.Componentfile.component_id == c_id,
             models2.Componentfile.state != "archived",
         )
     )
 
-    nb_componentfiles = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_componentfiles = flask.g.session.execute(count_query).scalar()
 
     query = declarative.handle_args(query, models2.Componentfile, args)
 
-    componentfiles = [cf.serialize() for cf in query.all()]
+    componentfiles = [
+        cf.serialize() for cf in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify(
         {"component_files": componentfiles, "_meta": {"count": nb_componentfiles}}
@@ -350,9 +359,9 @@ def get_last_components_by_type(component_types, topic_id, session=None):
     _components = []
     for ct in component_types:
         try:
-            component = (
-                session.query(models2.Component)
-                .filter(
+            query = (
+                select(models2.Component)
+                .where(
                     sql.and_(
                         models2.Component.type == ct,
                         models2.Component.topic_id == topic_id,
@@ -361,8 +370,8 @@ def get_last_components_by_type(component_types, topic_id, session=None):
                     )
                 )
                 .order_by(models2.Component.created_at.desc())
-                .first()
             )
+            component = session.execute(query).scalar()
         except sa_orm.exc.NoResultFound:
             raise dci_exc.DCIException(
                 message="component of type %s not found or not exported" % ct,
@@ -399,17 +408,14 @@ def verify_and_get_components_ids(
     schedule_component_types = set()
     for c_id in components_ids:
         try:
-            component = (
-                session.query(models2.Component)
-                .filter(
-                    sql.and_(
-                        models2.Component.id == c_id,
-                        models2.Component.topic_id == topic_id,
-                        models2.Component.state == "active",
-                    )
+            query = select(models2.Component).where(
+                sql.and_(
+                    models2.Component.id == c_id,
+                    models2.Component.topic_id == topic_id,
+                    models2.Component.state == "active",
                 )
-                .one()
             )
+            component = session.execute(query).scalar_one()
         except sa_orm.exc.NoResultFound:
             raise dci_exc.DCIException(
                 message="component id %s not found or not exported" % c_id,
@@ -450,20 +456,20 @@ def purge_archived_components(user):
     # if the SQL deletion or the Store deletion fail then
     # rollback the transaction, otherwise commit.
     for cmpt in archived_components:
-        get_cmpt_files = flask.g.session.query(models2.Componentfile)
-        get_cmpt_files = get_cmpt_files.filter(
+        get_cmpt_files_query = select(models2.Componentfile).where(
             models2.Componentfile.component_id == cmpt["id"]
         )
-        cmpt_files = get_cmpt_files.all()
+        cmpt_files = flask.g.session.execute(get_cmpt_files_query).scalars().all()
         for cmpt_file in cmpt_files:
             file_path = files_utils.build_file_path(
                 cmpt["topic_id"], cmpt["id"], cmpt_file.id
             )
             try:
                 store.delete("components", file_path)
-                flask.g.session.query(models2.Componentfile).filter(
+                delete_query = delete(models2.Componentfile).where(
                     models2.Componentfile.id == cmpt_file.id
-                ).delete()
+                )
+                flask.g.session.execute(delete_query)
                 flask.g.session.commit()
             except Exception as e:
                 logger.error(
@@ -472,8 +478,9 @@ def purge_archived_components(user):
                 )
                 flask.g.session.rollback()
                 raise dci_exc.DCIException(str(e))
-        flask.g.session.query(models2.Component).filter(
+        delete_cmpt_query = delete(models2.Component).where(
             models2.Component.id == cmpt["id"]
-        ).delete()
+        )
+        flask.g.session.execute(delete_cmpt_query)
         flask.g.session.commit()
     return flask.Response(None, 204, content_type="application/json")

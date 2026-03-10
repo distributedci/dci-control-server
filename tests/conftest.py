@@ -24,6 +24,7 @@ from passlib.apps import custom_app_context as pwd_context
 import contextlib
 import pytest
 import sqlalchemy_utils.functions
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
 
@@ -60,7 +61,7 @@ def empty_db(engine):
 def reset_job_event(engine):
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
-        con.execute("ALTER SEQUENCE jobs_events_id_seq RESTART WITH 1")
+        con.execute(text("ALTER SEQUENCE jobs_events_id_seq RESTART WITH 1"))
         trans.commit()
     return True
 

@@ -38,9 +38,7 @@ def test_build_job_email():
         "topic_id": "topic_id",
     }
     email = m_w.build_job_email("sender@example.com", job_event)
-    assert (
-        email.get_payload(decode=True).decode("utf-8")
-        == """
+    assert email.get_payload(decode=True).decode("utf-8") == """
 You are receiving this email because of the DCI job job_id for the
 topic topic on the Remote CI remoteci.
 
@@ -52,7 +50,6 @@ The components used are: component1, component2
 For more information:
 https://www.distributed-ci.io/jobs/job_id
 """
-    )
 
 
 def test_send_mails():
@@ -82,9 +79,7 @@ def test_build_component_email():
         "state": "active",
     }
     email = m_w.build_component_email("sender@example.com", component_event)
-    assert (
-        email.get_payload(decode=True).decode("utf-8")
-        == """
+    assert email.get_payload(decode=True).decode("utf-8") == """
 You are receiving this email because of the DCI topic topic.
 
 A new component has been created:
@@ -92,4 +87,3 @@ A new component has been created:
   https://www.distributed-ci.io/topics/topic_id/components/component_id
 
 """
-    )

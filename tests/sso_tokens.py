@@ -1,5 +1,11 @@
 # Generate TOKEN using website like https://token.dev/
 # Copy new public and private keys in tests/settings.py
+
+# Datetime constants for freezegun in tests
+# All SSO tokens (USER1, USER4, RH_EMPLOYEE) expire at: 1781681817 (2025-06-17 07:43:37)
+SSO_TOKENS_VALID_DATETIME = "2025-06-17 07:41:38"  # Before token expiration
+SSO_TOKENS_EXPIRED_DATETIME = "2029-08-17 19:23:37"  # After token expiration
+
 _doc_access_token_user1 = """
 {
   "alg": "RS256",

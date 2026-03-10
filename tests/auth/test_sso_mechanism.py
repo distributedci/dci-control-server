@@ -13,22 +13,20 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
-import datetime
-
 import dci.auth_mechanism as authm
 from dci.common import exceptions as dci_exc
 from dci import dci_config
 from tests.settings import SSO_PRIVATE_KEY
+from tests.sso_tokens import SSO_TOKENS_VALID_DATETIME, SSO_TOKENS_EXPIRED_DATETIME
 from tests.utils import generate_client, generate_jwt
 import flask
+from freezegun import freeze_time
 import mock
 import pytest
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_verified(
-    m_datetime,
     client_admin,
     app,
     session,
@@ -37,11 +35,6 @@ def test_sso_auth_verified(
     team_redhat_id,
     team_epm_id,
 ):
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     sso_headers = mock.Mock
     sso_headers.headers = {"Authorization": "Bearer %s" % access_token_user4}
     nb_users = len(client_admin.get("/api/v1/users").data["users"])
@@ -59,11 +52,10 @@ def test_sso_auth_verified(
         assert (nb_users + 1) == nb_users_after_sso
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
 @mock.patch("dci.auth_mechanism.sso.get_public_key_from_token")
 def test_sso_auth_verified_public_key_rotation(
     m_get_public_key_from_token,
-    m_datetime,
     sso_client_user1,
     app,
     session,
@@ -71,11 +63,6 @@ def test_sso_auth_verified_public_key_rotation(
 ):
     sso_public_key = dci_config.CONFIG["SSO_PUBLIC_KEY"]
     dci_config.CONFIG["SSO_PUBLIC_KEY"] = "= non valid sso public key here ="
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     m_get_public_key_from_token.return_value = sso_public_key
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
@@ -85,9 +72,8 @@ def test_sso_auth_verified_public_key_rotation(
     assert dci_config.CONFIG["SSO_PUBLIC_KEY"] == sso_public_key
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_verified_rh_employee(
-    m_datetime,
     client_admin,
     app,
     session,
@@ -96,11 +82,6 @@ def test_sso_auth_verified_rh_employee(
     team_redhat_id,
     team_epm_id,
 ):
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     sso_headers = mock.Mock
     sso_headers.headers = {"Authorization": "Bearer %s" % access_token_rh_employee}
     nb_users = len(client_admin.get("/api/v1/users").data["users"])
@@ -272,15 +253,10 @@ def test_user_creation_with_a_new_token_with_apidci_scope_specified_but_dci_audi
         assert jdoe["email"] == "jdoe@example.org"
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_not_verified(
-    m_datetime, client_admin, app, session, access_token_user1, team_admin_id
+    client_admin, app, session, access_token_user1, team_admin_id
 ):
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     # corrupt access_token
     access_token_user1 = access_token_user1 + "lol"
     sso_headers = mock.Mock
@@ -297,13 +273,8 @@ def test_sso_auth_not_verified(
         assert nb_users == nb_users_after_sso
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
-def test_sso_auth_get_users(m_datetime, sso_client_user1, app, session, team_admin_id):
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
+def test_sso_auth_get_users(sso_client_user1, app, session, team_admin_id):
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.session = session
@@ -311,15 +282,8 @@ def test_sso_auth_get_users(m_datetime, sso_client_user1, app, session, team_adm
         assert gusers.status_code == 401
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
-def test_sso_auth_get_current_user(
-    m_datetime, sso_client_user1, app, session, team_admin_id
-):
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1518653629
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
+def test_sso_auth_get_current_user(sso_client_user1, app, session, team_admin_id):
     with app.app_context():
         flask.g.team_admin_id = team_admin_id
         flask.g.session = session
@@ -327,11 +291,10 @@ def test_sso_auth_get_current_user(
         assert request.status_code == 200
 
 
-@mock.patch("jwt.api_jwt.datetime", spec=datetime.datetime)
+@freeze_time(SSO_TOKENS_EXPIRED_DATETIME)
 @mock.patch("dci.auth_mechanism.sso.get_public_key_from_token")
 def test_nrt_sso_auth_old_valid_pubkey_expired_token_raises_dci_exception(
     m_get_public_key_from_token,
-    m_datetime,
     sso_client_user1,
     app,
     session,
@@ -347,11 +310,6 @@ def test_nrt_sso_auth_old_valid_pubkey_expired_token_raises_dci_exception(
     """
     sso_public_key = dci_config.CONFIG["SSO_PUBLIC_KEY"]
     dci_config.CONFIG["SSO_PUBLIC_KEY"] = "= non valid sso public key here ="
-    m_utcnow = mock.MagicMock()
-    m_utcnow.utctimetuple.return_value = datetime.datetime.fromtimestamp(
-        1881681817
-    ).timetuple()
-    m_datetime.utcnow.return_value = m_utcnow
     m_get_public_key_from_token.return_value = sso_public_key
     with app.app_context():
         flask.g.team_admin_id = team_admin_id

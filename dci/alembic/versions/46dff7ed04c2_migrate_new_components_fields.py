@@ -32,7 +32,7 @@ from dci.db import models2
 
 from alembic import op
 from sqlalchemy.orm.session import Session
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 import sqlalchemy as sa
 import sys
 
@@ -43,18 +43,18 @@ def upgrade():
     # this dict will be used to remove redundancy for the creation of the indexes
     occurrences_components = {}
     limit = 100
-    query = (
-        session.query(models2.Component)
-        .order_by(models2.Component.created_at.asc())
-        .limit(limit)
-    )
 
     offset = 0
     try:
         while True:
-            query = query.offset(offset)
+            query = (
+                select(models2.Component)
+                .order_by(models2.Component.created_at.asc())
+                .limit(limit)
+                .offset(offset)
+            )
 
-            components = query.all()
+            components = session.execute(query).scalars().all()
             if not components:
                 break
             for c in components:

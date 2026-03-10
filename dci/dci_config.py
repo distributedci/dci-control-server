@@ -37,8 +37,6 @@ def get_engine(db_uri):
         db_uri,
         pool_size=CONFIG["SQLALCHEMY_POOL_SIZE"],
         max_overflow=CONFIG["SQLALCHEMY_MAX_OVERFLOW"],
-        encoding="utf8",
-        convert_unicode=CONFIG["SQLALCHEMY_NATIVE_UNICODE"],
         echo=CONFIG["SQLALCHEMY_ECHO"],
     )
 

@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import base64
+import datetime
 import gc
 import io
 import xml.etree.ElementTree
@@ -44,7 +45,7 @@ from dci import dci_config
 from dci.stores import files_utils
 import logging
 
-from sqlalchemy import sql
+from sqlalchemy import sql, select, func, delete
 from sqlalchemy import orm
 from sqlalchemy import exc as sa_exc
 
@@ -52,17 +53,17 @@ logger = logging.getLogger(__name__)
 
 
 def get_previous_job_in_topic(job):
-    topic_id = job.topic_id
-    query = flask.g.session.query(models2.Job)
+    created_at = job.created_at
+    if isinstance(created_at, str):
+        created_at = datetime.datetime.fromisoformat(created_at)
     query = (
-        query.filter(
-            sql.and_(
-                models2.Job.topic_id == topic_id,
-                models2.Job.created_at < job.created_at,
-                models2.Job.id != job.id,
-                models2.Job.remoteci_id == job.remoteci_id,
-                models2.Job.state != "archived",
-            ),
+        select(models2.Job)
+        .where(
+            models2.Job.topic_id == job.topic_id,
+            models2.Job.created_at < created_at,
+            models2.Job.id != job.id,
+            models2.Job.remoteci_id == job.remoteci_id,
+            models2.Job.state != "archived",
             models2.Job.name == job.name,
             models2.Job.configuration == job.configuration,
             models2.Job.url == job.url,
@@ -70,23 +71,20 @@ def get_previous_job_in_topic(job):
         .order_by(sql.desc(models2.Job.created_at))
         .limit(1)
     )
-    try:
-        return query.one()
-    except orm.exc.NoResultFound:
-        return None
+    return flask.g.session.scalars(query).first()
 
 
 def _get_previous_testsuites(prev_job, filename):
     if prev_job is None:
         return None
-    query = flask.g.session.query(models2.TestsResult).filter(
+    query = select(models2.TestsResult).where(
         sql.and_(
             models2.TestsResult.job_id == prev_job.id,
             models2.TestsResult.name == filename,
         )
     )
     try:
-        res = query.one()
+        res = flask.g.session.execute(query).scalar_one()
     except orm.exc.NoResultFound:
         return None
     test_file = base.get_resource_orm(models2.File, res.file_id)
@@ -221,16 +219,16 @@ def get_all_files(user, job_id):
         if job.team_id not in user.teams_ids:
             raise dci_exc.Unauthorized()
 
-    query = flask.g.session.query(models2.File)
-    query = query.filter(
+    query = select(models2.File).where(
         sql.and_(models2.File.job_id == job_id, models2.File.state != "archived")
     )
 
     query = declarative.handle_args(query, models2.File, args)
-    nb_files = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    nb_files = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    files = [f.serialize() for f in query.all()]
+    files = [f.serialize() for f in flask.g.session.execute(query).scalars().all()]
 
     return json.jsonify({"files": files, "_meta": {"count": nb_files}})
 
@@ -273,7 +271,7 @@ def get_file_content(user, file_id):
         file_descriptor,
         mimetype=file.mime or "text/plain",
         as_attachment=True,
-        attachment_filename=file.name.replace(" ", "_"),
+        download_name=file.name.replace(" ", "_"),
     )
 
 
@@ -359,9 +357,8 @@ def purge_archived_files(user):
                 file["team_id"], file["job_id"], file["id"]
             )
             store.delete("files", file_path)
-            flask.g.session.query(models2.File).filter(
-                models2.File.id == file["id"]
-            ).delete()
+            query = delete(models2.File).where(models2.File.id == file["id"])
+            flask.g.session.execute(query)
             flask.g.session.commit()
             logger.debug("file %s removed" % file_path)
         except sa_exc.DBAPIError as e:

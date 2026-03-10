@@ -20,11 +20,14 @@ from dci.db import declarative as dci_declarative
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import orm as sa_orm
 import sqlalchemy_utils as sa_utils
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 JOB_STATUSES = [
     "new",

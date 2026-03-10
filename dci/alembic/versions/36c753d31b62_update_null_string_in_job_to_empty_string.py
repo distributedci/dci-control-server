@@ -29,25 +29,27 @@ depends_on = None
 
 from alembic import op
 from sqlalchemy.orm.session import Session
-from sqlalchemy import exc
+from sqlalchemy import exc, text
 import sys
 
 
 def upgrade():
     session = Session(op.get_bind())
     try:
-        session.execute("UPDATE jobs SET comment = '' WHERE comment IS NULL")
+        session.execute(text("UPDATE jobs SET comment = '' WHERE comment IS NULL"))
         session.execute(
-            "UPDATE jobs SET status_reason = '' WHERE status_reason IS NULL"
+            text("UPDATE jobs SET status_reason = '' WHERE status_reason IS NULL")
         )
         session.execute(
-            "UPDATE jobs SET configuration = '' WHERE configuration IS NULL"
+            text("UPDATE jobs SET configuration = '' WHERE configuration IS NULL")
         )
-        session.execute("UPDATE jobs SET url = '' WHERE url IS NULL")
-        session.execute("UPDATE jobs SET name = '' WHERE name IS NULL")
-        session.execute("UPDATE jobs SET user_agent = '' WHERE user_agent IS NULL")
+        session.execute(text("UPDATE jobs SET url = '' WHERE url IS NULL"))
+        session.execute(text("UPDATE jobs SET name = '' WHERE name IS NULL"))
         session.execute(
-            "UPDATE jobs SET client_version = '' WHERE client_version IS NULL"
+            text("UPDATE jobs SET user_agent = '' WHERE user_agent IS NULL")
+        )
+        session.execute(
+            text("UPDATE jobs SET client_version = '' WHERE client_version IS NULL")
         )
     except exc.IntegrityError as ie:
         print("Rollback " + str(ie))

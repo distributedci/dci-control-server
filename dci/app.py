@@ -18,9 +18,6 @@
 from gevent import monkey
 
 monkey.patch_all()
-import psycogreen.gevent
-
-psycogreen.gevent.patch_psycopg()
 
 from dci.api import v1 as api_v1
 from dci.api import v2 as api_v2
@@ -35,7 +32,7 @@ import flask
 import logging
 import sys
 import time
-from sqlalchemy import exc as sa_exc
+from sqlalchemy import exc as sa_exc, select
 from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -72,7 +69,8 @@ class DciControlServer(flask.Flask):
         return super(DciControlServer, self).process_response(resp)
 
     def _get_team_id(self, session, name):
-        team = session.query(models2.Team).filter(models2.Team.name == name).first()
+        query = select(models2.Team).where(models2.Team.name == name)
+        team = session.execute(query).scalar()
         if team is None:
             print(
                 "%s team not found. Please init the database"
@@ -108,7 +106,6 @@ def create_app(param=None):
     configure_root_logger()
 
     dci_app = DciControlServer()
-    dci_app.url_map.converters["uuid"] = utils.UUIDConverter
 
     logger.info("dci control server startup")
 
@@ -171,7 +168,8 @@ def create_app(param=None):
     dci_app.register_blueprint(api_v1.api, url_prefix="/api/v1")
     dci_app.register_blueprint(api_v2.api, url_prefix="/api/v2")
 
-    # Registering custom encoder
-    dci_app.json_encoder = utils.JSONEncoder
+    # Registering custom json provider
+    dci_app.json_provider_class = utils.DCIJSONProvider
+    dci_app.json = utils.DCIJSONProvider(dci_app)
 
     return dci_app

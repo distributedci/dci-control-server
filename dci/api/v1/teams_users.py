@@ -38,13 +38,16 @@ def add_user_to_team(user, team_id, user_id):
     team = base.get_resource_orm(models2.Team, team_id)
     user = base.get_resource_orm(models2.User, user_id)
 
-    try:
-        team.users.append(user)
-        flask.g.session.add(team)
-        flask.g.session.commit()
-    except sa_exc.IntegrityError:
-        flask.g.session.rollback()
-        raise dci_exc.DCIException(message="conflict when adding team", status_code=409)
+    if user not in team.users:
+        try:
+            team.users.append(user)
+            flask.g.session.add(team)
+            flask.g.session.commit()
+        except sa_exc.IntegrityError:
+            flask.g.session.rollback()
+            raise dci_exc.DCIException(
+                message="conflict when adding team", status_code=409
+            )
 
     return flask.Response(None, 201, content_type="application/json")
 
