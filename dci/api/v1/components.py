@@ -145,7 +145,7 @@ def get_all_components(user, topics_ids):
             sql.or_(
                 models2.Component.team_id.in_(user.teams_ids),
                 models2.Component.team_id.in_(components_access_teams_ids),
-                models2.Component.team_id == None,  # noqa
+                models2.Component.team_id.is_(None),
             )
         )
 
@@ -366,7 +366,7 @@ def get_last_components_by_type(component_types, topic_id, session=None):
                         models2.Component.type == ct,
                         models2.Component.topic_id == topic_id,
                         models2.Component.state == "active",
-                        models2.Component.team_id == None,  # noqa
+                        models2.Component.team_id.is_(None),
                     )
                 )
                 .order_by(models2.Component.created_at.desc())

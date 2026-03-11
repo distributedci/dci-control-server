@@ -37,10 +37,10 @@ from tests import data as tests_data
 from tests import utils as t_utils
 
 
-def test_create_files(client_user1, team1_jobstate):
-    file_id = t_utils.create_task_file(client_user1, team1_jobstate, "file", "content")[
-        "id"
-    ]
+def test_create_files(client_user1, team1_jobstate_id):
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "file", "content"
+    )["id"]
 
     file = client_user1.get("/api/v1/files/%s" % file_id).data["file"]
 
@@ -203,25 +203,25 @@ def test_delete_file_by_id(client_user1, team1_job_id):
 # Tests for the isolation
 
 
-def test_create_file_as_user(client_user1, team1_jobstate):
-    headers = {"DCI-JOBSTATE-ID": team1_jobstate, "DCI-NAME": "name"}
+def test_create_file_as_user(client_user1, team1_jobstate_id):
+    headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name"}
     file = client_user1.post("/api/v1/files", headers=headers)
     assert file.status_code == 201
 
 
-def test_get_file_as_user(client_user1, team1_jobstate_file, team1_jobstate):
-    file = client_user1.get("/api/v1/files/%s" % team1_jobstate_file)
+def test_get_file_as_user(client_user1, team1_jobstate_file_id, team1_jobstate_id):
+    file = client_user1.get("/api/v1/files/%s" % team1_jobstate_file_id)
     assert file.status_code == 200
 
 
-def test_delete_file_as_user(client_user1, team1_jobstate_file):
-    file_delete = client_user1.delete("/api/v1/files/%s" % team1_jobstate_file)
+def test_delete_file_as_user(client_user1, team1_jobstate_file_id):
+    file_delete = client_user1.delete("/api/v1/files/%s" % team1_jobstate_file_id)
     assert file_delete.status_code == 204
 
 
-def test_get_file_content_as_user(client_user1, team1_jobstate):
+def test_get_file_content_as_user(client_user1, team1_jobstate_id):
     content = "azertyuiop1234567890"
-    file_id = t_utils.create_task_file(client_user1, team1_jobstate, "foo", content)[
+    file_id = t_utils.create_task_file(client_user1, team1_jobstate_id, "foo", content)[
         "id"
     ]
 
@@ -231,16 +231,16 @@ def test_get_file_content_as_user(client_user1, team1_jobstate):
     assert get_file.data == content
 
 
-def test_change_file_to_invalid_state(client_admin, team1_jobstate_file):
-    t = client_admin.get("/api/v1/files/" + team1_jobstate_file).data["file"]
+def test_change_file_to_invalid_state(client_admin, team1_jobstate_file_id):
+    t = client_admin.get("/api/v1/files/" + team1_jobstate_file_id).data["file"]
     data = {"state": "file"}
     r = client_admin.put(
-        "/api/v1/files/" + team1_jobstate_file,
+        "/api/v1/files/" + team1_jobstate_file_id,
         data=data,
         headers={"If-match": t["etag"]},
     )
     assert r.status_code == 405
-    current_file = client_admin.get("/api/v1/files/" + team1_jobstate_file)
+    current_file = client_admin.get("/api/v1/files/" + team1_jobstate_file_id)
     assert current_file.status_code == 200
     assert current_file.data["file"]["state"] == "active"
 

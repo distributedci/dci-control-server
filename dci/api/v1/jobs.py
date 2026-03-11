@@ -485,7 +485,7 @@ def get_job_by_id(user, job_id):
         job = job.serialize()
         files_query = select(models2.File).where(
             sql.and_(
-                models2.File.jobstate_id == None,  # noqa
+                models2.File.jobstate_id.is_(None),
                 models2.File.job_id == job_id,
                 models2.File.state != "archived",
             )
