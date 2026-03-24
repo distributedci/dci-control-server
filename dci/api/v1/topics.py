@@ -70,7 +70,7 @@ def get_topic_by_id(user, topic_id):
             sa_orm.selectinload(models2.Topic.next_topic),
         ],
     )
-    topic_serialized = topic.serialize()
+    topic_serialized = topic.serialize(only_columns=models2.Topic.api_fields)
 
     if (
         user.is_not_super_admin()
@@ -111,7 +111,12 @@ def get_all_topics(user):
     query = d.handle_pagination(query, args)
 
     topics = flask.g.session.execute(query).scalars().all()
-    topics = list(map(lambda t: t.serialize(), topics))
+    topics = list(
+        map(
+            lambda t: t.serialize(only_columns=models2.Topic.api_fields),
+            topics,
+        )
+    )
 
     return flask.jsonify({"topics": topics, "_meta": {"count": nb_topics}})
 
@@ -133,7 +138,7 @@ def put_topic(user, topic_id):
     topic = base.get_resource_orm(models2.Topic, topic_id)
 
     return flask.Response(
-        json.dumps({"topic": topic.serialize()}),
+        json.dumps({"topic": topic.serialize(only_columns=models2.Topic.api_fields)}),
         200,
         headers={"ETag": topic.etag},
         content_type="application/json",
@@ -202,7 +207,10 @@ def get_all_subscribed_users_from_topic(user, topic_id):
         .join(models2.UserTopic)
         .where(models2.UserTopic.topic_id == topic_id)
     )
-    users = [u.serialize() for u in flask.g.session.execute(query).scalars().all()]
+    users = [
+        u.serialize(only_columns=models2.User.api_fields)
+        for u in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"users": users, "_meta": {"count": len(users)}})
 
@@ -235,7 +243,10 @@ def get_all_subscribed_topics(user):
         .join(models2.UserTopic)
         .where(models2.UserTopic.user_id == user.id)
     )
-    topics = [t.serialize() for t in flask.g.session.execute(query).scalars().all()]
+    topics = [
+        t.serialize(only_columns=models2.Topic.api_fields)
+        for t in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"topics": topics, "_meta": {"count": len(topics)}})
 

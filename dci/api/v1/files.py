@@ -228,7 +228,10 @@ def get_all_files(user, job_id):
     nb_files = flask.g.session.execute(count_query).scalar()
     query = declarative.handle_pagination(query, args)
 
-    files = [f.serialize() for f in flask.g.session.execute(query).scalars().all()]
+    files = [
+        f.serialize(only_columns=models2.File.api_fields)
+        for f in flask.g.session.execute(query).scalars().all()
+    ]
 
     return json.jsonify({"files": files, "_meta": {"count": nb_files}})
 
@@ -239,7 +242,7 @@ def get_file_by_id(user, file_id):
     file = base.get_resource_orm(models2.File, file_id)
 
     return flask.Response(
-        json.dumps({"file": file.serialize()}),
+        json.dumps({"file": file.serialize(only_columns=models2.File.api_fields)}),
         200,
         content_type="application/json",
     )

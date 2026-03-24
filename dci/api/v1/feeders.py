@@ -83,7 +83,8 @@ def get_all_feeders(user, t_id=None):
     query = declarative.handle_pagination(query, args)
 
     feeders = [
-        feeder.serialize() for feeder in flask.g.session.execute(query).scalars().all()
+        feeder.serialize(only_columns=models2.Feeder.api_fields_without_api_secret)
+        for feeder in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify({"feeders": feeders, "_meta": {"count": nb_feeders}})
@@ -98,7 +99,9 @@ def get_feeder_by_id(user, feeder_id):
         raise dci_exc.Unauthorized()
 
     return flask.Response(
-        json.dumps({"feeder": feeder.serialize()}),
+        json.dumps(
+            {"feeder": feeder.serialize(only_columns=models2.Feeder.api_fields)}
+        ),
         200,
         headers={"ETag": feeder.etag},
         content_type="application/json",
@@ -122,7 +125,13 @@ def put_feeder(user, feeder_id):
     feeder = base.get_resource_orm(models2.Feeder, feeder_id)
 
     return flask.Response(
-        json.dumps({"feeder": feeder.serialize(ignore_columns=["api_secret"])}),
+        json.dumps(
+            {
+                "feeder": feeder.serialize(
+                    only_columns=models2.Feeder.api_fields_without_api_secret
+                )
+            }
+        ),
         200,
         headers={"ETag": feeder.etag},
         content_type="application/json",
@@ -167,7 +176,9 @@ def put_api_secret_feeder(user, feeder_id):
 
     feeder = base.get_resource_orm(models2.Feeder, feeder_id)
     return flask.Response(
-        json.dumps({"feeder": feeder.serialize()}),
+        json.dumps(
+            {"feeder": feeder.serialize(only_columns=models2.Feeder.api_fields)}
+        ),
         200,
         headers={"ETag": feeder.etag},
         content_type="application/json",

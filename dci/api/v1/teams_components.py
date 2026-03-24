@@ -95,7 +95,10 @@ def get_component_access_team(user, team_id):
         raise dci_exc.Unauthorized()
 
     team = base.get_resource_orm(models2.Team, team_id)
-    components_access_team = [t.serialize() for t in team.components_access_teams]
+    components_access_team = [
+        t.serialize(only_columns=models2.Team.api_fields)
+        for t in team.components_access_teams
+    ]
 
     return flask.jsonify(
         {

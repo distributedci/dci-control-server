@@ -82,7 +82,9 @@ def update_product(user, product_id):
     product = base.get_resource_orm(models2.Product, product_id)
 
     return flask.Response(
-        json.dumps({"product": product.serialize()}),
+        json.dumps(
+            {"product": product.serialize(only_columns=models2.Product.api_fields)}
+        ),
         200,
         headers={"ETag": product.etag},
         content_type="application/json",
@@ -115,7 +117,9 @@ def get_all_products(user):
     nb_products = flask.g.session.execute(count_query).scalar()
     query = d.handle_pagination(query, args)
     products = flask.g.session.execute(query).scalars().all()
-    products = list(map(lambda p: p.serialize(), products))
+    products = list(
+        map(lambda p: p.serialize(only_columns=models2.Product.api_fields), products)
+    )
 
     return flask.jsonify({"products": products, "_meta": {"count": nb_products}})
 
@@ -148,7 +152,7 @@ def get_product_by_id(user, product_id):
         raise dci_exc.DCIException(message="product not found", status_code=404)
 
     return flask.Response(
-        json.dumps({"product": p.serialize()}),
+        json.dumps({"product": p.serialize(only_columns=models2.Product.api_fields)}),
         200,
         headers={"ETag": p.etag},
         content_type="application/json",
@@ -281,7 +285,10 @@ def get_all_teams_from_product(user, product_id):
         .where(models2.Product.id == product_id)
         .where(models2.Product.state != "archived")
     )
-    teams = [t.serialize() for t in flask.g.session.execute(query).scalars().all()]
+    teams = [
+        t.serialize(only_columns=models2.Team.api_fields)
+        for t in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"teams": teams, "_meta": {"count": len(teams)}})
 

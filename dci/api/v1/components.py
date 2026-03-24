@@ -113,7 +113,13 @@ def update_components(user, c_id):
     )
 
     return flask.Response(
-        json.dumps({"component": component.serialize()}),
+        json.dumps(
+            {
+                "component": component.serialize(
+                    only_columns=models2.Component.api_fields
+                )
+            }
+        ),
         200,
         headers={"ETag": component.etag},
         content_type="application/json",
@@ -155,7 +161,7 @@ def get_all_components(user, topics_ids):
     query = declarative.handle_pagination(query, args)
 
     components = [
-        component.serialize()
+        component.serialize(only_columns=models2.Component.api_fields)
         for component in flask.g.session.execute(query).scalars().all()
     ]
 
@@ -191,9 +197,11 @@ def get_component_by_id(user, c_id):
             models2.Job.team_id.in_(user.teams_ids)
         )
 
-    serialized_component = component.serialize()
+    serialized_component = component.serialize(
+        only_columns=models2.Component.api_fields
+    )
     serialized_component["jobs"] = [
-        j.serialize()
+        j.serialize(only_columns=models2.Job.api_fields_without_data)
         for j in flask.g.session.execute(component_jobs_query).scalars().all()
     ]
     return flask.Response(
@@ -236,7 +244,8 @@ def list_components_files(user, c_id):
     query = declarative.handle_args(query, models2.Componentfile, args)
 
     componentfiles = [
-        cf.serialize() for cf in flask.g.session.execute(query).scalars().all()
+        cf.serialize(only_columns=models2.Componentfile.api_fields)
+        for cf in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify(
@@ -276,7 +285,13 @@ def get_component_file_by_id(user, c_id, f_id):
     permissions.verify_access_to_component(user, component)
 
     componentfile = base.get_resource_orm(models2.Componentfile, f_id)
-    return flask.jsonify({"component_file": componentfile.serialize()})
+    return flask.jsonify(
+        {
+            "component_file": componentfile.serialize(
+                only_columns=models2.Componentfile.api_fields
+            )
+        }
+    )
 
 
 @api.route("/components/<uuid:c_id>/files/<uuid:f_id>/content", methods=["GET"])

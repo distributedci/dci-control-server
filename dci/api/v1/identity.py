@@ -95,7 +95,7 @@ def put_identity(user):
         raise dci_exc.DCIException(message=str(e), status_code=409)
 
     user = base.get_resource_orm(models2.User, user.id)
-    user_serialized = user.serialize()
+    user_serialized = user.serialize(only_columns=models2.User.api_fields)
 
     return flask.Response(
         json.dumps({"user": user_serialized}),

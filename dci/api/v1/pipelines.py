@@ -66,7 +66,7 @@ def get_pipeline_by_id(user, p_id):
             raise dci_exc.Unauthorized()
 
     return flask.Response(
-        json.dumps({"pipeline": p.serialize()}),
+        json.dumps({"pipeline": p.serialize(only_columns=models2.Pipeline.api_fields)}),
         200,
         content_type="application/json",
     )
@@ -90,8 +90,8 @@ def get_pipelines(user):
     query = declarative.handle_pagination(query, args)
 
     pipelines = [
-        j.serialize(ignore_columns=["data"])
-        for j in flask.g.session.execute(query).scalars().all()
+        p.serialize(only_columns=models2.Pipeline.api_fields)
+        for p in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify({"pipelines": pipelines, "_meta": {"count": nb_pipelines}})
@@ -119,7 +119,10 @@ def get_jobs_from_pipeline(user, p_id):
         .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
     )
 
-    jobs = [j.serialize() for j in flask.g.session.execute(query).scalars().all()]
+    jobs = [
+        j.serialize(only_columns=models2.Job.api_fields_without_data)
+        for j in flask.g.session.execute(query).scalars().all()
+    ]
 
     return flask.jsonify({"jobs": jobs, "_meta": {"count": len(jobs)}})
 
@@ -140,7 +143,7 @@ def update_pipeline_by_id(user, p_id):
     p = base.get_resource_orm(models2.Pipeline, p_id)
 
     return flask.Response(
-        json.dumps({"pipeline": p.serialize()}),
+        json.dumps({"pipeline": p.serialize(only_columns=models2.Pipeline.api_fields)}),
         200,
         headers={"ETag": p.etag},
         content_type="application/json",

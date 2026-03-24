@@ -101,7 +101,8 @@ def get_all_jobstates(user, job_id):
     query = declarative.handle_pagination(query, args)
 
     jobstates = [
-        js.serialize() for js in flask.g.session.execute(query).scalars().all()
+        js.serialize(only_columns=models2.Jobstate.api_fields)
+        for js in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify({"jobstates": jobstates, "_meta": {"count": nb_jobstates}})
@@ -114,7 +115,9 @@ def get_jobstate_by_id(user, js_id):
         models2.Jobstate, js_id, options=[sa_orm.selectinload(models2.Jobstate.files)]
     )
     return flask.Response(
-        json.dumps({"jobstate": js.serialize()}),
+        json.dumps(
+            {"jobstate": js.serialize(only_columns=models2.Jobstate.api_fields)}
+        ),
         200,
         content_type="application/json",
     )

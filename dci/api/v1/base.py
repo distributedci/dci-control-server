@@ -79,7 +79,7 @@ def update_resource_orm(resource, data):
 def create_resource_orm(table, data):
     try:
         resource = table(**data)
-        resource_serialized = resource.serialize()
+        resource_serialized = resource.serialize(only_columns=table.api_fields)
         flask.g.session.add(resource)
         flask.g.session.commit()
         return resource_serialized
@@ -108,7 +108,8 @@ def get_to_purge_archived_resources(user, table):
 
     query = get_archived_resources_query(table)
     archived_resources = [
-        r.serialize() for r in flask.g.session.execute(query).scalars().all()
+        r.serialize(only_columns=table.api_fields)
+        for r in flask.g.session.execute(query).scalars().all()
     ]
 
     return flask.jsonify(
@@ -141,7 +142,7 @@ def get_resources_to_purge_orm(user, table):
 
     query = select(table).where(table.state == "archived")
     archived_resources = [
-        resource.serialize()
+        resource.serialize(only_columns=table.api_fields)
         for resource in flask.g.session.execute(query).scalars().all()
     ]
 

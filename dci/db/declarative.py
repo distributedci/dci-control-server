@@ -26,49 +26,57 @@ import uuid
 
 
 class Mixin(object):
-    def serialize(self, ignore_columns=[]):
-        def _get_nested_columns():
-            _res = {}
-            for ic in ignore_columns:
-                if "." in ic:
-                    k, v = ic.split(".")
-                    if k not in _res:
-                        _res[k] = [v]
-                    else:
-                        _res[k].append(v)
-            return _res
 
-        nested_ignore_columns = []
-        if ignore_columns:
-            nested_ignore_columns = _get_nested_columns()
-        _dict = {}
-        _attrs = self.__dict__.keys()
+    def serialize(self, only_columns=None, _seen=None):
 
-        for attr in _attrs:
-            if attr in ignore_columns:
-                continue
-            attr_obj = getattr(self, attr)
-            if isinstance(attr_obj, list):
-                _dict[attr] = []
-                for ao in attr_obj:
-                    _ignore_columns = []
-                    if attr in nested_ignore_columns:
-                        _ignore_columns = nested_ignore_columns[attr]
-                    if isinstance(ao, Mixin):
-                        _dict[attr].append(ao.serialize(ignore_columns=_ignore_columns))
-                    else:
-                        _dict[attr].append(ao)
-            elif isinstance(attr_obj, Mixin):
-                _ignore_columns = []
-                if attr in nested_ignore_columns:
-                    _ignore_columns = nested_ignore_columns[attr]
-                _dict[attr] = attr_obj.serialize(ignore_columns=_ignore_columns)
-            elif isinstance(attr_obj, uuid.UUID):
-                _dict[attr] = str(attr_obj)
-            elif isinstance(attr_obj, datetime.datetime):
-                _dict[attr] = attr_obj.isoformat()
-            elif not attr.startswith("_"):
-                _dict[attr] = self.__dict__[attr]
+        if only_columns is None:
+            return {}
+
+        if _seen is None:
+            _seen = []
+        if id(self) in _seen:
+            return {}
+        _seen.append(id(self))
+
+        try:
+            columns = [oc for oc in only_columns if not isinstance(oc, dict)]
+            relashionships = [oc for oc in only_columns if isinstance(oc, dict)]
+
+            _dict = {}
+
+            for attr in columns:
+                attr_obj = getattr(self, attr)
+                if isinstance(attr_obj, uuid.UUID):
+                    _dict[attr] = str(attr_obj)
+                elif isinstance(attr_obj, datetime.datetime):
+                    _dict[attr] = attr_obj.isoformat()
+                elif attr.startswith("_"):
+                    continue
+                else:
+                    _dict[attr] = attr_obj
+
+            for attr in relashionships:
+                _key = list(attr.keys())[0]
+                attr_obj = getattr(self, _key)
+
+                if isinstance(attr_obj, list):
+                    _dict[_key] = []
+                    for ao in attr_obj:
+                        if isinstance(ao, Mixin):
+                            _only_columns = attr[_key]
+                            _dict[_key].append(
+                                ao.serialize(only_columns=_only_columns, _seen=_seen)
+                            )
+                        else:
+                            _dict[_key].append(ao)
+                elif isinstance(attr_obj, Mixin):
+                    _only_columns = attr[_key]
+                    _dict[_key] = attr_obj.serialize(
+                        only_columns=_only_columns, _seen=_seen
+                    )
+        finally:
+            _seen.pop()
+
         return _dict
 
 
