@@ -110,9 +110,14 @@ class Worker(ConsumerMixin):
     def on_component_created(self, payload, message):
         try:
             component_id = payload["component_id"]
-            logging.info("received message dci.components.created, processing component %s", component_id)
-            component = m_w.get_serialized_component(self._session_db, component_id)
-            emails = a_d_l.get_emails_subscribed_to_topic(component["topic_id"], self._session_db)
+            logging.info(
+                "received message dci.components.created, processing component %s",
+                component_id,
+            )
+            component = a_d_l.get_serialized_component(self._session_db, component_id)
+            emails = a_d_l.get_emails_subscribed_to_topic(
+                component["topic_id"], self._session_db
+            )
             component_event = notifications.get_component_event(component, emails)
             if component_event and component_event["state"] == "active":
                 email_configuration = m_w.get_email_configuration()
@@ -130,9 +135,14 @@ class Worker(ConsumerMixin):
             component_id = payload["component_id"]
             previous_state = payload["previous_state"]
             state = payload["state"]
-            logging.info("received message dci.components.updated, processing component %s", component_id)
-            component = m_w.get_serialized_component(self._session_db, component_id)
-            emails = a_d_l.get_emails_subscribed_to_topic(component["topic_id"], self._session_db)
+            logging.info(
+                "received message dci.components.updated, processing component %s",
+                component_id,
+            )
+            component = a_d_l.get_serialized_component(self._session_db, component_id)
+            emails = a_d_l.get_emails_subscribed_to_topic(
+                component["topic_id"], self._session_db
+            )
             component_event = notifications.get_component_event(component, emails)
             if component_event and state == "active" and previous_state != "active":
                 email_configuration = m_w.get_email_configuration()
