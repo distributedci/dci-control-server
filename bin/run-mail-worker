@@ -49,8 +49,7 @@ def _get_smtp_server(server, port, account, password):
 
 def setup_logging():
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -75,7 +74,14 @@ def setup_logging():
 
 
 class Worker(ConsumerMixin):
-    def __init__(self, connection, queue_jobs_finished, queue_components_created, queue_components_updated, session_db):
+    def __init__(
+        self,
+        connection,
+        queue_jobs_finished,
+        queue_components_created,
+        queue_components_updated,
+        session_db,
+    ):
         self.connection = connection
         self._session_db = session_db
         self._queue_jobs_finished = queue_jobs_finished
@@ -84,17 +90,29 @@ class Worker(ConsumerMixin):
 
     def get_consumers(self, Consumer, channel):
         return [
-            Consumer(queues=[self._queue_jobs_finished], callbacks=[self.on_job_finished]),
-            Consumer(queues=[self._queue_components_created], callbacks=[self.on_component_created]),
-            Consumer(queues=[self._queue_components_updated], callbacks=[self.on_component_updated]),
+            Consumer(
+                queues=[self._queue_jobs_finished], callbacks=[self.on_job_finished]
+            ),
+            Consumer(
+                queues=[self._queue_components_created],
+                callbacks=[self.on_component_created],
+            ),
+            Consumer(
+                queues=[self._queue_components_updated],
+                callbacks=[self.on_component_updated],
+            ),
         ]
 
     def on_job_finished(self, payload, message):
         try:
             job_id = payload["job_id"]
-            logging.info("received message dci.jobs.finished, processing job %s", job_id)
+            logging.info(
+                "received message dci.jobs.finished, processing job %s", job_id
+            )
             job = m_w.get_serialized_job(self._session_db, job_id)
-            emails = a_d_l.get_emails_from_remoteci(self._session_db, job["remoteci_id"])
+            emails = a_d_l.get_emails_from_remoteci(
+                self._session_db, job["remoteci_id"]
+            )
             job_event = notifications.get_job_event(job, emails)
             if job_event:
                 email_configuration = m_w.get_email_configuration()
@@ -122,7 +140,9 @@ class Worker(ConsumerMixin):
             if component_event and component_event["state"] == "active":
                 email_configuration = m_w.get_email_configuration()
                 server = _get_smtp_server(**email_configuration)
-                email = m_w.build_component_email(email_configuration["account"], component_event)
+                email = m_w.build_component_email(
+                    email_configuration["account"], component_event
+                )
                 m_w.send_mails(server, component_event["emails"], email)
                 server.quit()
             logging.info("Worker processed successfully the message.")
@@ -147,7 +167,9 @@ class Worker(ConsumerMixin):
             if component_event and state == "active" and previous_state != "active":
                 email_configuration = m_w.get_email_configuration()
                 server = _get_smtp_server(**email_configuration)
-                email = m_w.build_component_email(email_configuration["account"], component_event)
+                email = m_w.build_component_email(
+                    email_configuration["account"], component_event
+                )
                 m_w.send_mails(server, component_event["emails"], email)
                 server.quit()
             logging.info("Worker processed successfully the message.")
@@ -162,20 +184,36 @@ def get_session_db():
     return sessionmaker(bind=engine)()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     setup_logging()
     session_db = get_session_db()
 
     exchange = Exchange(dci_kombu.DCI_EXCHANGE, type="topic")
-    queue_jobs_finished = Queue(dci_kombu.QUEUE_JOBS_FINISHED, exchange, routing_key=dci_kombu.RK_JOBS_FINISHED)
-    queue_components_created = Queue(dci_kombu.QUEUE_COMPONENTS_CREATED, exchange, routing_key=dci_kombu.RK_COMPONENTS_CREATED)
-    queue_components_updated = Queue(dci_kombu.QUEUE_COMPONENTS_UPDATED, exchange, routing_key=dci_kombu.RK_COMPONENTS_UPDATED)
+    queue_jobs_finished = Queue(
+        dci_kombu.QUEUE_JOBS_FINISHED, exchange, routing_key=dci_kombu.RK_JOBS_FINISHED
+    )
+    queue_components_created = Queue(
+        dci_kombu.QUEUE_COMPONENTS_CREATED,
+        exchange,
+        routing_key=dci_kombu.RK_COMPONENTS_CREATED,
+    )
+    queue_components_updated = Queue(
+        dci_kombu.QUEUE_COMPONENTS_UPDATED,
+        exchange,
+        routing_key=dci_kombu.RK_COMPONENTS_UPDATED,
+    )
 
     logging.info("exchange: dci.exchange, type: topic")
-    logging.info(f"queue: {dci_kombu.QUEUE_JOBS_FINISHED}, routing_key: {dci_kombu.RK_JOBS_FINISHED}")
-    logging.info(f"queue: {dci_kombu.QUEUE_COMPONENTS_CREATED}, routing_key: {dci_kombu.RK_COMPONENTS_CREATED}")
-    logging.info(f"queue: {dci_kombu.QUEUE_COMPONENTS_UPDATED}, routing_key: {dci_kombu.RK_COMPONENTS_UPDATED}")
+    logging.info(
+        f"queue: {dci_kombu.QUEUE_JOBS_FINISHED}, routing_key: {dci_kombu.RK_JOBS_FINISHED}"
+    )
+    logging.info(
+        f"queue: {dci_kombu.QUEUE_COMPONENTS_CREATED}, routing_key: {dci_kombu.RK_COMPONENTS_CREATED}"
+    )
+    logging.info(
+        f"queue: {dci_kombu.QUEUE_COMPONENTS_UPDATED}, routing_key: {dci_kombu.RK_COMPONENTS_UPDATED}"
+    )
 
     with Connection(AMQP_BROKER_URL, heartbeat=4) as conn:
         worker = Worker(

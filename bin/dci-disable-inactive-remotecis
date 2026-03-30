@@ -79,9 +79,7 @@ def main():
     conf = dci_config.CONFIG
     inactive_days = conf.get("REMOTECI_INACTIVITY_DAYS", 90)
 
-    logger.info(
-        f"Starting inactive RemoteCI cleanup (threshold: {inactive_days} days)"
-    )
+    logger.info(f"Starting inactive RemoteCI cleanup (threshold: {inactive_days} days)")
 
     # Create Flask app to get app context and engine
     app = dci_app.create_app()
