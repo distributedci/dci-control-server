@@ -109,7 +109,7 @@ class Worker(ConsumerMixin):
             logging.info(
                 "received message dci.jobs.finished, processing job %s", job_id
             )
-            job = m_w.get_serialized_job(self._session_db, job_id)
+            job = a_d_l.get_serialized_job(self._session_db, job_id)
             emails = a_d_l.get_emails_from_remoteci(
                 self._session_db, job["remoteci_id"]
             )
@@ -134,7 +134,7 @@ class Worker(ConsumerMixin):
             )
             component = a_d_l.get_serialized_component(self._session_db, component_id)
             emails = a_d_l.get_emails_subscribed_to_topic(
-                component["topic_id"], self._session_db
+                self._session_db, component["topic_id"]
             )
             component_event = notifications.get_component_event(component, emails)
             if component_event and component_event["state"] == "active":
@@ -161,7 +161,7 @@ class Worker(ConsumerMixin):
             )
             component = a_d_l.get_serialized_component(self._session_db, component_id)
             emails = a_d_l.get_emails_subscribed_to_topic(
-                component["topic_id"], self._session_db
+                self._session_db, component["topic_id"]
             )
             component_event = notifications.get_component_event(component, emails)
             if component_event and state == "active" and previous_state != "active":
