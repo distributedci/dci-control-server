@@ -314,6 +314,16 @@ def build_es_query(args, teams_ids=None):
             }
         }
 
+    es_aggs = args.get("json-aggs")
+    if es_aggs:
+        try:
+            es_aggs = json.loads(es_aggs)
+        except json.JSONDecodeError as e:
+            logger.error(f"error while loads serialized json aggs: {str(e)}")
+            raise dci_exc.DCIException("bad aggs serialized json")
+        if "aggs" in es_aggs:
+            es_query["aggs"] = es_aggs["aggs"]
+
     es_query["sort"] = handle_es_sort(args)
 
     _source = handle_includes_excludes(args)
