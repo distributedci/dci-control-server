@@ -17,9 +17,9 @@
 
 from dci import app
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     dci_app = app.create_app()
 
-    dci_app.run(dci_app.config['HOST'],
-                dci_app.config['PORT'],
-                debug=dci_app.config['DEBUG'])
+    dci_app.run(
+        dci_app.config["HOST"], dci_app.config["PORT"], debug=dci_app.config["DEBUG"]
+    )

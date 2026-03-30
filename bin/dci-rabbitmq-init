@@ -33,7 +33,10 @@ logger = logging.getLogger(__name__)
 
 def main():
     amqp_url = dci_config.CONFIG["AMQP_BROKER_URL"]
-    logger.info("Connecting to RabbitMQ at %s", amqp_url.split("@")[-1] if "@" in amqp_url else amqp_url)
+    logger.info(
+        "Connecting to RabbitMQ at %s",
+        amqp_url.split("@")[-1] if "@" in amqp_url else amqp_url,
+    )
 
     try:
         with kombu.Connection(amqp_url) as conn:
@@ -48,7 +51,9 @@ def main():
                 )
                 queue.maybe_bind(conn)
                 queue.declare()
-                logger.info("Declared queue %s (routing_key=%s)", q["name"], q["routing_key"])
+                logger.info(
+                    "Declared queue %s (routing_key=%s)", q["name"], q["routing_key"]
+                )
         logger.info("RabbitMQ init completed successfully.")
         return 0
     except Exception as e:
