@@ -269,3 +269,35 @@ def test_autocomplete_field(mock_requests, client_user1):
     res = client_user1.get("/api/v1/analytics/jobs/autocomplete?field=name")
     assert res.status_code == 200
     assert res.data == ["job1", "job2"]
+
+
+def test_aggs():
+    args = {
+        "query": "(name='toto')",
+        "json-aggs": '{"aggs": {"aggs_teams": {"terms": {"field": "team_id"}}}}',
+    }
+    teams_ids = [uuid.uuid4(), uuid.uuid4()]
+    ret = analytics.build_es_query(args, teams_ids)
+    assert ret == {
+        "from": 0,
+        "size": 20,
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "bool": {
+                            "should": [
+                                {"term": {"team_id": str(teams_ids[0])}},
+                                {"term": {"team_id": str(teams_ids[1])}},
+                            ]
+                        }
+                    },
+                    {"term": {"name": "toto"}},
+                ]
+            }
+        },
+        "aggs": {"aggs_teams": {"terms": {"field": "team_id"}}},
+        "sort": [
+            {"created_at": {"order": "desc", "format": "strict_date_optional_time"}}
+        ],
+    }
