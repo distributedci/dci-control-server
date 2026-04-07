@@ -733,3 +733,21 @@ update_pipeline_schema = {
     "type": "object",
     "properties": update_pipeline_properties,
 }
+
+
+###############################################################################
+#                                                                             #
+#                                  JWT Schema                                 #
+#                                                                             #
+###############################################################################
+
+create_jwt_properties = {
+    "email": Properties.email,
+    "password": Properties.non_empty_string,
+}
+create_jwt_schema = {
+    "type": "object",
+    "properties": create_jwt_properties,
+    "required": ["email", "password"],
+    "additionalProperties": False,
+}

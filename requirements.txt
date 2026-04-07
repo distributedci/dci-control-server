@@ -1,4 +1,5 @@
 pyjwt
+flask-jwt-extended
 cryptography
 pyparsing
 pytz
