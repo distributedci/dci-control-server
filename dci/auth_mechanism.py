@@ -128,28 +128,6 @@ class BaseMechanism(object):
             raise dci_exc.DCIException("team %s not active" % name, status_code=412)
 
 
-class BasicAuthMechanism(BaseMechanism):
-    def authenticate(self):
-        auth = self.request.authorization
-        if not auth:
-            raise dci_exc.DCIException("Authorization header missing", status_code=401)
-
-        username = auth.username
-        user = self.get_user(models2.User.name == username)
-        if user is None:
-            user = self.get_user(models2.User.email == username)
-            if user is None:
-                raise dci_exc.DCIException(
-                    "User %s does not exists." % username, status_code=401
-                )
-        is_authenticated = check_passwords_equal(auth.password, user.password)
-        if not is_authenticated:
-            raise dci_exc.DCIException("Invalid user credentials", status_code=401)
-        self.identity = self.identity_from_user(user)
-        self.track_authentication()
-        return True
-
-
 class HmacMechanism(BaseMechanism):
     def authenticate(self):
         headers = parse_headers(self.request.headers)
