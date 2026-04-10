@@ -50,14 +50,31 @@ def rm_upload_folder():
     shutil.rmtree(conf["FILES_UPLOAD_FOLDER"], ignore_errors=True)
 
 
+def _login_with_jwt(app, email, password):
+    """Login via JWT endpoint and return access token or raise exception if failed."""
+    with app.test_client() as client:
+        login_response = client.post(
+            "/api/v1/auth/login",
+            data=flask.json.dumps({"email": email, "password": password}),
+            headers={"Content-Type": "application/json"},
+        )
+        if login_response.status_code == 201:
+            tokens = flask.json.loads(login_response.data)
+            return tokens["access_token"]
+        raise Exception(
+            f"JWT login failed with status {login_response.status_code}: {login_response.data}"
+        )
+
+
 def generate_client(app, credentials=None, access_token=None):
     attrs = ["status_code", "data", "headers"]
     Response = collections.namedtuple("Response", attrs)
 
     if credentials:
-        token = base64.b64encode(("%s:%s" % credentials).encode("utf8")).decode("utf8")
+        email, password = credentials
+        jwt_token = _login_with_jwt(app, email, password)
         headers = {
-            "Authorization": "Basic " + token,
+            "Authorization": "JWTBearer " + jwt_token,
             "Content-Type": "application/json",
         }
     elif access_token:

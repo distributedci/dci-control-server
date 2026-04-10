@@ -27,6 +27,7 @@ import pytest
 
 @freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_verified(
+    jwt_freeze_time_compat,
     client_admin,
     app,
     session,
@@ -74,6 +75,7 @@ def test_sso_auth_verified_public_key_rotation(
 
 @freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_verified_rh_employee(
+    jwt_freeze_time_compat,
     client_admin,
     app,
     session,
@@ -255,7 +257,12 @@ def test_user_creation_with_a_new_token_with_apidci_scope_specified_but_dci_audi
 
 @freeze_time(SSO_TOKENS_VALID_DATETIME)
 def test_sso_auth_not_verified(
-    client_admin, app, session, access_token_user1, team_admin_id
+    jwt_freeze_time_compat,
+    client_admin,
+    app,
+    session,
+    access_token_user1,
+    team_admin_id,
 ):
     # corrupt access_token
     access_token_user1 = access_token_user1 + "lol"

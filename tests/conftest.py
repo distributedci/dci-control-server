@@ -97,6 +97,34 @@ def fs_clean(request):
 
 
 @pytest.fixture
+def jwt_freeze_time_compat(app):
+    """
+    Configure JWT to work with @freeze_time decorator.
+    Use this fixture in tests that combine JWT authentication with @freeze_time.
+    """
+    from datetime import timedelta
+
+    original_access_expires = app.config.get("JWT_ACCESS_TOKEN_EXPIRES")
+    original_refresh_expires = app.config.get("JWT_REFRESH_TOKEN_EXPIRES")
+    original_leeway = app.config.get("JWT_DECODE_LEEWAY")
+
+    # Set very long expiration and leeway to handle time differences
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=36500)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=36500)
+    app.config["JWT_DECODE_LEEWAY"] = timedelta(days=36500)
+
+    yield
+
+    # Restore original values
+    if original_access_expires is not None:
+        app.config["JWT_ACCESS_TOKEN_EXPIRES"] = original_access_expires
+    if original_refresh_expires is not None:
+        app.config["JWT_REFRESH_TOKEN_EXPIRES"] = original_refresh_expires
+    if original_leeway is not None:
+        app.config["JWT_DECODE_LEEWAY"] = original_leeway
+
+
+@pytest.fixture
 def db_provisioning(empty_db, session):
     utils.provision(session)
 
@@ -110,40 +138,42 @@ def app(db_provisioning, engine, fs_clean):
 
 
 # Clients
-# Clients basic auth
+
+
 @pytest.fixture
 def client_unauthorized(app):
-    return utils.generate_client(app, ("bob", "bob"))
+    return utils.generate_client(app)
 
 
+# Clients JWT auth
 @pytest.fixture
 def client_admin(app):
-    return utils.generate_client(app, ("admin", "admin"))
+    return utils.generate_client(app, ("admin@distributed-ci.io", "admin"))
 
 
 @pytest.fixture
 def client_user1(app):
-    return utils.generate_client(app, ("user1", "user1"))
+    return utils.generate_client(app, ("user1@example.org", "user1"))
 
 
 @pytest.fixture
 def client_user2(app):
-    return utils.generate_client(app, ("user2", "user2"))
+    return utils.generate_client(app, ("user2@example.org", "user2"))
 
 
 @pytest.fixture
 def client_user3(app):
-    return utils.generate_client(app, ("user3", "user3"))
+    return utils.generate_client(app, ("user3@example.org", "user3"))
 
 
 @pytest.fixture
 def client_epm(app):
-    return utils.generate_client(app, ("epm", "epm"))
+    return utils.generate_client(app, ("epm@redhat.com", "epm"))
 
 
 @pytest.fixture
 def client_rh_employee(app):
-    return utils.generate_client(app, ("rh_employee", "rh_employee"))
+    return utils.generate_client(app, ("rh_employee@redhat.com", "rh_employee"))
 
 
 # SSO clients
