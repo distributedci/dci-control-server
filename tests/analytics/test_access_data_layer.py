@@ -62,12 +62,15 @@ def test_get_jobs(
     assert "jobstates" in job1
     assert "files" in job1["jobstates"][0]
     assert "components" in job1
+    for component in job1["components"]:
+        assert "data" not in component
     assert "files" in job1
     assert "pipeline" in job1
     assert pipeline_id == job1["pipeline"]["id"]
     assert "product" in job1
     assert "api_secret" not in job1["remoteci"]
     assert "data" not in job1["topic"]
+    assert "data" not in job1
 
     jobs = a_d_l.get_jobs(session, 0, 10, "hours", 1)
     assert len(jobs) == 2
@@ -76,6 +79,10 @@ def test_get_jobs(
 def test_get_job_by_id(session, team1_job_id):
     team1_job = a_d_l.get_job_by_id(session, team1_job_id)
     assert "api_secret" not in team1_job["remoteci"]
+    for component in team1_job["components"]:
+        assert "data" not in component
+    assert "data" not in team1_job["topic"]
+    assert "data" not in team1_job
 
 
 @mock.patch("dci.api.v1.utils.get_utc_now")
@@ -94,6 +101,8 @@ def test_get_components(m_get_utc_now, session, client_admin, rhel_80_topic_id):
     components = a_d_l.get_components(session, 0, 10, "hours", 3)
     assert len(components) == 5
     assert "jobs" in components[0]
+    for c in components:
+        assert "data" not in c
 
     components = a_d_l.get_components(session, 0, 10, "hours", 1)
     assert len(components) == 0
