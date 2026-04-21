@@ -227,7 +227,7 @@ def test_build():
                                             ]
                                         }
                                     },
-                                    "inner_hits": {"name": "components"},
+                                    "inner_hits": {"name": "components_1"},
                                 }
                             },
                         ]
@@ -348,7 +348,7 @@ def test_query_build_regex():
                                 ]
                             }
                         },
-                        "inner_hits": {"name": "components"},
+                        "inner_hits": {"name": "components_1"},
                     }
                 },
             ]
@@ -388,7 +388,7 @@ def test_query_build_comparison_operator():
                                 ]
                             }
                         },
-                        "inner_hits": {"name": "keys_values"},
+                        "inner_hits": {"name": "keys_values_1"},
                     }
                 },
             ]
@@ -693,6 +693,46 @@ def test_query_with_not_operator():
                                 }
                             }
                         ]
+                    }
+                },
+            ]
+        }
+    }
+
+
+def test_nrt_query_with_same_root_path():
+    ret = qed.build(
+        "(((components.type='ocp') and (components.version='4.14.64')) and ((components.type='f5-spk') and (components.version='v2.2.0')))"
+    )
+    assert ret == {
+        "bool": {
+            "filter": [
+                {
+                    "nested": {
+                        "inner_hits": {"name": "components"},
+                        "path": "components",
+                        "query": {
+                            "bool": {
+                                "filter": [
+                                    {"term": {"components.type": "ocp"}},
+                                    {"term": {"components.version": "4.14.64"}},
+                                ]
+                            }
+                        },
+                    }
+                },
+                {
+                    "nested": {
+                        "inner_hits": {"name": "components_1"},
+                        "path": "components",
+                        "query": {
+                            "bool": {
+                                "filter": [
+                                    {"term": {"components.type": "f5-spk"}},
+                                    {"term": {"components.version": "v2.2.0"}},
+                                ]
+                            }
+                        },
                     }
                 },
             ]
