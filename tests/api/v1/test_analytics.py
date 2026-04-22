@@ -179,7 +179,7 @@ def test_build_es_query():
                                         "query": {
                                             "term": {"components.type": "f5-spk"}
                                         },
-                                        "inner_hits": {"name": "components"},
+                                        "inner_hits": {"name": "components_1"},
                                     }
                                 },
                                 {"terms": {"tags": ["daily"]}},
