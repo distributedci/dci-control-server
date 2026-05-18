@@ -50,7 +50,7 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
     )
 
     jobs = [
-        j.serialize(ignore_columns=["data", "topic.data"])
+        j.serialize(ignore_columns=["data", "topic.data", "components.data"])
         for j in session.execute(query).unique().scalars().all()
     ]
 
@@ -82,7 +82,7 @@ def get_job_by_id(session, job_id):
         session.execute(query)
         .unique()
         .scalar_one()
-        .serialize(ignore_columns=["data", "topic.data"])
+        .serialize(ignore_columns=["data", "topic.data", "components.data"])
     )
 
 
@@ -99,6 +99,9 @@ def get_components(session, offset, limit, unit, amount):
         .limit(limit)
     )
 
-    jobs = [c.serialize() for c in session.execute(query).scalars().all()]
+    jobs = [
+        c.serialize(ignore_columns=["data"])
+        for c in session.execute(query).scalars().all()
+    ]
 
     return jobs
