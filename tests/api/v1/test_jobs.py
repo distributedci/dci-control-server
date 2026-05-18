@@ -707,12 +707,20 @@ def test_get_jobstates_by_job_id_with_embed(
 
         mockito.head.return_value = head_result
         mock_s3.return_value = mockito
-        headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name1"}
+        headers = {
+            "DCI-JOBSTATE-ID": team1_jobstate_id,
+            "DCI-NAME": "name1",
+            "mime": "application/json",
+        }
         pfile = client_admin.post(
             "/api/v1/files", headers=headers, data="kikoolol"
         ).data
         file1_id = pfile["file"]["id"]
-        headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name2"}
+        headers = {
+            "DCI-JOBSTATE-ID": team1_jobstate_id,
+            "DCI-NAME": "name2",
+            "mime": "application/json",
+        }
         pfile = client_admin.post(
             "/api/v1/files", headers=headers, data="kikoolol"
         ).data

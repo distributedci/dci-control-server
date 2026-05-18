@@ -49,7 +49,7 @@ def create_teams(user):
 
     try:
         t = models2.Team(**values)
-        t_serialized = t.serialize()
+        t_serialized = t.serialize(only_columns=models2.Team.api_fields)
         flask.g.session.add(t)
         flask.g.session.commit()
     except sa_exc.IntegrityError as ie:
@@ -87,7 +87,7 @@ def get_all_teams(user):
     query = d.handle_pagination(query, args)
     teams = flask.g.session.execute(query).scalars().all()
     teams = list(
-        map(lambda t: t.serialize(ignore_columns=["remotecis.api_secret"]), teams)
+        map(lambda t: t.serialize(only_columns=models2.Team.api_fields), teams)
     )
 
     return flask.jsonify({"teams": teams, "_meta": {"count": nb_teams}})
@@ -117,7 +117,7 @@ def get_team_by_id(user, t_id):
         raise dci_exc.DCIException(message="team not found", status_code=404)
 
     return flask.Response(
-        json.dumps({"team": t.serialize(ignore_columns=["remotecis.api_secret"])}),
+        json.dumps({"team": t.serialize(only_columns=models2.Team.api_fields)}),
         200,
         headers={"ETag": t.etag},
         content_type="application/json",
@@ -140,7 +140,9 @@ def get_products_team_has_access_to(user, team_id):
     if user.is_not_epm() and user.is_not_in_team(team_id):
         raise dci_exc.Unauthorized()
     team = base.get_resource_orm(models2.Team, team_id)
-    team_products = [p.serialize() for p in team.products]
+    team_products = [
+        p.serialize(only_columns=models2.Product.api_fields) for p in team.products
+    ]
 
     return flask.jsonify(
         {"products": team_products, "_meta": {"count": len(team_products)}}
@@ -183,7 +185,7 @@ def put_team(user, t_id):
         raise dci_exc.DCIException(message="unable to return team", status_code=400)
 
     return flask.Response(
-        json.dumps({"team": t.serialize()}),
+        json.dumps({"team": t.serialize(only_columns=models2.Team.api_fields)}),
         200,
         headers={"ETag": values["etag"]},
         content_type="application/json",

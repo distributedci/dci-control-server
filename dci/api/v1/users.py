@@ -64,7 +64,7 @@ def create_users(user):
 
     try:
         u = models2.User(**values)
-        u_serialized = u.serialize()
+        u_serialized = u.serialize(only_columns=models2.User.api_fields)
         flask.g.session.add(u)
         flask.g.session.commit()
     except sa_exc.IntegrityError as ie:
@@ -102,7 +102,7 @@ def get_all_users(user):
     users = flask.g.session.execute(query).scalars().all()
     users = list(
         map(
-            lambda u: u.serialize(ignore_columns=["password", "remotecis.api_secret"]),
+            lambda u: u.serialize(only_columns=models2.User.api_fields),
             users,
         )
     )
@@ -127,9 +127,7 @@ def user_by_id(user, user_id):
         raise dci_exc.DCIException(message="user not found", status_code=404)
 
     return flask.Response(
-        json.dumps(
-            {"user": u.serialize(ignore_columns=["password", "remotecis.api_secret"])}
-        ),
+        json.dumps({"user": u.serialize(only_columns=models2.User.api_fields)}),
         200,
         headers={"ETag": u.etag},
         content_type="application/json",
@@ -198,7 +196,7 @@ def put_current_user(user):
         raise dci_exc.DCIException(message="unable to return user", status_code=400)
 
     return flask.Response(
-        json.dumps({"user": u.serialize(ignore_columns=["password"])}),
+        json.dumps({"user": u.serialize(only_columns=models2.User.api_fields)}),
         200,
         headers={"ETag": etag},
         content_type="application/json",
@@ -243,7 +241,7 @@ def put_user(user, user_id):
         raise dci_exc.DCIException(message="unable to return user", status_code=400)
 
     return flask.Response(
-        json.dumps({"user": u.serialize(ignore_columns=["password"])}),
+        json.dumps({"user": u.serialize(only_columns=models2.User.api_fields)}),
         200,
         headers={"ETag": values["etag"]},
         content_type="application/json",
@@ -295,7 +293,7 @@ def get_subscribed_remotecis(identity, user_id):
         .options(sa_orm.selectinload(models2.User.remotecis))
     )
     user = flask.g.session.execute(query).scalar_one()
-    user = user.serialize(ignore_columns=["remotecis.api_secret"])
+    user = user.serialize(only_columns=models2.User.api_fields)
 
     return flask.Response(
         json.dumps({"remotecis": user.get("remotecis")}),

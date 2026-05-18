@@ -50,7 +50,7 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
     )
 
     jobs = [
-        j.serialize(ignore_columns=["data", "topic.data"])
+        j.serialize(only_columns=models2.Job.api_fields_without_data)
         for j in session.execute(query).unique().scalars().all()
     ]
 
@@ -82,7 +82,7 @@ def get_job_by_id(session, job_id):
         session.execute(query)
         .unique()
         .scalar_one()
-        .serialize(ignore_columns=["data", "topic.data"])
+        .serialize(only_columns=models2.Job.api_fields_without_data)
     )
 
 
@@ -99,6 +99,9 @@ def get_components(session, offset, limit, unit, amount):
         .limit(limit)
     )
 
-    jobs = [c.serialize() for c in session.execute(query).scalars().all()]
+    jobs = [
+        c.serialize(only_columns=models2.Component.api_fields)
+        for c in session.execute(query).scalars().all()
+    ]
 
     return jobs

@@ -62,7 +62,6 @@ def create_remotecis(user):
         raise dci_exc.Unauthorized()
 
     remoteci = base.create_resource_orm(models2.Remoteci, values)
-    remoteci["api_secret"] = api_secret
     return flask.Response(
         json.dumps({"remoteci": remoteci}),
         201,
@@ -96,7 +95,12 @@ def get_all_remotecis(user, t_id=None):
     query = d.handle_pagination(query, args)
     remotecis = flask.g.session.execute(query).scalars().all()
     remotecis = list(
-        map(lambda r: r.serialize(ignore_columns=["api_secret"]), remotecis)
+        map(
+            lambda r: r.serialize(
+                only_columns=models2.Remoteci.api_fields_without_api_secret
+            ),
+            remotecis,
+        )
     )
 
     return flask.jsonify({"remotecis": remotecis, "_meta": {"count": nb_remotecis}})
@@ -117,7 +121,13 @@ def get_remoteci_by_id(user, remoteci_id):
         raise dci_exc.Unauthorized()
 
     return flask.Response(
-        json.dumps({"remoteci": r.serialize(ignore_columns=["api_secret"])}),
+        json.dumps(
+            {
+                "remoteci": r.serialize(
+                    only_columns=models2.Remoteci.api_fields_without_api_secret
+                )
+            }
+        ),
         200,
         headers={"ETag": r.etag},
         content_type="application/json",
@@ -141,7 +151,13 @@ def put_remoteci(user, remoteci_id):
     remoteci = base.get_resource_orm(models2.Remoteci, remoteci_id)
 
     return flask.Response(
-        json.dumps({"remoteci": remoteci.serialize(ignore_columns=["api_secret"])}),
+        json.dumps(
+            {
+                "remoteci": remoteci.serialize(
+                    only_columns=models2.Remoteci.api_fields_without_api_secret
+                )
+            }
+        ),
         200,
         headers={"ETag": remoteci.etag},
         content_type="application/json",
@@ -230,7 +246,7 @@ def get_all_users_from_remotecis(user, remoteci_id):
     )
     if user.is_not_in_team(r.team_id) and user.is_not_epm():
         raise dci_exc.Unauthorized()
-    users = r.serialize()["users"]
+    users = r.serialize(only_columns=models2.Remoteci.api_fields)["users"]
     res = flask.jsonify({"users": users, "_meta": {"count": len(users)}})
     return res
 
@@ -286,8 +302,7 @@ def put_api_secret_remoteci(user, remoteci_id):
     base.update_resource_orm(remoteci, {"api_secret": api_secret})
 
     remoteci = base.get_resource_orm(models2.Remoteci, remoteci_id)
-    remoteci = remoteci.serialize()
-    remoteci["api_secret"] = api_secret
+    remoteci = remoteci.serialize(only_columns=models2.Remoteci.api_fields)
     return flask.Response(
         json.dumps({"remoteci": remoteci}),
         200,

@@ -117,11 +117,8 @@ class User(dci_declarative.Mixin, Base):
         "Remoteci", secondary=USER_REMOTECIS, back_populates="users"
     )
 
-    def serialize(self, ignore_columns=[]):
-        ignore_columns = list(ignore_columns)
-        if "password" not in ignore_columns:
-            ignore_columns.append("password")
-        return super(User, self).serialize(ignore_columns=ignore_columns)
+
+User.api_fields = list(n for n in User.__mapper__.columns.keys() if n != "password")
 
 
 JOIN_PRODUCTS_TEAMS = sa.Table(
@@ -201,6 +198,9 @@ class Team(dci_declarative.Mixin, Base):
     )
 
 
+Team.api_fields = list(Team.__mapper__.columns.keys())
+
+
 class UserTopic(dci_declarative.Mixin, Base):
     __tablename__ = "users_topics"
     user_id = sa.Column(
@@ -215,6 +215,9 @@ class UserTopic(dci_declarative.Mixin, Base):
         nullable=False,
         primary_key=True,
     )
+
+
+UserTopic.api_fields = list(UserTopic.__mapper__.columns.keys())
 
 
 class Topic(dci_declarative.Mixin, Base):
@@ -253,6 +256,10 @@ class Topic(dci_declarative.Mixin, Base):
     next_topic = sa_orm.relationship("Topic", remote_side="Topic.id")
 
 
+Topic.api_fields = list(Topic.__mapper__.columns.keys())
+Topic.api_fields_without_data = list(n for n in Topic.api_fields if n != "data")
+
+
 class Remoteci(dci_declarative.Mixin, Base):
     __tablename__ = "remotecis"
     __table_args__ = (
@@ -288,10 +295,11 @@ class Remoteci(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team", back_populates="remotecis")
 
-    def serialize(self, ignore_columns=[]):
-        if "api_secret" not in ignore_columns:
-            ignore_columns.append("api_secret")
-        return super(Remoteci, self).serialize(ignore_columns=ignore_columns)
+
+Remoteci.api_fields = list(Remoteci.__mapper__.columns.keys())
+Remoteci.api_fields_without_api_secret = list(
+    n for n in Remoteci.api_fields if n != "api_secret"
+)
 
 
 class Product(dci_declarative.Mixin, Base):
@@ -316,6 +324,9 @@ class Product(dci_declarative.Mixin, Base):
     teams = sa_orm.relationship(
         "Team", secondary=JOIN_PRODUCTS_TEAMS, back_populates="products"
     )
+
+
+Product.api_fields = list(Product.__mapper__.columns.keys())
 
 
 class Feeder(dci_declarative.Mixin, Base):
@@ -350,6 +361,12 @@ class Feeder(dci_declarative.Mixin, Base):
     team = sa_orm.relationship("Team", back_populates="feeders")
 
 
+Feeder.api_fields = list(Feeder.__mapper__.columns.keys())
+Feeder.api_fields_without_api_secret = list(
+    n for n in Feeder.api_fields if n != "api_secret"
+)
+
+
 class Log(Base):
     __tablename__ = "logs"
     __table_args__ = (sa.Index("logs_user_id_idx", "user_id"),)
@@ -357,6 +374,9 @@ class Log(Base):
     created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
     user_id = sa.Column("user_id", pg.UUID(as_uuid=True), nullable=False)
     action = sa.Column(sa.Text, nullable=False)
+
+
+Log.api_fields = list(Log.__mapper__.columns.keys())
 
 
 JOIN_JOBS_COMPONENTS = sa.Table(
@@ -404,6 +424,9 @@ class Componentfile(dci_declarative.Mixin, Base):
         nullable=True,
     )
     state = sa.Column(STATES, default="active")
+
+
+Componentfile.api_fields = list(Componentfile.__mapper__.columns.keys())
 
 
 class Component(dci_declarative.Mixin, Base):
@@ -474,6 +497,10 @@ class Component(dci_declarative.Mixin, Base):
         "Job", secondary=JOIN_JOBS_COMPONENTS, back_populates="components"
     )
     topic = sa_orm.relationship("Topic")
+
+
+Component.api_fields = list(Component.__mapper__.columns.keys())
+Component.api_fields_without_data = list(n for n in Component.api_fields if n != "data")
 
 
 class Job(dci_declarative.Mixin, Base):
@@ -560,6 +587,10 @@ class Job(dci_declarative.Mixin, Base):
     keys_values = sa_orm.relationship("JobKeyValue")
 
 
+Job.api_fields = list(Job.__mapper__.columns.keys())
+Job.api_fields_without_data = list(n for n in Job.api_fields if n != "data")
+
+
 class JobKeyValue(dci_declarative.Mixin, Base):
     __tablename__ = "jobs_keys_values"
     __table_args__ = (
@@ -576,6 +607,9 @@ class JobKeyValue(dci_declarative.Mixin, Base):
     value = sa.Column(sa.Float(), nullable=False)
 
 
+JobKeyValue.api_fields = list(JobKeyValue.__mapper__.columns.keys())
+
+
 class Jobstate(dci_declarative.Mixin, Base):
     __tablename__ = "jobstates"
     __table_args__ = (sa.Index("jobstates_job_id_idx", "job_id"),)
@@ -590,6 +624,9 @@ class Jobstate(dci_declarative.Mixin, Base):
         nullable=False,
     )
     files = sa_orm.relationship("File")
+
+
+Jobstate.api_fields = list(Jobstate.__mapper__.columns.keys())
 
 
 class TestsResult(dci_declarative.Mixin, Base):
@@ -626,6 +663,9 @@ class TestsResult(dci_declarative.Mixin, Base):
         sa.ForeignKey("files.id", ondelete="CASCADE"),
         nullable=False,
     )
+
+
+TestsResult.api_fields = list(TestsResult.__mapper__.columns.keys())
 
 
 class File(dci_declarative.Mixin, Base):
@@ -670,6 +710,9 @@ class File(dci_declarative.Mixin, Base):
     )
 
 
+File.api_fields = list(File.__mapper__.columns.keys())
+
+
 class JobEvent(dci_declarative.Mixin, Base):
     __tablename__ = "jobs_events"
     __table_args__ = (sa.Index("jobs_events_job_id_idx", "job_id"),)
@@ -678,6 +721,9 @@ class JobEvent(dci_declarative.Mixin, Base):
     job_id = sa.Column("job_id", pg.UUID(as_uuid=True), nullable=False)
     topic_id = sa.Column("topic_id", pg.UUID(as_uuid=True), nullable=False)
     status = sa.Column("status", FINAL_STATUSES_ENUM)
+
+
+JobEvent.api_fields = list(JobEvent.__mapper__.columns.keys())
 
 
 class Counter(dci_declarative.Mixin, Base):
@@ -694,6 +740,9 @@ class Counter(dci_declarative.Mixin, Base):
     etag = sa.Column(
         sa.String(40), nullable=False, default=utils.gen_etag, onupdate=utils.gen_etag
     )
+
+
+Counter.api_fields = list(Counter.__mapper__.columns.keys())
 
 
 class Pipeline(dci_declarative.Mixin, Base):
@@ -718,3 +767,103 @@ class Pipeline(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team")
     state = sa.Column(STATES, default="active")
+
+
+Pipeline.api_fields = list(Pipeline.__mapper__.columns.keys())
+
+
+# we declare all the relashionships at the end of the file to avoid circular references
+_job_relationships = [
+    {"results": TestsResult.api_fields},
+    {"components": Component.api_fields},
+    {"topic": Topic.api_fields_without_data},
+    {"team": Team.api_fields},
+    {"pipeline": Pipeline.api_fields},
+    {"keys_values": JobKeyValue.api_fields},
+    {"files": File.api_fields},
+    {"jobstates": Jobstate.api_fields},
+    {"remoteci": Remoteci.api_fields_without_api_secret},
+    {"product": Product.api_fields},
+]
+Job.api_fields.extend(_job_relationships)
+Job.api_fields_without_data.extend(_job_relationships)
+
+
+Team.api_fields.extend(
+    [
+        {"remotecis": Remoteci.api_fields_without_api_secret},
+        {"feeders": Feeder.api_fields_without_api_secret},
+        {"products": Product.api_fields},
+        {"components_access_teams": Team.api_fields},
+        {"users": User.api_fields},
+    ]
+)
+
+
+Jobstate.api_fields.extend(
+    [
+        {"files": File.api_fields},
+    ]
+)
+
+
+User.api_fields.extend(
+    [
+        {"team": Team.api_fields},
+        {"remotecis": Remoteci.api_fields_without_api_secret},
+    ]
+)
+
+
+_topic_relationships = [
+    {"product": Product.api_fields},
+    {"next_topic": Topic.api_fields_without_data},
+]
+Topic.api_fields.extend(_topic_relationships)
+Topic.api_fields_without_data.extend(_topic_relationships)
+
+
+_component_relationships = [
+    {"topic": Topic.api_fields_without_data},
+    {"jobs": Job.api_fields_without_data},
+    {"files": Componentfile.api_fields},
+]
+Component.api_fields.extend(_component_relationships)
+Component.api_fields_without_data.extend(_component_relationships)
+
+
+_feeder_relationships = [
+    {"team": Team.api_fields},
+]
+Feeder.api_fields.extend(_feeder_relationships)
+Feeder.api_fields_without_api_secret.extend(_feeder_relationships)
+
+
+Jobstate.api_fields.extend(
+    [
+        {"files": File.api_fields},
+    ]
+)
+
+
+Pipeline.api_fields.extend(
+    [
+        {"team": Team.api_fields},
+    ]
+)
+
+
+Product.api_fields.extend(
+    [
+        {"teams": Team.api_fields},
+        {"topics": Topic.api_fields_without_data},
+    ]
+)
+
+
+_remoteci_relationships = [
+    {"team": Team.api_fields},
+    {"users": User.api_fields},
+]
+Remoteci.api_fields.extend(_remoteci_relationships)
+Remoteci.api_fields_without_api_secret.extend(_remoteci_relationships)

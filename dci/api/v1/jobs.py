@@ -192,7 +192,6 @@ def _build_job(product_id, topic_id, remoteci, components_ids, values):
     )
     base.create_resource_orm(models2.Job, values)
     j = base.get_resource_orm(models2.Job, values["id"])
-
     for sci in p_schedule_components_ids:
         c = base.get_resource_orm(models2.Component, sci)
         try:
@@ -356,7 +355,7 @@ def get_all_jobs(user, topic_id=None):
     query = declarative.handle_pagination(query, args)
 
     jobs = [
-        j.serialize(ignore_columns=["data", "topic.data"])
+        j.serialize(only_columns=models2.Job.api_fields_without_data)
         for j in flask.g.session.execute(query).unique().scalars().all()
     ]
 
@@ -381,7 +380,7 @@ def get_components_from_job(user, job_id):
     except sa_orm.exc.NoResultFound:
         raise dci_exc.DCIException(message="job not found", status_code=404)
 
-    j_serialized = j.serialize()
+    j_serialized = j.serialize(only_columns=models2.Job.api_fields_without_data)
     c_serialized = j_serialized["components"]
     return flask.jsonify(
         {"components": c_serialized, "_meta": {"count": len(c_serialized)}}
@@ -482,16 +481,17 @@ def get_job_by_id(user, job_id):
     )
     try:
         job = flask.g.session.execute(query).unique().scalar_one()
-        job = job.serialize()
+        job = job.serialize(only_columns=models2.Job.api_fields)
         files_query = select(models2.File).where(
             sql.and_(
-                models2.File.jobstate_id.is_(None),
+                models2.File.jobstate_id == None,  # noqa
                 models2.File.job_id == job_id,
                 models2.File.state != "archived",
             )
         )
         files = [
-            f.serialize() for f in flask.g.session.execute(files_query).scalars().all()
+            f.serialize(only_columns=models2.File.api_fields)
+            for f in flask.g.session.execute(files_query).scalars().all()
         ]
         job["files"] = files
 
@@ -534,7 +534,7 @@ def update_job_by_id(user, job_id):
     job = base.get_resource_orm(models2.Job, job_id)
 
     return flask.Response(
-        json.dumps({"job": job.serialize()}),
+        json.dumps({"job": job.serialize(models2.Job.api_fields)}),
         200,
         headers={"ETag": job.etag},
         content_type="application/json",
@@ -582,7 +582,7 @@ def get_all_results_from_jobs(user, j_id):
 
     results = []
     for test_result in all_tests_results:
-        test_result = test_result.serialize()
+        test_result = test_result.serialize(only_columns=models2.TestsResult.api_fields)
         results.append(
             {
                 "filename": test_result["name"],

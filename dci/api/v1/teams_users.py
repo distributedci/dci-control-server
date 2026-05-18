@@ -58,7 +58,7 @@ def get_users_from_team(user, team_id):
     if user.is_not_epm() and user.is_not_in_team(team_id):
         raise dci_exc.Unauthorized()
     team = base.get_resource_orm(models2.Team, team_id)
-    team_users = [u.serialize() for u in team.users]
+    team_users = [u.serialize(only_columns=models2.User.api_fields) for u in team.users]
 
     return flask.jsonify({"users": team_users, "_meta": {"count": len(team_users)}})
 
@@ -70,7 +70,7 @@ def get_teams_of_user(user, user_id):
         raise dci_exc.Unauthorized()
 
     user = base.get_resource_orm(models2.User, user_id)
-    user_teams = [t.serialize() for t in user.team]
+    user_teams = [t.serialize(only_columns=models2.Team.api_fields) for t in user.team]
 
     return flask.jsonify({"teams": user_teams, "_meta": {"count": len(user_teams)}})
 

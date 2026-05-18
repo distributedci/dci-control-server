@@ -74,7 +74,7 @@ def get_serialized_job(session, job_id):
             sa_orm.selectinload(models2.Job.results),
         ],
     )
-    return job.serialize()
+    return job.serialize(only_columns=models2.Job.api_fields_without_data)
 
 
 def get_serialized_component(session, component_id):
@@ -86,4 +86,4 @@ def get_serialized_component(session, component_id):
             sa_orm.joinedload(models2.Component.topic, innerjoin=True),
         ],
     )
-    return component.serialize()
+    return component.serialize(only_columns=models2.Component.api_fields)
