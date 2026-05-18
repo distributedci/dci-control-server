@@ -33,7 +33,9 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
         .order_by(models2.Job.updated_at.asc())
         .offset(offset)
         .limit(limit)
-        .options(sa_orm.selectinload(models2.Job.components))
+        .options(
+            sa_orm.selectinload(models2.Job.components).defer(models2.Component.data)
+        )
         .options(
             sa_orm.selectinload(models2.Job.jobstates).selectinload(
                 models2.Jobstate.files
@@ -43,16 +45,18 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
         .options(sa_orm.selectinload(models2.Job.results))
         .options(sa_orm.joinedload(models2.Job.pipeline, innerjoin=False))
         .options(sa_orm.joinedload(models2.Job.remoteci, innerjoin=True))
-        .options(sa_orm.joinedload(models2.Job.topic, innerjoin=True))
+        .options(
+            sa_orm.joinedload(models2.Job.topic, innerjoin=True).defer(
+                models2.Topic.data
+            )
+        )
         .options(sa_orm.joinedload(models2.Job.product, innerjoin=True))
         .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
         .options(sa_orm.joinedload(models2.Job.keys_values, innerjoin=False))
+        .options(sa_orm.defer(models2.Job.data))
     )
 
-    jobs = [
-        j.serialize(ignore_columns=["data", "topic.data"])
-        for j in session.execute(query).unique().scalars().all()
-    ]
+    jobs = [j.serialize() for j in session.execute(query).unique().scalars().all()]
 
     return jobs
 
@@ -62,7 +66,9 @@ def get_job_by_id(session, job_id):
     query = query.where(models2.Job.id == job_id)
 
     query = (
-        query.options(sa_orm.selectinload(models2.Job.components))
+        query.options(
+            sa_orm.selectinload(models2.Job.components).defer(models2.Component.data)
+        )
         .options(
             sa_orm.selectinload(models2.Job.jobstates).selectinload(
                 models2.Jobstate.files
@@ -72,18 +78,17 @@ def get_job_by_id(session, job_id):
         .options(sa_orm.selectinload(models2.Job.results))
         .options(sa_orm.joinedload(models2.Job.pipeline, innerjoin=False))
         .options(sa_orm.joinedload(models2.Job.remoteci, innerjoin=True))
-        .options(sa_orm.joinedload(models2.Job.topic, innerjoin=True))
+        .options(
+            sa_orm.joinedload(models2.Job.topic, innerjoin=True).defer(
+                models2.Topic.data
+            )
+        )
         .options(sa_orm.joinedload(models2.Job.product, innerjoin=True))
         .options(sa_orm.joinedload(models2.Job.team, innerjoin=True))
         .options(sa_orm.joinedload(models2.Job.keys_values, innerjoin=False))
     )
 
-    return (
-        session.execute(query)
-        .unique()
-        .scalar_one()
-        .serialize(ignore_columns=["data", "topic.data"])
-    )
+    return session.execute(query).unique().scalar_one().serialize()
 
 
 def get_components(session, offset, limit, unit, amount):
@@ -95,6 +100,7 @@ def get_components(session, offset, limit, unit, amount):
         .where(models2.Component.created_at >= (get_utc_now() - timedelta(**delta)))
         .order_by(models2.Component.created_at.asc())
         .options(sa_orm.selectinload(models2.Component.jobs))
+        .options(sa_orm.defer(models2.Component.data))
         .offset(offset)
         .limit(limit)
     )

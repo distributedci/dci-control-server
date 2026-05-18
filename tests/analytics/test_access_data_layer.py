@@ -62,6 +62,8 @@ def test_get_jobs(
     assert "jobstates" in job1
     assert "files" in job1["jobstates"][0]
     assert "components" in job1
+    for c in job1["components"]:
+        assert "data" not in c
     assert "files" in job1
     assert "pipeline" in job1
     assert pipeline_id == job1["pipeline"]["id"]
@@ -94,6 +96,8 @@ def test_get_components(m_get_utc_now, session, client_admin, rhel_80_topic_id):
     components = a_d_l.get_components(session, 0, 10, "hours", 3)
     assert len(components) == 5
     assert "jobs" in components[0]
+    for c in components:
+        assert "data" not in c
 
     components = a_d_l.get_components(session, 0, 10, "hours", 1)
     assert len(components) == 0
