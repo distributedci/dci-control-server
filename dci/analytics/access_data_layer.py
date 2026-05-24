@@ -57,6 +57,15 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
     return jobs
 
 
+def get_jobs_ids_from_timestamp(session, offset, limit, timestamp):
+    query = select(models2.Job.id)
+    query = query.where(models2.Job.updated_at >= timestamp)
+    query = query.order_by(models2.Job.updated_at.asc())
+    query = query.offset(offset)
+    query = query.limit(limit)
+    return [str(j_id) for j_id in session.execute(query).scalars().all()]
+
+
 def get_job_by_id(session, job_id):
     query = select(models2.Job)
     query = query.where(models2.Job.id == job_id)

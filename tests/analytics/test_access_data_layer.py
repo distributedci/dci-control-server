@@ -17,6 +17,7 @@
 from dci.analytics import access_data_layer as a_d_l
 from dci.common import time
 
+from datetime import datetime as dt
 import datetime
 import mock
 import uuid
@@ -78,6 +79,13 @@ def test_get_jobs(
 def test_get_job_by_id(session, team1_job_id):
     team1_job = a_d_l.get_job_by_id(session, team1_job_id)
     assert "api_secret" not in team1_job["remoteci"]
+
+
+def test_get_jobs_ids_from_timestamp(session, team1_job_id, team1_job):
+    timestamp = dt.fromisoformat(team1_job["updated_at"])
+    ids = a_d_l.get_jobs_ids_from_timestamp(session, 0, 10, timestamp)
+    assert len(ids) == 1
+    assert ids[0] == str(team1_job_id)
 
 
 @mock.patch("dci.api.v1.utils.get_utc_now")
