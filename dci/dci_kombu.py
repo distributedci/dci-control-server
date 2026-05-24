@@ -34,16 +34,22 @@ RK_COMPONENTS_CREATED = "dci.components.created"
 RK_COMPONENTS_UPDATED = "dci.components.updated"
 
 QUEUE_JOBS_CREATED = "jobs_created"
+QUEUE_JOBS_CREATED_ANALYTICS = "jobs_created_analytics"
 QUEUE_JOBS_UPDATED = "jobs_updated"
+QUEUE_JOBS_UPDATED_ANALYTICS = "jobs_updated_analytics"
 QUEUE_JOBS_FINISHED = "jobs_finished"
+QUEUE_JOBS_FINISHED_ANALYTICS = "jobs_finished_analytics"
 QUEUE_FILES_CREATED = "files_created"
 QUEUE_COMPONENTS_CREATED = "components_created"
 QUEUE_COMPONENTS_UPDATED = "components_updated"
 
 QUEUE_NAMES_ROUTING_KEYS = [
     {"name": QUEUE_JOBS_CREATED, "routing_key": RK_JOBS_CREATED},
+    {"name": QUEUE_JOBS_CREATED_ANALYTICS, "routing_key": RK_JOBS_CREATED},
     {"name": QUEUE_JOBS_UPDATED, "routing_key": RK_JOBS_UPDATED},
+    {"name": QUEUE_JOBS_UPDATED_ANALYTICS, "routing_key": RK_JOBS_UPDATED},
     {"name": QUEUE_JOBS_FINISHED, "routing_key": RK_JOBS_FINISHED},
+    {"name": QUEUE_JOBS_FINISHED_ANALYTICS, "routing_key": RK_JOBS_FINISHED},
     {"name": QUEUE_FILES_CREATED, "routing_key": RK_FILES_CREATED},
     {"name": QUEUE_COMPONENTS_CREATED, "routing_key": RK_COMPONENTS_CREATED},
     {"name": QUEUE_COMPONENTS_UPDATED, "routing_key": RK_COMPONENTS_UPDATED},
