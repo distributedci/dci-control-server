@@ -66,6 +66,7 @@ class KombuProducer:
     def _publish(self, message, routing_key):
         try:
             message["timestamp"] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"Publishing message: {message} to routing key: {routing_key}")
             return self._get_producer().publish(
                 message,
                 exchange=self._dci_exchange,
