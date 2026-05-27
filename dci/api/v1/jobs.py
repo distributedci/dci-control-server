@@ -533,6 +533,9 @@ def update_job_by_id(user, job_id):
     base.update_resource_orm(job, values)
     job = base.get_resource_orm(models2.Job, job_id)
 
+    if job.status in models2.FINAL_STATUSES:
+        flask.g.messaging.publish_jobs_updated({"job_id": str(job_id)})
+
     return flask.Response(
         json.dumps({"job": job.serialize()}),
         200,

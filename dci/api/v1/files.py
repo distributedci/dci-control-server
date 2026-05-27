@@ -208,6 +208,9 @@ def create_files(user):
         flask.g.session.rollback()
         raise dci_exc.DCIException(message=str(e), status_code=409)
 
+    if job.status in models2.FINAL_STATUSES:
+        flask.g.messaging.publish_jobs_updated({"job_id": str(job.id)})
+
     return flask.Response(json.dumps(result), 201, content_type="application/json")
 
 
