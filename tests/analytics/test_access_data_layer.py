@@ -83,9 +83,10 @@ def test_get_job_by_id(session, team1_job_id):
 
 def test_get_jobs_ids_from_timestamp(session, team1_job_id, team1_job):
     timestamp = dt.fromisoformat(team1_job["updated_at"])
-    ids = a_d_l.get_jobs_ids_from_timestamp(session, 0, 10, timestamp)
-    assert len(ids) == 1
-    assert ids[0] == str(team1_job_id)
+    jobs = a_d_l.get_jobs_ids_from_timestamp(session, 0, 10, timestamp)
+    assert len(jobs) == 1
+    assert jobs[0]["id"] == str(team1_job_id)
+    assert jobs[0]["etag"] == team1_job["etag"]
 
 
 @mock.patch("dci.api.v1.utils.get_utc_now")

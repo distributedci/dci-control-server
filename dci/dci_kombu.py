@@ -44,9 +44,7 @@ QUEUE_COMPONENTS_CREATED = "components_created"
 QUEUE_COMPONENTS_UPDATED = "components_updated"
 
 QUEUE_NAMES_ROUTING_KEYS = [
-    {"name": QUEUE_JOBS_CREATED, "routing_key": RK_JOBS_CREATED},
     {"name": QUEUE_JOBS_CREATED_ANALYTICS, "routing_key": RK_JOBS_CREATED},
-    {"name": QUEUE_JOBS_UPDATED, "routing_key": RK_JOBS_UPDATED},
     {"name": QUEUE_JOBS_UPDATED_ANALYTICS, "routing_key": RK_JOBS_UPDATED},
     {"name": QUEUE_JOBS_FINISHED, "routing_key": RK_JOBS_FINISHED},
     {"name": QUEUE_JOBS_FINISHED_ANALYTICS, "routing_key": RK_JOBS_FINISHED},
