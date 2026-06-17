@@ -209,6 +209,12 @@ def test_create_file_as_user(client_user1, team1_jobstate_id):
     assert file.status_code == 201
 
 
+def test_nrt_create_files_as_user_from_other_team(client_user2, team1_jobstate_id):
+    headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name"}
+    file = client_user2.post("/api/v1/files", headers=headers)
+    assert file.status_code == 401
+
+
 def test_get_file_as_user(client_user1, team1_jobstate_file_id, team1_jobstate_id):
     file = client_user1.get("/api/v1/files/%s" % team1_jobstate_file_id)
     assert file.status_code == 200

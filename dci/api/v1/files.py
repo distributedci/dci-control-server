@@ -159,7 +159,7 @@ def create_files(user):
     job = base.get_resource_orm(models2.Job, values.get("job_id"))
     if (
         user.is_not_in_team(job.team_id)
-        and user.is_read_only_user()
+        and user.is_not_read_only_user()
         and user.is_not_epm()
     ):
         raise dci_exc.Unauthorized()
