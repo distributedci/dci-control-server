@@ -55,6 +55,10 @@ def create_jobstates(user):
     # 'run' or 'pre-run' then set the job to 'error' state
     job_id = values.get("job_id")
     job = base.get_resource_orm(models2.Job, job_id)
+
+    if user.is_not_in_team(job.team_id):
+        raise dci_exc.Unauthorized()
+
     status = values.get("status")
     if status in ["failure", "error"]:
         if job.status in ["new", "pre-run"]:
