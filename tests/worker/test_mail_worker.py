@@ -20,7 +20,7 @@ import mock
 
 def test_get_email_configuration():
     email_configuration = m_w.get_email_configuration()
-    assert "server" in email_configuration
+    assert "host" in email_configuration
     assert "port" in email_configuration
     assert "account" in email_configuration
     assert "password" in email_configuration
