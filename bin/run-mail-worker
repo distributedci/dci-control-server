@@ -41,6 +41,7 @@ LOGGING_LEVEL = logging.INFO
 
 def _get_smtp_server(server, port, account, password):
     server = smtplib.SMTP(server, port)
+    server.connect(host=server, port=port)
     server.starttls()
     if account and password:
         server.login(account, password)
