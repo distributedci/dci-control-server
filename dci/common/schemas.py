@@ -430,12 +430,15 @@ create_remoteci_schema = {
 
 update_remoteci_properties = {
     "name": Properties.string,
-    "team_id": Properties.uuid,
     "state": Properties.enum(RESOURCE_STATES),
     "data": Properties.json,
     "public": Properties.boolean,
 }
-update_remoteci_schema = {"type": "object", "properties": update_remoteci_properties}
+update_remoteci_schema = {
+    "type": "object",
+    "properties": update_remoteci_properties,
+    "additionalProperties": False,
+}
 
 
 ###############################################################################

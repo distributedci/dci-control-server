@@ -926,3 +926,22 @@ def test_disable_inactive_remotecis_no_inactive_found(
     # Could be 0 if no other inactive RemoteCIs exist
     assert isinstance(data["disabled"], int)
     assert isinstance(data["remotecis"], list)
+
+
+def test_nrt_change_team_id_of_remoteci(
+    hmac_client_team1, team1_remoteci, team2_remoteci
+):
+    r = hmac_client_team1.get("/api/v1/identity").data
+    assert team1_remoteci["team_id"] in r["identity"]["teams"]
+    r = hmac_client_team1.get("/api/v1/remotecis/" + team1_remoteci["id"]).data[
+        "remoteci"
+    ]
+    r = hmac_client_team1.put(
+        "/api/v1/remotecis/" + team1_remoteci["id"],
+        data={"mdrteam_id": team2_remoteci["team_id"]},
+        headers={"If-match": r["etag"]},
+    )
+    assert r.status_code == 400
+    r = hmac_client_team1.get("/api/v1/identity").data
+    assert team1_remoteci["team_id"] in r["identity"]["teams"].keys()
+    assert team2_remoteci["team_id"] not in r["identity"]["teams"].keys()
