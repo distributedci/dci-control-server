@@ -215,6 +215,28 @@ def test_nrt_create_files_as_user_from_other_team(client_user2, team1_jobstate_i
     assert file.status_code == 401
 
 
+def test_nrt_redhat_user_cannot_create_file_for_team1_job(
+    client_rh_employee, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_rh_employee.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_redhat_remoteci_cannot_create_file_for_team1_job(
+    hmac_client_redhat, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = hmac_client_redhat.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_epm_user_cannot_create_file_for_team1_job(client_epm, team1_job_id):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_epm.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
 def test_get_file_as_user(client_user1, team1_jobstate_file_id, team1_jobstate_id):
     file = client_user1.get("/api/v1/files/%s" % team1_jobstate_file_id)
     assert file.status_code == 200
