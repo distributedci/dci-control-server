@@ -240,6 +240,12 @@ def get_all_files(user, job_id):
 @decorators.login_required
 def get_file_by_id(user, file_id):
     file = base.get_resource_orm(models2.File, file_id)
+    if (
+        user.is_not_in_team(file.team_id)
+        and user.is_not_read_only_user()
+        and user.is_not_epm()
+    ):
+        raise dci_exc.Unauthorized()
 
     return flask.Response(
         json.dumps({"file": file.serialize()}),
@@ -317,6 +323,8 @@ def upload_certification(user, file_id):
     check_json_is_valid(file_upload_certification_schema, data)
 
     file = base.get_resource_orm(models2.File, file_id)
+    if user.is_not_in_team(file.team_id) or user.is_read_only_user() or user.is_epm():
+        raise dci_exc.Unauthorized()
     file_descriptor = get_file_descriptor(file)
     file_content = file_descriptor.read()
 
