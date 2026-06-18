@@ -647,3 +647,114 @@ def test_upload_tests_with_invalid_xml(
     )
     assert file_upload_result.status_code == 400
     assert file_upload_result.data["message"].startswith("Invalid XML: ")
+
+
+# NRT: File exfiltration vulnerabilities (CWE-862)
+
+
+def test_nrt_get_file_by_id_cross_team_unauthorized(
+    client_user1, client_user2, team1_jobstate_id
+):
+    """NRT: Prevent metadata leak - user2 should not access team1's file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "sensitive.txt", "secret data"
+    )["id"]
+
+    # user2 (team2) attempts to get file metadata - should be unauthorized
+    response = client_user2.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 401
+
+
+def test_nrt_get_file_by_id_read_only_user_authorized(
+    client_user1, client_rh_employee, team1_jobstate_id
+):
+    """NRT: Read-only users should be able to read file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.txt", "test data"
+    )["id"]
+
+    # read-only user should be able to read file metadata
+    response = client_rh_employee.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 200
+    assert response.data["file"]["name"] == "test.txt"
+
+
+def test_nrt_get_file_by_id_epm_user_authorized(
+    client_user1, client_epm, team1_jobstate_id
+):
+    """NRT: EPM users should be able to read file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.txt", "test data"
+    )["id"]
+
+    # EPM user should be able to read file metadata
+    response = client_epm.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 200
+    assert response.data["file"]["name"] == "test.txt"
+
+
+def test_nrt_upload_certification_cross_team_unauthorized(
+    client_user1, client_user2, team1_jobstate_id
+):
+    """NRT: Prevent file exfiltration - user2 should not exfiltrate team1's file to cert portal"""
+    # user1 (team1) creates a file with sensitive content
+    sensitive_content = "CONFIDENTIAL: team1 internal data"
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "confidential.log", sensitive_content
+    )["id"]
+
+    # user2 (team2) attempts to exfiltrate via certification upload - should be unauthorized
+    cert_data = {
+        "username": "attacker",
+        "password": "attacker_pass",
+        "certification_id": "12345",
+    }
+    response = client_user2.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
+
+
+def test_nrt_upload_certification_read_only_user_unauthorized(
+    client_rh_employee, team1_jobstate_id, client_user1
+):
+    """NRT: Prevent read-only users from using certification upload"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    # read-only user attempts certification upload - should be unauthorized
+    cert_data = {
+        "username": "rh_employee",
+        "password": "rh_employee_pass",
+        "certification_id": "12345",
+    }
+    response = client_rh_employee.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
+
+
+def test_nrt_upload_certification_epm_user_unauthorized(
+    client_epm, team1_jobstate_id, client_user1
+):
+    """NRT: Prevent EPM users from using certification upload"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    # EPM user attempts certification upload - should be unauthorized
+    cert_data = {
+        "username": "epm",
+        "password": "epm_pass",
+        "certification_id": "12345",
+    }
+    response = client_epm.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
