@@ -15,6 +15,7 @@
 # under the License.
 
 import os
+import re
 
 import flask
 import logging
@@ -32,16 +33,35 @@ from dciauth.signature import HmacAuthBase
 logger = logging.getLogger(__name__)
 
 
+def _normalize_component_filepath(component_id: str, filepath: str) -> str:
+    if re.search(r"%[0-9a-fA-F]{2}", filepath):
+        raise dci_exc.DCIException("Request malformed: filepath is invalid")
+
+    normalized_filepath = os.path.normpath("/" + filepath).lstrip("/")
+    normalized_component_id_filepath = os.path.join(component_id, normalized_filepath)
+    component_id_filepath = os.path.join(component_id, filepath)
+
+    if component_id_filepath != normalized_component_id_filepath:
+        raise dci_exc.DCIException("Request malformed: filepath is invalid")
+
+    return normalized_component_id_filepath
+
+
 def get_component_file_from_rhdl(filepath, component):
     if filepath == "dci_files_list.json":
         filepath = "rhdl_files_list.json"
-    normalized_filepath = os.path.normpath("/" + filepath).lstrip("/")
-    normalized_rhdl_component_filepath = os.path.join(
-        component.display_name, "files", normalized_filepath
+
+    if re.search(r"%[0-9a-fA-F]{2}", component.display_name):
+        raise dci_exc.DCIException("Request malformed: display_name is invalid")
+
+    if "/" in component.display_name or ".." in component.display_name:
+        raise dci_exc.DCIException(
+            "Request malformed: display_name contains invalid characters"
+        )
+
+    normalized_rhdl_component_filepath = _normalize_component_filepath(
+        os.path.join(component.display_name, "files"), filepath
     )
-    rhdl_component_filepath = os.path.join(component.display_name, "files", filepath)
-    if rhdl_component_filepath != normalized_rhdl_component_filepath:
-        raise dci_exc.DCIException("Request malformed: filepath is invalid")
 
     rhdl_file_url = os.path.join(
         CONFIG["RHDL_API_URL"], "components", normalized_rhdl_component_filepath
