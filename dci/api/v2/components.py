@@ -38,6 +38,13 @@ def _reject_url_encoded_characters(text: str) -> None:
         raise dci_exc.DCIException("Request malformed: contains URL-encoded characters")
 
 
+def _reject_slash_in_component_name(component_name: str) -> None:
+    if "/" in component_name:
+        raise dci_exc.DCIException(
+            "Request malformed: display_name contains invalid characters"
+        )
+
+
 def _normalize_component_filepath(component_id: str, filepath: str) -> str:
     _reject_url_encoded_characters(filepath)
 
@@ -57,11 +64,7 @@ def get_component_file_from_rhdl(filepath, component):
         filepath = "rhdl_files_list.json"
 
     _reject_url_encoded_characters(component.display_name)
-
-    if "/" in component.display_name:
-        raise dci_exc.DCIException(
-            "Request malformed: display_name contains invalid characters"
-        )
+    _reject_slash_in_component_name(component.display_name)
 
     normalized_rhdl_component_filepath = _normalize_component_filepath(
         os.path.join(component.display_name, "files"), filepath
