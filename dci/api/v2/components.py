@@ -46,8 +46,6 @@ def _reject_slash_in_component_name(component_name: str) -> None:
 
 
 def _normalize_component_filepath(component_id: str, filepath: str) -> str:
-    _reject_url_encoded_characters(filepath)
-
     component_id_filepath = os.path.join(component_id, filepath)
     normalized_component_id_filepath = os.path.normpath(
         "/" + component_id_filepath
@@ -63,6 +61,7 @@ def get_component_file_from_rhdl(filepath, component):
     if filepath == "dci_files_list.json":
         filepath = "rhdl_files_list.json"
 
+    _reject_url_encoded_characters(filepath)
     _reject_url_encoded_characters(component.display_name)
     _reject_slash_in_component_name(component.display_name)
 
