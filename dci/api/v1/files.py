@@ -157,11 +157,7 @@ def create_files(user):
         values["job_id"] = jobstate.job_id
 
     job = base.get_resource_orm(models2.Job, values.get("job_id"))
-    if (
-        user.is_not_in_team(job.team_id)
-        and user.is_not_read_only_user()
-        and user.is_not_epm()
-    ):
+    if user.is_not_in_team(job.team_id) or user.is_read_only_user() or user.is_epm():
         raise dci_exc.Unauthorized()
 
     file_id = utils.gen_uuid()

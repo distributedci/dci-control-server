@@ -107,7 +107,7 @@ def test_create_task_file_update_job_duration(client_user1, team1_job):
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_regressions_successfix(
-    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, client_user1, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",
@@ -127,7 +127,7 @@ def test_upload_tests_with_regressions_successfix(
     ).data["job"]
 
     f_1 = t_utils.create_file(
-        client_admin,
+        client_user1,
         job_1["id"],
         "Tempest",
         tests_data.jobtest_one,
@@ -135,7 +135,7 @@ def test_upload_tests_with_regressions_successfix(
     )["id"]
     assert f_1 is not None
     t_utils.create_file(
-        client_admin,
+        client_user1,
         job_1["id"],
         "Rally",
         tests_data.jobtest_one,
@@ -143,7 +143,7 @@ def test_upload_tests_with_regressions_successfix(
     )
 
     f_2 = t_utils.create_file(
-        client_admin,
+        client_user1,
         job_2["id"],
         "Tempest",
         tests_data.jobtest_two,
@@ -151,7 +151,7 @@ def test_upload_tests_with_regressions_successfix(
     )["id"]
     assert f_2 is not None
     t_utils.create_file(
-        client_admin,
+        client_user1,
         job_2["id"],
         "Rally",
         tests_data.jobtest_one,
@@ -159,7 +159,7 @@ def test_upload_tests_with_regressions_successfix(
     )
 
     # 3. verify regression in job_2's result which is 'test_3'
-    job_2_results = client_admin.get(
+    job_2_results = client_user1.get(
         "/api/v1/jobs/%s?embed=results" % job_2["id"]
     ).data["job"]["results"]
 
@@ -212,6 +212,28 @@ def test_create_file_as_user(client_user1, team1_jobstate_id):
 def test_nrt_create_files_as_user_from_other_team(client_user2, team1_jobstate_id):
     headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name"}
     file = client_user2.post("/api/v1/files", headers=headers)
+    assert file.status_code == 401
+
+
+def test_nrt_redhat_user_cannot_create_file_for_team1_job(
+    client_rh_employee, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_rh_employee.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_redhat_remoteci_cannot_create_file_for_team1_job(
+    hmac_client_redhat, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = hmac_client_redhat.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_epm_user_cannot_create_file_for_team1_job(client_epm, team1_job_id):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_epm.post("/api/v1/files", headers=headers, data="content")
     assert file.status_code == 401
 
 
@@ -506,7 +528,7 @@ def test_nrt_get_an_empty_junit_file(_, client_user1, team1_job_id):
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
-def test_retrieve_junit(_, client_admin, team1_job_id):
+def test_retrieve_junit(_, client_user1, team1_job_id):
     headers = {
         "DCI-NAME": "junit_file.xml",
         "DCI-JOB-ID": team1_job_id,
@@ -515,24 +537,24 @@ def test_retrieve_junit(_, client_admin, team1_job_id):
         "Content-Type": "application/junit",
     }
 
-    file = client_admin.post("/api/v1/files", headers=headers, data=tests_data.JUNIT)
+    file = client_user1.post("/api/v1/files", headers=headers, data=tests_data.JUNIT)
     file_id = file.data["file"]["id"]
 
     # First retrieve file
-    res = client_admin.get("/api/v1/files/%s/content" % file_id)
+    res = client_user1.get("/api/v1/files/%s/content" % file_id)
 
     assert res.data == tests_data.JUNIT
 
     # Non Regression Test: XHR doesn't modify content
     headers = {"X-Requested-With": "XMLHttpRequest"}
-    res = client_admin.get("/api/v1/files/%s/content" % file_id, headers=headers)
+    res = client_user1.get("/api/v1/files/%s/content" % file_id, headers=headers)
 
     assert res.data == tests_data.JUNIT
     assert res.headers["Content-Type"] == "application/junit"
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
-def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job_id):
+def test_create_file_fill_tests_results_table(_, engine, client_user1, team1_job_id):
     with open("tests/data/tempest-results.xml", "r") as f:
         content_file = f.read()
 
@@ -543,7 +565,7 @@ def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job
         "Content-Disposition": "attachment; filename=tempest-results.xml",
         "Content-Type": "application/junit",
     }
-    client_admin.post("/api/v1/files", headers=headers, data=content_file)
+    client_user1.post("/api/v1/files", headers=headers, data=content_file)
 
     query = sql.select(models2.TestsResult)
     with engine.connect() as conn:
@@ -563,7 +585,7 @@ def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_tests_results_table_with_multiple_testsuites(
-    _, engine, client_admin, team1_job_id
+    _, engine, client_user1, team1_job_id
 ):
     with open("tests/data/junit_with_multiple_testsuite.xml", "r") as f:
         content_file = f.read()
@@ -575,7 +597,7 @@ def test_tests_results_table_with_multiple_testsuites(
         "Content-Disposition": "attachment; filename=junit_with_multiple_testsuite.xml",
         "Content-Type": "application/junit",
     }
-    client_admin.post("/api/v1/files", headers=headers, data=content_file)
+    client_user1.post("/api/v1/files", headers=headers, data=content_file)
 
     query = sql.select(models2.TestsResult)
     with engine.connect() as conn:
@@ -596,7 +618,7 @@ def test_tests_results_table_with_multiple_testsuites(
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_invalid_xml(
-    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",
