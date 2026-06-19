@@ -33,13 +33,18 @@ from dciauth.signature import HmacAuthBase
 logger = logging.getLogger(__name__)
 
 
-def _normalize_component_filepath(component_id: str, filepath: str) -> str:
-    if re.search(r"%[0-9a-fA-F]{2}", filepath):
-        raise dci_exc.DCIException("Request malformed: filepath is invalid")
+def _reject_url_encoded_characters(text: str) -> None:
+    if re.search(r"%[0-9a-fA-F]{2}", text):
+        raise dci_exc.DCIException("Request malformed: contains URL-encoded characters")
 
-    normalized_filepath = os.path.normpath("/" + filepath).lstrip("/")
-    normalized_component_id_filepath = os.path.join(component_id, normalized_filepath)
+
+def _normalize_component_filepath(component_id: str, filepath: str) -> str:
+    _reject_url_encoded_characters(filepath)
+
     component_id_filepath = os.path.join(component_id, filepath)
+    normalized_component_id_filepath = os.path.normpath(
+        "/" + component_id_filepath
+    ).lstrip("/")
 
     if component_id_filepath != normalized_component_id_filepath:
         raise dci_exc.DCIException("Request malformed: filepath is invalid")
@@ -51,10 +56,9 @@ def get_component_file_from_rhdl(filepath, component):
     if filepath == "dci_files_list.json":
         filepath = "rhdl_files_list.json"
 
-    if re.search(r"%[0-9a-fA-F]{2}", component.display_name):
-        raise dci_exc.DCIException("Request malformed: display_name is invalid")
+    _reject_url_encoded_characters(component.display_name)
 
-    if "/" in component.display_name or ".." in component.display_name:
+    if "/" in component.display_name:
         raise dci_exc.DCIException(
             "Request malformed: display_name contains invalid characters"
         )
