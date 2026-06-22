@@ -401,6 +401,28 @@ def team1_job_id(team1_job):
 
 
 @pytest.fixture
+def redhat_job(hmac_client_redhat, rhel_80_topic, rhel_80_component_id):
+    data = {
+        "name": "redhat test",
+        "components_ids": [rhel_80_component_id],
+        "topic_id": rhel_80_topic["id"],
+    }
+    return hmac_client_redhat.post("/api/v1/jobs/schedule", data=data).data["job"]
+
+
+@pytest.fixture
+def redhat_job_id(redhat_job):
+    return redhat_job["id"]
+
+
+@pytest.fixture
+def redhat_jobstate_id(client_rh_employee, redhat_job_id):
+    data = {"job_id": redhat_job_id, "status": "running", "comment": "redhat job"}
+    jobstate = client_rh_employee.post("/api/v1/jobstates", data=data).data
+    return jobstate["jobstate"]["id"]
+
+
+@pytest.fixture
 def team1_jobstate_id(client_user1, team1_job_id):
     data = {"job_id": team1_job_id, "status": "running", "comment": "kikoolol"}
     jobstate = client_user1.post("/api/v1/jobstates", data=data).data

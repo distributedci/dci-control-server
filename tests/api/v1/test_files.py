@@ -223,6 +223,15 @@ def test_nrt_redhat_user_cannot_create_file_for_team1_job(
     assert file.status_code == 401
 
 
+def test_nrt_redhat_user_can_create_file_for_own_team_job(
+    client_rh_employee, redhat_job_id
+):
+    """NRT: Red Hat team members should be able to create files for their own team's jobs"""
+    headers = {"DCI-JOB-ID": redhat_job_id, "DCI-NAME": "name"}
+    file = client_rh_employee.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 201
+
+
 def test_nrt_redhat_remoteci_cannot_create_file_for_team1_job(
     hmac_client_redhat, team1_job_id
 ):
@@ -758,3 +767,28 @@ def test_nrt_upload_certification_epm_user_unauthorized(
         "/api/v1/files/%s/certifications" % file_id, data=cert_data
     )
     assert response.status_code == 401
+
+
+@mock.patch("dci.api.v1.files.ServerProxy")
+def test_nrt_redhat_user_can_upload_certification_for_own_team_job(
+    mock_server_proxy, client_rh_employee, hmac_client_redhat, redhat_jobstate_id
+):
+    """NRT: Red Hat team members should be able to upload certifications for their own team's files"""
+    mock_server_proxy.return_value.Cert.getOpenStack_4_7.return_value = {
+        "cert_nid": "test_nid"
+    }
+
+    # Use hmac_client_redhat to avoid mutating client_rh_employee's Content-Type header
+    file_id = t_utils.create_task_file(
+        hmac_client_redhat, redhat_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    cert_data = {
+        "username": "rh_employee",
+        "password": "rh_employee_pass",
+        "certification_id": "12345",
+    }
+    response = client_rh_employee.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 204
