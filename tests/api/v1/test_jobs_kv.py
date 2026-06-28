@@ -16,8 +16,16 @@
 
 from __future__ import unicode_literals
 
+import mock
 
-def test_add_kv_to_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_id):
+
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_add_kv_to_job(
+    mock_kp, hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
+):
+    m_publish = mock_kp.return_value
+    m_publish.publish_jobs_updated = mock.MagicMock()
+
     data = {
         "components": [rhel_80_component_id],
         "topic_id": rhel_80_topic_id,
@@ -35,6 +43,7 @@ def test_add_kv_to_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
         data={"key": "mykey", "value": 123},
     )
     r.status_code == 201
+    m_publish.publish_jobs_updated.assert_called_once()
 
     job = hmac_client_team1.get("/api/v1/jobs/%s" % job_id)
     assert job.data["job"]["keys_values"][0]["job_id"] == job_id
@@ -49,7 +58,13 @@ def test_add_kv_to_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
     r.status_code == 409
 
 
-def test_delete_from_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_id):
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_delete_from_job(
+    mock_kp, hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
+):
+    m_publish = mock_kp.return_value
+    m_publish.publish_jobs_updated = mock.MagicMock()
+
     data = {
         "components": [rhel_80_component_id],
         "topic_id": rhel_80_topic_id,
@@ -67,6 +82,8 @@ def test_delete_from_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_
         data={"key": "mykey", "value": 123.123},
     )
     r.status_code == 201
+    m_publish.publish_jobs_updated.assert_called_once()
+    m_publish.publish_jobs_updated.reset_mock()
 
     job = hmac_client_team1.get("/api/v1/jobs/%s" % job_id)
     assert job.data["job"]["keys_values"][0]["job_id"] == job_id
@@ -78,6 +95,7 @@ def test_delete_from_job(hmac_client_team1, rhel_80_topic_id, rhel_80_component_
         data={"key": "mykey"},
     )
     r.status_code == 204
+    m_publish.publish_jobs_updated.assert_called_once()
 
     job = hmac_client_team1.get("/api/v1/jobs/%s" % job_id)
     job = job.data["job"]
