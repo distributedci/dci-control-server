@@ -54,6 +54,7 @@ def add_kv_to_job(user, job_id):
     except Exception as e:
         flask.g.session.rollback()
         raise dci_exc.DCIException(message=str(e), status_code=409)
+    flask.g.messaging.publish_jobs_updated({"job_id": str(job_id)})
 
     return flask.Response(
         json.dumps({"kv": jkv}),
@@ -87,6 +88,7 @@ def delete_kv_from_job(user, job_id):
     except Exception as e:
         flask.g.session.rollback()
         raise dci_exc.DCIException(message=str(e))
+    flask.g.messaging.publish_jobs_updated({"job_id": str(job_id)})
 
     return flask.Response(
         None,
