@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
 import jwt
 import json
 from jwt.algorithms import RSAAlgorithm
@@ -44,3 +45,17 @@ def decode_jwt(access_token, pem_public_key, audience):
         audience=audience,
         algorithms=["RS256"],
     )
+
+
+def encode_service_jwt(secret, audience, issuer, ttl_seconds=300, extra_claims=None):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    payload = {
+        "iat": now,
+        "exp": now + datetime.timedelta(seconds=ttl_seconds),
+        "aud": audience,
+        "iss": issuer,
+        "sub": "dci-control-server",
+    }
+    if extra_claims:
+        payload.update(extra_claims)
+    return jwt.encode(payload, secret, algorithm="HS256")

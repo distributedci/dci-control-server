@@ -24,7 +24,7 @@ from dci.api.v1 import analytics
 from dci.analytics import query_es_dsl as qed
 
 
-@mock.patch("dci.api.v1.analytics.requests.get")
+@mock.patch("dci.api.v1.analytics.analytics_request")
 def test_elasticsearch_ressource_not_found(
     mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
 ):
@@ -38,7 +38,7 @@ def test_elasticsearch_ressource_not_found(
     assert res.status_code == 404
 
 
-@mock.patch("dci.api.v1.analytics.requests.get")
+@mock.patch("dci.api.v1.analytics.analytics_request")
 def test_elasticsearch_error(
     mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
 ):
@@ -53,7 +53,7 @@ def test_elasticsearch_error(
     assert res.status_code == 400
 
 
-@mock.patch("dci.api.v1.analytics.requests.get")
+@mock.patch("dci.api.v1.analytics.analytics_request")
 def test_elasticsearch_connection_error(
     mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
 ):
@@ -258,7 +258,7 @@ def test_build_autocompletion_query():
     }
 
 
-@mock.patch("dci.api.v1.analytics.requests.get")
+@mock.patch("dci.api.v1.analytics.analytics_request")
 def test_autocomplete_field(mock_requests, client_user1):
     mock_autocomplete = mock.MagicMock()
     mock_autocomplete.status_code = 200

@@ -17,9 +17,10 @@
 import flask
 import json
 import logging
-import requests
-from requests.exceptions import ConnectionError
 import uuid
+from requests.exceptions import ConnectionError
+
+from dci.analytics.client import analytics_request
 
 from dci.analytics import query_es_dsl as qed
 from dci.api.v1 import api
@@ -33,7 +34,6 @@ from dci.common.schemas import (
     analytics_tasks_pipelines_status,
     check_json_is_valid,
 )
-from dci.dci_config import CONFIG
 from dci.db import models2
 from dci import decorators
 
@@ -65,10 +65,9 @@ def tasks_duration_cumulated(user):
     query = "q=topic_id:%s AND remoteci_id:%s" % (args["topic_id"], args["remoteci_id"])
     offset, limit = handle_pagination(args)
     try:
-        res = requests.get(
-            "%s/elasticsearch/tasks_duration_cumulated/_search?%s"
-            % (CONFIG["ANALYTICS_URL"], query),
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "GET",
+            "/elasticsearch/tasks_duration_cumulated/_search?%s" % query,
             data=json.dumps(
                 {
                     "from": offset,
@@ -145,10 +144,9 @@ def tasks_components_coverage(user):
         query["collapse"] = {"field": "type"}
 
     try:
-        res = requests.get(
-            "%s/elasticsearch/tasks_components_coverage/_search"
-            % (CONFIG["ANALYTICS_URL"]),
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "GET",
+            "/elasticsearch/tasks_components_coverage/_search",
             json=query,
         )
 
@@ -187,9 +185,9 @@ def tasks_junit_comparison(user):
             raise dci_exc.Unauthorized()
 
     try:
-        res = requests.post(
-            "%s/analytics/junit_topics_comparison" % CONFIG["ANALYTICS_URL"],
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "POST",
+            "/analytics/junit_topics_comparison",
             json=values,
         )
 
@@ -224,9 +222,9 @@ def tasks_pipelines_status(user):
                     raise dci_exc.Unauthorized()
 
     try:
-        res = requests.post(
-            "%s/analytics/pipelines_status" % CONFIG["ANALYTICS_URL"],
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "POST",
+            "/analytics/pipelines_status",
             json=values,
         )
 
@@ -349,9 +347,9 @@ def tasks_jobs(user):
         raise dci_exc.DCIException("syntax error while parsing the query")
 
     try:
-        res = requests.get(
-            "%s/analytics/jobs" % (CONFIG["ANALYTICS_URL"]),
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "GET",
+            "/analytics/jobs",
             json=es_query,
         )
         res_json = res.json()
@@ -389,9 +387,9 @@ def tasks_jobs_autocomplete(user):
     autocomplete = build_autocompletion_query(args, str(user.teams_ids[0]))
 
     try:
-        res = requests.get(
-            "%s/analytics/jobs/autocomplete" % (CONFIG["ANALYTICS_URL"]),
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "GET",
+            "/analytics/jobs/autocomplete",
             json=autocomplete,
         )
         res_json = res.json()
@@ -423,9 +421,9 @@ def tasks_jobs2(user):
     payload = flask.request.json
 
     try:
-        res = requests.get(
-            "%s/analytics/jobs" % (CONFIG["ANALYTICS_URL"]),
-            headers={"Content-Type": "application/json"},
+        res = analytics_request(
+            "GET",
+            "/analytics/jobs",
             json=payload,
         )
 
