@@ -90,16 +90,7 @@ def _get_root_prefix(operand):
     return operand.split(".")[0]
 
 
-def _unique_inner_hits_name(path, seen_count_by_path):
-    """Names for inner_hits are unique per query: counter by path Elasticsearch."""
-    n = seen_count_by_path.get(path, 0)
-    seen_count_by_path[path] = n + 1
-    return path if n == 0 else "%s_%d" % (path, n)
-
-
-def _handle_comparison_operator(
-    handle_nested, operator, operand_1, operand_2, seen_count_by_path
-):
+def _handle_comparison_operator(handle_nested, operator, operand_1, operand_2):
     if handle_nested and "." in operand_1:
         path = _get_nested_prefix(operand_1)
         return {
@@ -108,19 +99,12 @@ def _handle_comparison_operator(
                 "query": {
                     "range": {operand_1: {_op_to_es_range_op[operator]: operand_2}}
                 },
-                "inner_hits": {
-                    "name": _unique_inner_hits_name(path, seen_count_by_path)
-                },
             }
         }
     return {"range": {operand_1: {_op_to_es_range_op[operator]: operand_2}}}
 
 
-def _generate_from_operators(
-    parsed_query, handle_nested=False, seen_count_by_path=None
-):
-    if seen_count_by_path is None:
-        seen_count_by_path = {}
+def _generate_from_operators(parsed_query, handle_nested=False):
     if len(parsed_query) == 2 and parsed_query[0] == "not":
         return {
             "bool": {
@@ -128,7 +112,6 @@ def _generate_from_operators(
                     _generate_from_operators(
                         parsed_query[1],
                         handle_nested=handle_nested,
-                        seen_count_by_path=seen_count_by_path,
                     )
                 ]
             }
@@ -145,9 +128,6 @@ def _generate_from_operators(
                 "nested": {
                     "path": path,
                     "query": {"term": {operand_1: operand_2}},
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         return {"term": {operand_1: operand_2}}
@@ -157,7 +137,6 @@ def _generate_from_operators(
             operator,
             operand_1,
             operand_2,
-            seen_count_by_path,
         )
     elif operator == "=~":
         _regexp = {
@@ -175,9 +154,6 @@ def _generate_from_operators(
                 "nested": {
                     "path": path,
                     "query": _regexp,
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         return _regexp
@@ -188,9 +164,6 @@ def _generate_from_operators(
                 "nested": {
                     "path": path,
                     "query": {"bool": {"must_not": {"terms": {operand_1: operand_2}}}},
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         return {"bool": {"must_not": {"terms": {operand_1: operand_2}}}}
@@ -201,9 +174,6 @@ def _generate_from_operators(
                 "nested": {
                     "path": path,
                     "query": {"terms": {operand_1: operand_2}},
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         return {"terms": {operand_1: operand_2}}
@@ -214,9 +184,6 @@ def _generate_from_operators(
                 "nested": {
                     "path": path,
                     "query": {"bool": {"must_not": {"term": {operand_1: operand_2}}}},
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         return {"bool": {"must_not": {"term": {operand_1: operand_2}}}}
@@ -259,21 +226,19 @@ def _is_nested_query(operands_1, operands_2=None):
     return path
 
 
-def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None):
-    if seen_count_by_path is None:
-        seen_count_by_path = {}
+def _generate_es_query(parsed_query, handle_nested=True):
     if (
         len(parsed_query) > 0
         and isinstance(parsed_query, list)
         and isinstance(parsed_query[0], str)
     ):
-        return _generate_from_operators(parsed_query, handle_nested, seen_count_by_path)
+        return _generate_from_operators(parsed_query, handle_nested)
     if (
         len(parsed_query) == 1
         and isinstance(parsed_query, list)
         and isinstance(parsed_query[0], list)
     ):
-        return _generate_es_query(parsed_query[0], handle_nested, seen_count_by_path)
+        return _generate_es_query(parsed_query[0], handle_nested)
 
     if "or" in parsed_query:
         left_operands, right_operands = _split_on_or(parsed_query)
@@ -288,36 +253,23 @@ def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None
                                 _generate_es_query(
                                     left_operands,
                                     handle_nested=False,
-                                    seen_count_by_path=seen_count_by_path,
                                 )
                             ]
                             + [
                                 _generate_es_query(
                                     right_operands,
                                     handle_nested=False,
-                                    seen_count_by_path=seen_count_by_path,
                                 )
                             ],
                         }
-                    },
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
                     },
                 }
             }
         else:
             return {
                 "bool": {
-                    "should": [
-                        _generate_es_query(
-                            left_operands, seen_count_by_path=seen_count_by_path
-                        )
-                    ]
-                    + [
-                        _generate_es_query(
-                            right_operands, seen_count_by_path=seen_count_by_path
-                        )
-                    ],
+                    "should": [_generate_es_query(left_operands)]
+                    + [_generate_es_query(right_operands)],
                 }
             }
     else:
@@ -337,7 +289,6 @@ def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None
                 _generate_es_query(
                     first_element,
                     handle_nested=False,
-                    seen_count_by_path=seen_count_by_path,
                 )
             ]
             operands = operands[1:]
@@ -350,7 +301,6 @@ def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None
                         _generate_es_query(
                             operands[i],
                             handle_nested=False,
-                            seen_count_by_path=seen_count_by_path,
                         )
                     )
                 else:
@@ -361,7 +311,6 @@ def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None
                     _generate_es_query(
                         operands[i:],
                         handle_nested=True,
-                        seen_count_by_path=seen_count_by_path,
                     )
                 )
 
@@ -369,23 +318,12 @@ def _generate_es_query(parsed_query, handle_nested=True, seen_count_by_path=None
                 "nested": {
                     "path": path,
                     "query": {"bool": {"filter": _filter}},
-                    "inner_hits": {
-                        "name": _unique_inner_hits_name(path, seen_count_by_path)
-                    },
                 }
             }
         else:
-            return {
-                "bool": {
-                    "filter": [
-                        _generate_es_query(o, seen_count_by_path=seen_count_by_path)
-                        for o in operands
-                    ]
-                }
-            }
+            return {"bool": {"filter": [_generate_es_query(o) for o in operands]}}
 
 
 def build(query):
     parsed_query = parse(query)
-    seen_count_by_path = {}
-    return _generate_es_query(parsed_query, seen_count_by_path=seen_count_by_path)
+    return _generate_es_query(parsed_query)
