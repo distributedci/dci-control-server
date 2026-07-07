@@ -126,6 +126,23 @@ def test_tasks_pipelines_status_streams_response(mock_req, client_admin):
     assert res.headers.get("Content-Type") == "application/json"
 
 
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_tasks_pipelines_status_empty_teams_ids_is_unauthorized(mock_req, client_user1):
+    # A regular user sending teams_ids=[] bypasses the team-membership check
+    # and reaches the analytics backend with no team filter.
+    res = client_user1.post(
+        "/api/v1/analytics/pipelines_status",
+        json={
+            "start_date": "1970-01-01",
+            "end_date": "1970-01-01",
+            "teams_ids": [],
+            "pipelines_names": [],
+        },
+    )
+    assert res.status_code == 401
+    mock_req.assert_not_called()
+
+
 def test_tasks_analytics_pipelines_status(client_user1, team_admin_id):
     res = client_user1.post(
         "/api/v1/analytics/pipelines_status",
