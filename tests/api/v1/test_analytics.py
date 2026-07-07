@@ -17,7 +17,7 @@
 from __future__ import unicode_literals
 
 import mock
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, ReadTimeout
 import uuid
 
 from dci.api.v1 import analytics
@@ -63,6 +63,67 @@ def test_elasticsearch_connection_error(
         % (team2_remoteci_id, rhel_80_topic_id)
     )
     assert res.status_code == 503
+
+
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_elasticsearch_read_timeout(
+    mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
+):
+    mock_requests.side_effect = ReadTimeout()
+    res = client_admin.get(
+        "/api/v1/analytics/tasks_duration_cumulated?remoteci_id=%s&topic_id=%s"
+        % (team2_remoteci_id, rhel_80_topic_id)
+    )
+    assert res.status_code == 503
+
+
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_tasks_junit_comparison_streams_response(
+    mock_req, client_user1, team1_remoteci_id, rhel_80_topic_id
+):
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_req.return_value = mock_res
+
+    res = client_user1.post(
+        "/api/v1/analytics/junit_comparison",
+        json={
+            "topic_1_id": str(rhel_80_topic_id),
+            "topic_1_start_date": "1970-01-01",
+            "topic_1_end_date": "1970-01-01",
+            "remoteci_1_id": str(team1_remoteci_id),
+            "topic_1_baseline_computation": "mean",
+            "tags_1": [],
+            "topic_2_id": str(rhel_80_topic_id),
+            "topic_2_start_date": "1970-01-01",
+            "topic_2_end_date": "1970-01-01",
+            "remoteci_2_id": str(team1_remoteci_id),
+            "topic_2_baseline_computation": "mean",
+            "tags_2": [],
+            "test_name": "test",
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers.get("Content-Type") == "application/json"
+
+
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_tasks_pipelines_status_streams_response(mock_req, client_admin):
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_req.return_value = mock_res
+
+    res = client_admin.post(
+        "/api/v1/analytics/pipelines_status",
+        json={
+            "start_date": "1970-01-01",
+            "end_date": "1970-01-01",
+            "teams_ids": [],
+            "pipelines_names": [],
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers.get("Content-Type") == "application/json"
 
 
 def test_tasks_analytics_pipelines_status(client_user1, team_admin_id):
@@ -262,11 +323,33 @@ def test_build_autocompletion_query():
 def test_autocomplete_field(mock_requests, client_user1):
     mock_autocomplete = mock.MagicMock()
     mock_autocomplete.status_code = 200
-    mock_autocomplete.json.return_value = ["job1", "job2"]
+    mock_autocomplete.content = b'["job1", "job2"]'
     mock_requests.return_value = mock_autocomplete
     res = client_user1.get("/api/v1/analytics/jobs/autocomplete?field=name")
     assert res.status_code == 200
     assert res.data == ["job1", "job2"]
+
+
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_tasks_jobs_streams_response(mock_req, client_admin):
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_req.return_value = mock_res
+
+    res = client_admin.get("/api/v1/analytics/jobs?query=(name%3D'test')")
+    assert res.status_code == 200
+    assert res.headers.get("Content-Type") == "application/json"
+
+
+@mock.patch("dci.api.v1.analytics.analytics_request")
+def test_tasks_jobs2_streams_response(mock_req, client_admin):
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_req.return_value = mock_res
+
+    res = client_admin.get("/api/v1/analytics/jobs2", json={})
+    assert res.status_code == 200
+    assert res.headers.get("Content-Type") == "application/json"
 
 
 def test_aggs():
