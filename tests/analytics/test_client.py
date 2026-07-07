@@ -16,6 +16,7 @@
 
 import mock
 import pytest
+from requests.exceptions import ChunkedEncodingError
 
 import dci.common.exceptions as dci_exc
 from dci.analytics import client
@@ -76,7 +77,7 @@ def test_analytics_jwt_secret_must_not_be_empty():
         client.analytics_headers()
 
 
-@mock.patch("dci.analytics.client.requests.request")
+@mock.patch("dci.analytics.client._session.request")
 @mock.patch(
     "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
 )
@@ -93,7 +94,7 @@ def test_analytics_request_default_headers(mock_analytics_headers, mock_request)
     )
 
 
-@mock.patch("dci.analytics.client.requests.request")
+@mock.patch("dci.analytics.client._session.request")
 @mock.patch(
     "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
 )
@@ -117,7 +118,7 @@ def test_analytics_request_merges_kwargs_headers(mock_analytics_headers, mock_re
     )
 
 
-@mock.patch("dci.analytics.client.requests.request")
+@mock.patch("dci.analytics.client._session.request")
 @mock.patch(
     "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
 )
@@ -141,7 +142,7 @@ def test_analytics_request_auth_headers_not_overwritable(
     )
 
 
-@mock.patch("dci.analytics.client.requests.request")
+@mock.patch("dci.analytics.client._session.request")
 @mock.patch(
     "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
 )
@@ -155,3 +156,27 @@ def test_analytics_request_accepts_custom_timeout(mock_analytics_headers, mock_r
         headers=DEFAULT_HEADERS,
         timeout=42,
     )
+
+
+def test_guarded_stream_yields_chunks():
+    mock_res = mock.MagicMock()
+    mock_res.iter_content.return_value = iter([b"chunk1", b"chunk2"])
+
+    chunks = list(client.guarded_stream(mock_res))
+
+    assert chunks == [b"chunk1", b"chunk2"]
+    mock_res.close.assert_called_once()
+
+
+def test_guarded_stream_closes_on_streaming_error():
+    def failing_chunks():
+        yield b"partial"
+        raise ChunkedEncodingError("connection lost mid-stream")
+
+    mock_res = mock.MagicMock()
+    mock_res.iter_content.return_value = failing_chunks()
+
+    chunks = list(client.guarded_stream(mock_res))
+
+    assert chunks == [b"partial"]
+    mock_res.close.assert_called_once()

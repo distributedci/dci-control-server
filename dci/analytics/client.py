@@ -14,12 +14,24 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 import requests
 import time
+from requests.exceptions import (
+    ChunkedEncodingError,
+    ConnectionError,
+    ContentDecodingError,
+    Timeout,
+)
 
 from dci.auth import encode_service_jwt
 from dci.common.exceptions import DCIException
 from dci.dci_config import CONFIG
+
+logger = logging.getLogger(__name__)
+
+_session = requests.Session()
 
 _jwt_token_cache = {"token": None, "expires_at": 0.0}
 _JWT_CACHE_REFRESH_BUFFER_SECONDS = 30
@@ -55,6 +67,21 @@ def analytics_headers():
     }
 
 
+ANALYTICS_CHUNK_SIZE = 1024**2  # 1MB
+
+
+def guarded_stream(res):
+    # iter_content() is consumed after the view returns, outside the caller's
+    # try/except. This wrapper catches transport errors that would otherwise be
+    # silently swallowed by the WSGI layer, and ensures the connection is closed.
+    try:
+        yield from res.iter_content(chunk_size=ANALYTICS_CHUNK_SIZE)
+    except (ChunkedEncodingError, ContentDecodingError, ConnectionError, Timeout) as e:
+        logger.error("analytics streaming error: %s", e)
+    finally:
+        res.close()
+
+
 def analytics_request(method, path, **kwargs):
     url = "%s%s" % (CONFIG["ANALYTICS_URL"], path)
     a_headers = analytics_headers()
@@ -64,4 +91,9 @@ def analytics_request(method, path, **kwargs):
         kwargs["headers"] = a_headers
     if "timeout" not in kwargs:
         kwargs["timeout"] = CONFIG["REQUESTS_TIMEOUT"]
-    return requests.request(method, url, **kwargs)
+
+    return _session.request(
+        method,
+        url,
+        **kwargs,
+    )

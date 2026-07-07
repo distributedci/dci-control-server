@@ -18,9 +18,9 @@ import flask
 import json
 import logging
 import uuid
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, Timeout
 
-from dci.analytics.client import analytics_request
+from dci.analytics.client import analytics_request, guarded_stream
 
 from dci.analytics import query_es_dsl as qed
 from dci.api.v1 import api
@@ -88,7 +88,7 @@ def tasks_duration_cumulated(user):
             raise dci_exc.DCIException(
                 "error with backend service: %s" % res.text, status_code=res.status_code
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s " % str(e))
         raise dci_exc.DCIException(
             "connection error with backend service", status_code=503
@@ -161,7 +161,7 @@ def tasks_components_coverage(user):
             raise dci_exc.DCIException(
                 "error with backend service: %s" % res.text, status_code=res.status_code
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s" % str(e))
         raise dci_exc.DCIException(
             "connection error with backend service", status_code=503
@@ -189,10 +189,14 @@ def tasks_junit_comparison(user):
             "POST",
             "/analytics/junit_topics_comparison",
             json=values,
+            stream=True,
         )
 
         if res.status_code == 200:
-            return flask.jsonify(res.json())
+            return flask.Response(
+                flask.stream_with_context(guarded_stream(res)),
+                content_type="application/json",
+            )
         elif res.status_code == 404:
             raise dci_exc.DCIException(
                 "resource not found in backend server: %s" % res.text, status_code=404
@@ -202,7 +206,7 @@ def tasks_junit_comparison(user):
             raise dci_exc.DCIException(
                 "error with backend service: %s" % res.text, status_code=res.status_code
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s " % str(e))
         raise dci_exc.DCIException(
             "connection error with backend service", status_code=503
@@ -226,10 +230,14 @@ def tasks_pipelines_status(user):
             "POST",
             "/analytics/pipelines_status",
             json=values,
+            stream=True,
         )
 
         if res.status_code == 200:
-            return flask.jsonify(res.json())
+            return flask.Response(
+                flask.stream_with_context(guarded_stream(res)),
+                content_type="application/json",
+            )
         else:
             logger.error("analytics error: %s" % str(res.text))
             return flask.Response(
@@ -237,7 +245,7 @@ def tasks_pipelines_status(user):
                 res.status_code,
                 content_type="application/json",
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s" % str(e))
         return flask.Response(
             json.dumps({"error": "connection error with backend service: %s" % str(e)}),
@@ -351,11 +359,14 @@ def tasks_jobs(user):
             "GET",
             "/analytics/jobs",
             json=es_query,
+            stream=True,
         )
-        res_json = res.json()
 
         if res.status_code == 200:
-            return flask.jsonify(res_json)
+            return flask.Response(
+                flask.stream_with_context(guarded_stream(res)),
+                content_type="application/json",
+            )
         else:
             logger.error("analytics error: %s" % str(res.text))
             return flask.Response(
@@ -363,7 +374,7 @@ def tasks_jobs(user):
                 res.status_code,
                 content_type="application/json",
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s" % str(e))
         return flask.Response(
             json.dumps({"error": "connection error with backend service: %s" % str(e)}),
@@ -392,10 +403,8 @@ def tasks_jobs_autocomplete(user):
             "/analytics/jobs/autocomplete",
             json=autocomplete,
         )
-        res_json = res.json()
-
         if res.status_code == 200:
-            return flask.jsonify(res_json)
+            return flask.Response(res.content, content_type="application/json")
         else:
             logger.error("analytics error: %s" % str(res.text))
             return flask.Response(
@@ -403,7 +412,7 @@ def tasks_jobs_autocomplete(user):
                 res.status_code,
                 content_type="application/json",
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s" % str(e))
         return flask.Response(
             json.dumps({"error": "connection error with backend service: %s" % str(e)}),
@@ -425,10 +434,14 @@ def tasks_jobs2(user):
             "GET",
             "/analytics/jobs",
             json=payload,
+            stream=True,
         )
 
         if res.status_code == 200:
-            return flask.jsonify(res.json())
+            return flask.Response(
+                flask.stream_with_context(guarded_stream(res)),
+                content_type="application/json",
+            )
         else:
             logger.error("analytics error: %s" % str(res.text))
             return flask.Response(
@@ -436,7 +449,7 @@ def tasks_jobs2(user):
                 res.status_code,
                 content_type="application/json",
             )
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s" % str(e))
         return flask.Response(
             json.dumps({"error": "connection error with backend service: %s" % str(e)}),
