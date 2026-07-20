@@ -198,13 +198,17 @@ def tasks_junit_comparison(user):
                 content_type="application/json",
             )
         elif res.status_code == 404:
+            errmsg = str(res.text)
+            res.close()
             raise dci_exc.DCIException(
-                "resource not found in backend server: %s" % res.text, status_code=404
+                "resource not found in backend server: %s" % errmsg, status_code=404
             )
         else:
-            logger.error("analytics error: %s" % res.text)
+            errmsg = str(res.text)
+            res.close()
+            logger.error("analytics error: %s" % errmsg)
             raise dci_exc.DCIException(
-                "error with backend service: %s" % res.text, status_code=res.status_code
+                "error with backend service: %s" % errmsg, status_code=res.status_code
             )
     except (ConnectionError, Timeout) as e:
         logger.error("analytics connection error: %s " % str(e))
@@ -240,9 +244,11 @@ def tasks_pipelines_status(user):
                 content_type="application/json",
             )
         else:
-            logger.error("analytics error: %s" % str(res.text))
+            errmsg = str(res.text)
+            res.close()
+            logger.error("analytics error: %s" % errmsg)
             return flask.Response(
-                json.dumps({"error": "error with backend service: %s" % str(res.text)}),
+                json.dumps({"error": "error with backend service: %s" % errmsg}),
                 res.status_code,
                 content_type="application/json",
             )
@@ -369,9 +375,11 @@ def tasks_jobs(user):
                 content_type="application/json",
             )
         else:
-            logger.error("analytics error: %s" % str(res.text))
+            errmsg = str(res.text)
+            res.close()
+            logger.error("analytics error: %s" % errmsg)
             return flask.Response(
-                json.dumps({"error": "error with backend service: %s" % str(res.text)}),
+                json.dumps({"error": "error with backend service: %s" % errmsg}),
                 res.status_code,
                 content_type="application/json",
             )
@@ -444,9 +452,11 @@ def tasks_jobs2(user):
                 content_type="application/json",
             )
         else:
-            logger.error("analytics error: %s" % str(res.text))
+            errmsg = str(res.text)
+            res.close()
+            logger.error("analytics error: %s" % errmsg)
             return flask.Response(
-                json.dumps({"error": "error with backend service: %s" % str(res.text)}),
+                json.dumps({"error": "error with backend service: %s" % errmsg}),
                 res.status_code,
                 content_type="application/json",
             )
