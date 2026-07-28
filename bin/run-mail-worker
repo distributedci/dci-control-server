@@ -39,13 +39,13 @@ AMQP_BROKER_URL = os.getenv("AMQP_BROKER_URL", "amqp://guest:guest@rabbitmq:5672
 LOGGING_LEVEL = logging.INFO
 
 
-def _get_smtp_server(server, port, account, password):
-    server = smtplib.SMTP(server, port)
-    server.connect(host=server, port=port)
-    server.starttls()
+def _get_smtp_server(host, port, account, password):
+    smtp_server = smtplib.SMTP(host, port)
+    smtp_server.connect(host=host, port=port)
+    smtp_server.starttls()
     if account and password:
-        server.login(account, password)
-    return server
+        smtp_server.login(account, password)
+    return smtp_server
 
 
 def setup_logging():

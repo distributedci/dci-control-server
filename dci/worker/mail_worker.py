@@ -26,7 +26,7 @@ except ImportError:
 
 def get_email_configuration():
     return {
-        "server": os.getenv("DCI_EMAIL_SERVER"),
+        "host": os.getenv("DCI_EMAIL_SERVER"),
         "port": os.getenv("DCI_EMAIL_SERVER_PORT", 587),
         "account": os.getenv("DCI_FROM_EMAIL", "no-reply@distributed-ci.io"),
         "password": os.getenv("DCI_EMAIL_PASSWORD"),
