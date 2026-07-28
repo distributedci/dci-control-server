@@ -209,3 +209,21 @@ def test_create_pipeline_for_another_team_not_authorized(client_user1, team2_id)
         data={"name": "pipeline1", "team_id": team2_id},
     )
     assert pipeline.status_code == 401
+
+
+def test_nrt_redhat_user_can_delete_own_team_pipeline(
+    client_rh_employee, team_redhat_id
+):
+    """NRT: Red Hat team members should be able to delete pipelines in their own team"""
+    pipeline = client_rh_employee.post(
+        "/api/v1/pipelines",
+        data={"name": "pipeline1", "team_id": team_redhat_id},
+    )
+    assert pipeline.status_code == 201
+    pipeline_id = pipeline.data["pipeline"]["id"]
+    pipeline_etag = pipeline.data["pipeline"]["etag"]
+
+    delete_pipeline = client_rh_employee.delete(
+        "/api/v1/pipelines/%s" % pipeline_id, headers={"If-match": pipeline_etag}
+    )
+    assert delete_pipeline.status_code == 204

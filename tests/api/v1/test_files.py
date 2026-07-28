@@ -107,7 +107,7 @@ def test_create_task_file_update_job_duration(client_user1, team1_job):
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_regressions_successfix(
-    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, client_user1, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",
@@ -127,7 +127,7 @@ def test_upload_tests_with_regressions_successfix(
     ).data["job"]
 
     f_1 = t_utils.create_file(
-        client_admin,
+        client_user1,
         job_1["id"],
         "Tempest",
         tests_data.jobtest_one,
@@ -135,7 +135,7 @@ def test_upload_tests_with_regressions_successfix(
     )["id"]
     assert f_1 is not None
     t_utils.create_file(
-        client_admin,
+        client_user1,
         job_1["id"],
         "Rally",
         tests_data.jobtest_one,
@@ -143,7 +143,7 @@ def test_upload_tests_with_regressions_successfix(
     )
 
     f_2 = t_utils.create_file(
-        client_admin,
+        client_user1,
         job_2["id"],
         "Tempest",
         tests_data.jobtest_two,
@@ -151,7 +151,7 @@ def test_upload_tests_with_regressions_successfix(
     )["id"]
     assert f_2 is not None
     t_utils.create_file(
-        client_admin,
+        client_user1,
         job_2["id"],
         "Rally",
         tests_data.jobtest_one,
@@ -159,7 +159,7 @@ def test_upload_tests_with_regressions_successfix(
     )
 
     # 3. verify regression in job_2's result which is 'test_3'
-    job_2_results = client_admin.get(
+    job_2_results = client_user1.get(
         "/api/v1/jobs/%s?embed=results" % job_2["id"]
     ).data["job"]["results"]
 
@@ -212,6 +212,37 @@ def test_create_file_as_user(client_user1, team1_jobstate_id):
 def test_nrt_create_files_as_user_from_other_team(client_user2, team1_jobstate_id):
     headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name"}
     file = client_user2.post("/api/v1/files", headers=headers)
+    assert file.status_code == 401
+
+
+def test_nrt_redhat_user_cannot_create_file_for_team1_job(
+    client_rh_employee, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_rh_employee.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_redhat_user_can_create_file_for_own_team_job(
+    client_rh_employee, redhat_job_id
+):
+    """NRT: Red Hat team members should be able to create files for their own team's jobs"""
+    headers = {"DCI-JOB-ID": redhat_job_id, "DCI-NAME": "name"}
+    file = client_rh_employee.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 201
+
+
+def test_nrt_redhat_remoteci_cannot_create_file_for_team1_job(
+    hmac_client_redhat, team1_job_id
+):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = hmac_client_redhat.post("/api/v1/files", headers=headers, data="content")
+    assert file.status_code == 401
+
+
+def test_nrt_epm_user_cannot_create_file_for_team1_job(client_epm, team1_job_id):
+    headers = {"DCI-JOB-ID": team1_job_id, "DCI-NAME": "name"}
+    file = client_epm.post("/api/v1/files", headers=headers, data="content")
     assert file.status_code == 401
 
 
@@ -506,7 +537,7 @@ def test_nrt_get_an_empty_junit_file(_, client_user1, team1_job_id):
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
-def test_retrieve_junit(_, client_admin, team1_job_id):
+def test_retrieve_junit(_, client_user1, team1_job_id):
     headers = {
         "DCI-NAME": "junit_file.xml",
         "DCI-JOB-ID": team1_job_id,
@@ -515,24 +546,24 @@ def test_retrieve_junit(_, client_admin, team1_job_id):
         "Content-Type": "application/junit",
     }
 
-    file = client_admin.post("/api/v1/files", headers=headers, data=tests_data.JUNIT)
+    file = client_user1.post("/api/v1/files", headers=headers, data=tests_data.JUNIT)
     file_id = file.data["file"]["id"]
 
     # First retrieve file
-    res = client_admin.get("/api/v1/files/%s/content" % file_id)
+    res = client_user1.get("/api/v1/files/%s/content" % file_id)
 
     assert res.data == tests_data.JUNIT
 
     # Non Regression Test: XHR doesn't modify content
     headers = {"X-Requested-With": "XMLHttpRequest"}
-    res = client_admin.get("/api/v1/files/%s/content" % file_id, headers=headers)
+    res = client_user1.get("/api/v1/files/%s/content" % file_id, headers=headers)
 
     assert res.data == tests_data.JUNIT
     assert res.headers["Content-Type"] == "application/junit"
 
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
-def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job_id):
+def test_create_file_fill_tests_results_table(_, engine, client_user1, team1_job_id):
     with open("tests/data/tempest-results.xml", "r") as f:
         content_file = f.read()
 
@@ -543,7 +574,7 @@ def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job
         "Content-Disposition": "attachment; filename=tempest-results.xml",
         "Content-Type": "application/junit",
     }
-    client_admin.post("/api/v1/files", headers=headers, data=content_file)
+    client_user1.post("/api/v1/files", headers=headers, data=content_file)
 
     query = sql.select(models2.TestsResult)
     with engine.connect() as conn:
@@ -563,7 +594,7 @@ def test_create_file_fill_tests_results_table(_, engine, client_admin, team1_job
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_tests_results_table_with_multiple_testsuites(
-    _, engine, client_admin, team1_job_id
+    _, engine, client_user1, team1_job_id
 ):
     with open("tests/data/junit_with_multiple_testsuite.xml", "r") as f:
         content_file = f.read()
@@ -575,7 +606,7 @@ def test_tests_results_table_with_multiple_testsuites(
         "Content-Disposition": "attachment; filename=junit_with_multiple_testsuite.xml",
         "Content-Type": "application/junit",
     }
-    client_admin.post("/api/v1/files", headers=headers, data=content_file)
+    client_user1.post("/api/v1/files", headers=headers, data=content_file)
 
     query = sql.select(models2.TestsResult)
     with engine.connect() as conn:
@@ -596,7 +627,7 @@ def test_tests_results_table_with_multiple_testsuites(
 
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_invalid_xml(
-    _, client_admin, hmac_client_team1, rhel_80_topic, rhel_80_component_id
+    _, hmac_client_team1, rhel_80_topic, rhel_80_component_id
 ):
     headers = {
         "User-Agent": "python-dciclient",
@@ -625,3 +656,139 @@ def test_upload_tests_with_invalid_xml(
     )
     assert file_upload_result.status_code == 400
     assert file_upload_result.data["message"].startswith("Invalid XML: ")
+
+
+# NRT: File exfiltration vulnerabilities (CWE-862)
+
+
+def test_nrt_get_file_by_id_cross_team_unauthorized(
+    client_user1, client_user2, team1_jobstate_id
+):
+    """NRT: Prevent metadata leak - user2 should not access team1's file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "sensitive.txt", "secret data"
+    )["id"]
+
+    # user2 (team2) attempts to get file metadata - should be unauthorized
+    response = client_user2.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 401
+
+
+def test_nrt_get_file_by_id_read_only_user_authorized(
+    client_user1, client_rh_employee, team1_jobstate_id
+):
+    """NRT: Read-only users should be able to read file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.txt", "test data"
+    )["id"]
+
+    # read-only user should be able to read file metadata
+    response = client_rh_employee.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 200
+    assert response.data["file"]["name"] == "test.txt"
+
+
+def test_nrt_get_file_by_id_epm_user_authorized(
+    client_user1, client_epm, team1_jobstate_id
+):
+    """NRT: EPM users should be able to read file metadata"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.txt", "test data"
+    )["id"]
+
+    # EPM user should be able to read file metadata
+    response = client_epm.get("/api/v1/files/%s" % file_id)
+    assert response.status_code == 200
+    assert response.data["file"]["name"] == "test.txt"
+
+
+def test_nrt_upload_certification_cross_team_unauthorized(
+    client_user1, client_user2, team1_jobstate_id
+):
+    """NRT: Prevent file exfiltration - user2 should not exfiltrate team1's file to cert portal"""
+    # user1 (team1) creates a file with sensitive content
+    sensitive_content = "CONFIDENTIAL: team1 internal data"
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "confidential.log", sensitive_content
+    )["id"]
+
+    # user2 (team2) attempts to exfiltrate via certification upload - should be unauthorized
+    cert_data = {
+        "username": "attacker",
+        "password": "attacker_pass",
+        "certification_id": "12345",
+    }
+    response = client_user2.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
+
+
+def test_nrt_upload_certification_read_only_user_unauthorized(
+    client_rh_employee, team1_jobstate_id, client_user1
+):
+    """NRT: Prevent read-only users from using certification upload"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    # read-only user attempts certification upload - should be unauthorized
+    cert_data = {
+        "username": "rh_employee",
+        "password": "rh_employee_pass",
+        "certification_id": "12345",
+    }
+    response = client_rh_employee.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
+
+
+def test_nrt_upload_certification_epm_user_unauthorized(
+    client_epm, team1_jobstate_id, client_user1
+):
+    """NRT: Prevent EPM users from using certification upload"""
+    # user1 (team1) creates a file
+    file_id = t_utils.create_task_file(
+        client_user1, team1_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    # EPM user attempts certification upload - should be unauthorized
+    cert_data = {
+        "username": "epm",
+        "password": "epm_pass",
+        "certification_id": "12345",
+    }
+    response = client_epm.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 401
+
+
+@mock.patch("dci.api.v1.files.ServerProxy")
+def test_nrt_redhat_user_can_upload_certification_for_own_team_job(
+    mock_server_proxy, client_rh_employee, hmac_client_redhat, redhat_jobstate_id
+):
+    """NRT: Red Hat team members should be able to upload certifications for their own team's files"""
+    mock_server_proxy.return_value.Cert.getOpenStack_4_7.return_value = {
+        "cert_nid": "test_nid"
+    }
+
+    # Use hmac_client_redhat to avoid mutating client_rh_employee's Content-Type header
+    file_id = t_utils.create_task_file(
+        hmac_client_redhat, redhat_jobstate_id, "test.log", "test data"
+    )["id"]
+
+    cert_data = {
+        "username": "rh_employee",
+        "password": "rh_employee_pass",
+        "certification_id": "12345",
+    }
+    response = client_rh_employee.post(
+        "/api/v1/files/%s/certifications" % file_id, data=cert_data
+    )
+    assert response.status_code == 204

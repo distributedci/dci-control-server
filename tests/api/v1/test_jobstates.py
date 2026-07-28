@@ -36,6 +36,12 @@ def test_create_jobstates(client_user1, team1_job_id):
     assert job["job"]["status"] == "running"
 
 
+def test_nrt_create_jobstates_from_other_team(client_user2, team1_job_id):
+    data = {"job_id": team1_job_id, "status": "running", "comment": "kikoolol"}
+
+    assert client_user2.post("/api/v1/jobstates", data=data).status_code == 401
+
+
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_create_jobstates_failure(mock_kp, client_user1, team1_job_id):
     mock_kp = mock_kp.return_value

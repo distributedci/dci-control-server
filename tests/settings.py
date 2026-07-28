@@ -63,3 +63,5 @@ acgc4kgDThAjD7VlXad9UHpNMO8=
 """
 
 SSO_REALM = "redhat-external"
+
+ANALYTICS_JWT_SECRET = "test-analytics-jwt-secret"

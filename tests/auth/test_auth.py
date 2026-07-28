@@ -15,6 +15,7 @@
 # under the License.
 
 from freezegun import freeze_time
+import jwt
 from dci import auth
 from dci import dci_config
 from tests.sso_tokens import SSO_TOKENS_VALID_DATETIME
@@ -48,6 +49,25 @@ def test_decode_jwt(access_token_user1):
     decoded_jwt = auth.decode_jwt(access_token_user1, pubkey, "api.dci")
     assert decoded_jwt["username"] == "user1"
     assert decoded_jwt["email"] == "user1@example.org"
+
+
+@freeze_time(SSO_TOKENS_VALID_DATETIME)
+def test_encode_service_jwt():
+    secret = "test-analytics-jwt-secret"
+    audience = "dci-analytics"
+    issuer = "dci-control-server"
+    token = auth.encode_service_jwt(secret, audience, issuer, ttl_seconds=300)
+    decoded = jwt.decode(
+        token,
+        secret,
+        algorithms=["HS256"],
+        audience=audience,
+        issuer=issuer,
+    )
+    assert decoded["aud"] == audience
+    assert decoded["iss"] == issuer
+    assert decoded["sub"] == "dci-control-server"
+    assert decoded["exp"] - decoded["iat"] == 300
 
 
 def test_jwk_to_pem():

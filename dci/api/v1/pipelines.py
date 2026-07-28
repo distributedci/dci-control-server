@@ -154,9 +154,7 @@ def delete_pipeline_by_id(user, p_id):
 
     p = base.get_resource_orm(models2.Pipeline, p_id, if_match_etag)
 
-    if (
-        user.is_not_in_team(p.team_id) or user.is_read_only_user()
-    ) and user.is_not_epm():
+    if user.is_not_in_team(p.team_id) or user.is_epm():
         raise dci_exc.Unauthorized()
 
     try:

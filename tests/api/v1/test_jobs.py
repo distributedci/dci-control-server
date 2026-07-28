@@ -359,7 +359,7 @@ def test_get_all_jobs_with_pagination(
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_get_all_jobs_with_subresources(
     _,
-    client_admin,
+    client_user1,
     hmac_client_team1,
     team1_id,
     team1_remoteci_id,
@@ -372,7 +372,7 @@ def test_get_all_jobs_with_subresources(
     hmac_client_team1.post("/api/v1/jobs", data=data)
     hmac_client_team1.post("/api/v1/jobs", data=data)
 
-    jobs = client_admin.get("/api/v1/jobs").data
+    jobs = client_user1.get("/api/v1/jobs").data
 
     for job in jobs["jobs"]:
         assert "team" in job
@@ -389,7 +389,7 @@ def test_get_all_jobs_with_subresources(
 
     assert jobs["_meta"]["count"] == 2
     assert len(jobs["jobs"]) == 2
-    jobs = client_admin.get("/api/v1/jobs").data
+    jobs = client_user1.get("/api/v1/jobs").data
     for job in jobs["jobs"]:
         headers = {
             "DCI-JOB-ID": job["id"],
@@ -397,8 +397,8 @@ def test_get_all_jobs_with_subresources(
             "DCI-MIME": "application/junit",
             "Content-Type": "application/junit",
         }
-        client_admin.post("/api/v1/files", headers=headers, data=JUNIT)
-    jobs = client_admin.get("/api/v1/jobs").data
+        client_user1.post("/api/v1/files", headers=headers, data=JUNIT)
+    jobs = client_user1.get("/api/v1/jobs").data
     assert jobs["_meta"]["count"] == 2
     assert len(jobs["jobs"]) == 2
     for job in jobs["jobs"]:
@@ -620,12 +620,12 @@ def test_get_job_by_id(hmac_client_team1, rhel_80_topic_id, rhel_80_component_id
     assert "files" in job["job"]
 
 
-def test_get_jobstates_by_job_id(client_admin, client_user1, team1_job_id):
+def test_get_jobstates_by_job_id(client_user1, team1_job_id):
     data = {"status": "new", "job_id": team1_job_id}
     jobstate_ids = set(
         [
-            client_admin.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
-            client_admin.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
+            client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
+            client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
         ]
     )
 
@@ -637,18 +637,16 @@ def test_get_jobstates_by_job_id(client_admin, client_user1, team1_job_id):
     assert jobstate_ids == found_jobstate_ids
 
     # verify embed with all embedded options
-    jobstates = client_admin.get("/api/v1/jobs/%s?embed=jobstates" % team1_job_id)
+    jobstates = client_user1.get("/api/v1/jobs/%s?embed=jobstates" % team1_job_id)
     assert len(jobstates.data["job"]["jobstates"]) == len(found_jobstate_ids)
 
 
-def test_get_jobstates_by_job_id_sorted(
-    client_admin, client_user1, team1_job_id, session
-):
+def test_get_jobstates_by_job_id_sorted(client_user1, team1_job_id, session):
     data = {"status": "new", "job_id": team1_job_id}
     jobstate_ids = [
-        client_admin.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
-        client_admin.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
-        client_admin.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
+        client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
+        client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
+        client_user1.post("/api/v1/jobstates", data=data).data["jobstate"]["id"],
     ]
 
     job = client_user1.get("/api/v1/jobs/%s" % team1_job_id)
@@ -694,7 +692,7 @@ def test_get_jobstates_by_job_id_by_epm(client_epm, client_admin, team1_job_id):
 
 
 def test_get_jobstates_by_job_id_with_embed(
-    client_admin, team1_job_id, team1_jobstate_id
+    client_user1, team1_job_id, team1_jobstate_id
 ):
     with mock.patch(AWSS3, spec=S3) as mock_s3:
         mockito = mock.MagicMock()
@@ -708,16 +706,16 @@ def test_get_jobstates_by_job_id_with_embed(
         mockito.head.return_value = head_result
         mock_s3.return_value = mockito
         headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name1"}
-        pfile = client_admin.post(
+        pfile = client_user1.post(
             "/api/v1/files", headers=headers, data="kikoolol"
         ).data
         file1_id = pfile["file"]["id"]
         headers = {"DCI-JOBSTATE-ID": team1_jobstate_id, "DCI-NAME": "name2"}
-        pfile = client_admin.post(
+        pfile = client_user1.post(
             "/api/v1/files", headers=headers, data="kikoolol"
         ).data
         file2_id = pfile["file"]["id"]
-        jobstates = client_admin.get(
+        jobstates = client_user1.get(
             "/api/v1/jobs/%s/jobstates" "?embed=files" % team1_job_id
         )
         jobstate = jobstates.data["jobstates"][0]
@@ -768,7 +766,7 @@ def test_delete_job_by_id(hmac_client_team1, rhel_80_topic_id, rhel_80_component
     assert job.status_code == 404
 
 
-def test_delete_job_archive_dependencies(client_admin, team1_job_id):
+def test_delete_job_archive_dependencies(client_user1, team1_job_id):
     with mock.patch(AWSS3, spec=S3) as mock_s3:
         mockito = mock.MagicMock()
 
@@ -787,19 +785,19 @@ def test_delete_job_archive_dependencies(client_admin, team1_job_id):
             "Content-Type": "text/plain",
         }
 
-        file = client_admin.post("/api/v1/files", headers=headers, data="content")
+        file = client_user1.post("/api/v1/files", headers=headers, data="content")
         assert file.status_code == 201
 
         url = "/api/v1/jobs/%s" % team1_job_id
-        job = client_admin.get(url)
+        job = client_user1.get(url)
         etag = job.data["job"]["etag"]
         assert job.status_code == 200
 
-        deleted_job = client_admin.delete(url, headers={"If-match": etag})
+        deleted_job = client_user1.delete(url, headers={"If-match": etag})
         assert deleted_job.status_code == 204
 
         url = "/api/v1/files/%s" % file.data["file"]["id"]
-        file = client_admin.get(url)
+        file = client_user1.get(url)
         assert file.status_code == 404
 
 

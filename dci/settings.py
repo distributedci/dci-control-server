@@ -80,6 +80,10 @@ AMQP_BROKER_URL = os.getenv("AMQP_BROKER_URL", "amqp://guest:guest@rabbitmq:5672
 
 # Analytics
 ANALYTICS_URL = os.getenv("ANALYTICS_URL", "http://dci-analytics:2345")
+ANALYTICS_JWT_SECRET = os.getenv("ANALYTICS_JWT_SECRET", "")
+ANALYTICS_JWT_AUDIENCE = os.getenv("ANALYTICS_JWT_AUDIENCE", "dci-analytics")
+ANALYTICS_JWT_ISSUER = os.getenv("ANALYTICS_JWT_ISSUER", "dci-control-server")
+ANALYTICS_JWT_TTL_SECONDS = int(os.getenv("ANALYTICS_JWT_TTL_SECONDS", "300"))
 
 
 # Logging related parameters

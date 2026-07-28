@@ -227,3 +227,84 @@ def test_get_component_file_from_rhdl_handles_404_json_without_message_field(
     assert "message" in response_data
     # When RHDL JSON has no "message" field, the entire JSON is used
     assert response_data["message"] == {"status_code": "404", "error": "File not found"}
+
+
+def test_get_component_file_blocks_path_traversal(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    test_cases = [
+        "../etc/passwd",
+        "./../etc/passwd",
+        "dir/../../etc/passwd",
+    ]
+    for payload in test_cases:
+        r = hmac_client_team1.get(
+            f"/api/v2/components/{rhel_80_component['id']}/files/{payload}"
+        )
+        assert r.status_code == 400, f"Failed to block path traversal: {payload}"
+
+
+def test_get_component_file_blocks_url_encoded_traversal(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    test_cases = [
+        "..%2Fetc%2Fpasswd",
+        "%2e%2e%2Fetc%2Fpasswd",
+        "%2e%2e/etc/passwd",
+        "..%2F..%2Fetc%2Fpasswd",
+        "%2e%2e%2F%2e%2e%2Fetc%2Fpasswd",
+    ]
+    for payload in test_cases:
+        r = hmac_client_team1.get(
+            f"/api/v2/components/{rhel_80_component['id']}/files/{payload}"
+        )
+        assert r.status_code == 400, f"Failed to block URL-encoded traversal: {payload}"
+
+
+def test_get_component_file_blocks_double_url_encoded_traversal(
+    hmac_client_team1,
+    rhel_80_component,
+):
+    test_cases = [
+        "%252e%252e%252Fetc%252Fpasswd",
+        "%252e%252e%252F%252e%252e%252Fetc%252Fpasswd",
+    ]
+    for payload in test_cases:
+        r = hmac_client_team1.get(
+            f"/api/v2/components/{rhel_80_component['id']}/files/{payload}"
+        )
+        assert (
+            r.status_code == 400
+        ), f"Failed to block double-encoded traversal: {payload}"
+
+
+def test_component_with_malicious_display_name_blocked(
+    hmac_client_team1,
+    rhel_80_component,
+    engine,
+):
+    from dci.db import models2
+
+    malicious_display_names = [
+        "../../etc",
+        "../component",
+        "valid/../invalid",
+        "path/with/slash",
+    ]
+
+    for display_name in malicious_display_names:
+        with engine.begin() as conn:
+            conn.execute(
+                models2.Component.__table__.update()
+                .where(models2.Component.id == rhel_80_component["id"])
+                .values(display_name=display_name)
+            )
+
+        r = hmac_client_team1.get(
+            f"/api/v2/components/{rhel_80_component['id']}/files/test.txt"
+        )
+        assert (
+            r.status_code == 400
+        ), f"Failed to block malicious display_name: {display_name}"

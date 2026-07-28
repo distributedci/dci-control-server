@@ -15,6 +15,7 @@
 # under the License.
 
 import os
+import re
 
 import flask
 import logging
@@ -32,16 +33,41 @@ from dciauth.signature import HmacAuthBase
 logger = logging.getLogger(__name__)
 
 
+def _reject_url_encoded_characters(text: str) -> None:
+    if re.search(r"%[0-9a-fA-F]{2}", text):
+        raise dci_exc.DCIException("Request malformed: contains URL-encoded characters")
+
+
+def _reject_slash_in_component_name(component_name: str) -> None:
+    if "/" in component_name:
+        raise dci_exc.DCIException(
+            "Request malformed: display_name contains invalid characters"
+        )
+
+
+def _normalize_component_filepath(component_id: str, filepath: str) -> str:
+    component_id_filepath = os.path.join(component_id, filepath)
+    normalized_component_id_filepath = os.path.normpath(
+        "/" + component_id_filepath
+    ).lstrip("/")
+
+    if component_id_filepath != normalized_component_id_filepath:
+        raise dci_exc.DCIException("Request malformed: filepath is invalid")
+
+    return normalized_component_id_filepath
+
+
 def get_component_file_from_rhdl(filepath, component):
     if filepath == "dci_files_list.json":
         filepath = "rhdl_files_list.json"
-    normalized_filepath = os.path.normpath("/" + filepath).lstrip("/")
-    normalized_rhdl_component_filepath = os.path.join(
-        component.display_name, "files", normalized_filepath
+
+    _reject_url_encoded_characters(filepath)
+    _reject_url_encoded_characters(component.display_name)
+    _reject_slash_in_component_name(component.display_name)
+
+    normalized_rhdl_component_filepath = _normalize_component_filepath(
+        os.path.join(component.display_name, "files"), filepath
     )
-    rhdl_component_filepath = os.path.join(component.display_name, "files", filepath)
-    if rhdl_component_filepath != normalized_rhdl_component_filepath:
-        raise dci_exc.DCIException("Request malformed: filepath is invalid")
 
     rhdl_file_url = os.path.join(
         CONFIG["RHDL_API_URL"], "components", normalized_rhdl_component_filepath
