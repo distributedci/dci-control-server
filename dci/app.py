@@ -32,6 +32,7 @@ import flask
 import logging
 import sys
 import time
+from flask_jwt_extended import JWTManager
 from sqlalchemy import exc as sa_exc, select
 from sqlalchemy.orm import sessionmaker
 
@@ -171,5 +172,8 @@ def create_app(param=None):
     # Registering custom json provider
     dci_app.json_provider_class = utils.DCIJSONProvider
     dci_app.json = utils.DCIJSONProvider(dci_app)
+
+    # Configure JWT manager
+    JWTManager(dci_app)
 
     return dci_app
