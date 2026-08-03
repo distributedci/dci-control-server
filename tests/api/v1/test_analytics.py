@@ -17,7 +17,6 @@
 from __future__ import unicode_literals
 
 import mock
-from requests.exceptions import ConnectionError, ReadTimeout
 import uuid
 
 from dci.api.v1 import analytics
@@ -25,56 +24,69 @@ from dci.analytics import query_es_dsl as qed
 
 
 @mock.patch("dci.api.v1.analytics.analytics_request")
-def test_elasticsearch_ressource_not_found(
+def test_tasks_duration_cumulated_calls_analytics_backend(
     mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
 ):
-    mock_404 = mock.MagicMock()
-    mock_404.status_code = 404
-    mock_requests.return_value = mock_404
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_res.json.return_value = {
+        "total": {"value": 0, "relation": "eq"},
+        "max_score": None,
+        "hits": [],
+    }
+    mock_requests.return_value = mock_res
+
     res = client_admin.get(
         "/api/v1/analytics/tasks_duration_cumulated?remoteci_id=%s&topic_id=%s"
         % (team2_remoteci_id, rhel_80_topic_id)
     )
-    assert res.status_code == 404
+
+    assert res.status_code == 200
+    assert res.data == {
+        "total": {"value": 0, "relation": "eq"},
+        "max_score": None,
+        "hits": [],
+    }
+    mock_requests.assert_called_once_with(
+        "GET",
+        "/duration_cumulated",
+        params={
+            "topic_id": str(rhel_80_topic_id),
+            "remoteci_id": str(team2_remoteci_id),
+            "offset": 0,
+            "limit": 20,
+        },
+    )
 
 
 @mock.patch("dci.api.v1.analytics.analytics_request")
-def test_elasticsearch_error(
-    mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
+def test_tasks_components_coverage_calls_analytics_backend(
+    mock_requests, client_admin, rhel_80_topic_id
 ):
-    mock_error = mock.MagicMock()
-    mock_error.status_code = 400
-    mock_error.text = "error"
-    mock_requests.return_value = mock_error
+    mock_res = mock.MagicMock()
+    mock_res.status_code = 200
+    mock_res.json.return_value = {
+        "total": {"value": 0, "relation": "eq"},
+        "max_score": None,
+        "hits": [],
+    }
+    mock_requests.return_value = mock_res
+
     res = client_admin.get(
-        "/api/v1/analytics/tasks_duration_cumulated?remoteci_id=%s&topic_id=%s"
-        % (team2_remoteci_id, rhel_80_topic_id)
+        "/api/v1/analytics/tasks_components_coverage?topic_id=%s" % rhel_80_topic_id
     )
-    assert res.status_code == 400
 
-
-@mock.patch("dci.api.v1.analytics.analytics_request")
-def test_elasticsearch_connection_error(
-    mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
-):
-    mock_requests.side_effect = ConnectionError()
-    res = client_admin.get(
-        "/api/v1/analytics/tasks_duration_cumulated?remoteci_id=%s&topic_id=%s"
-        % (team2_remoteci_id, rhel_80_topic_id)
+    assert res.status_code == 200
+    assert res.data == {
+        "total": {"value": 0, "relation": "eq"},
+        "max_score": None,
+        "hits": [],
+    }
+    mock_requests.assert_called_once_with(
+        "GET",
+        "/components_coverage",
+        params={"topic_id": str(rhel_80_topic_id), "team_id": "red_hat", "types": []},
     )
-    assert res.status_code == 503
-
-
-@mock.patch("dci.api.v1.analytics.analytics_request")
-def test_elasticsearch_read_timeout(
-    mock_requests, client_admin, team2_remoteci_id, rhel_80_topic_id
-):
-    mock_requests.side_effect = ReadTimeout()
-    res = client_admin.get(
-        "/api/v1/analytics/tasks_duration_cumulated?remoteci_id=%s&topic_id=%s"
-        % (team2_remoteci_id, rhel_80_topic_id)
-    )
-    assert res.status_code == 503
 
 
 @mock.patch("dci.api.v1.analytics.analytics_request")
