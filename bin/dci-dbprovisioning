@@ -24,74 +24,82 @@ from dciauth.signature import HmacAuthBase
 
 DCI_HOST = settings.HOST
 DCI_PORT = settings.PORT
-DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin")
+DCI_LOGIN = os.environ.get("DCI_LOGIN", "admin@example.org")
 DCI_PASSWORD = os.environ.get("DCI_PASSWORD", "admin")
 DEFAULT_DCI_CS_URL = f"http://{DCI_HOST}:{DCI_PORT}"
 DCI_CS_URL = os.environ.get("DCI_CS_URL", DEFAULT_DCI_CS_URL)
 
-PARTNER = (
-    "partner",
-    "partner",
-)
+JWT_TOKENS = {}  # {"admin": {"access": "...", "refresh": "..."}, "partner": {...}}
 
 
 def get_url(endpoint, subresource=None):
     return "%s/api/v1/%s" % (DCI_CS_URL, endpoint)
 
 
+def login(email=DCI_LOGIN, password=DCI_PASSWORD, user_key="admin"):
+    url = get_url("auth/login")
+    r = requests.post(url, json={"email": email, "password": password})
+    r.raise_for_status()
+    tokens = r.json()
+    JWT_TOKENS[user_key] = {
+        "access": tokens["access_token"],
+        "refresh": tokens["refresh_token"],
+    }
+
+
 def get(
     endpoint,
-    user=(
-        DCI_LOGIN,
-        DCI_PASSWORD,
-    ),
     params={},
+    user="admin",
 ):
     url = get_url(endpoint)
     print("-------------")
     print("GET %s" % url)
-    return requests.get(url, auth=user, params=params)
+    token = JWT_TOKENS[user]["access"]
+    return requests.get(
+        url, params=params, headers={"Authorization": f"JWTBearer {token}"}
+    )
 
 
 def post(
     endpoint,
     data,
-    user=(
-        DCI_LOGIN,
-        DCI_PASSWORD,
-    ),
+    user="admin",
 ):
     url = get_url(endpoint)
     print("-------------")
     print("POST %s" % url)
     print(json.dumps(data, indent=2))
-    return requests.post(url, json=data, auth=user)
+    token = JWT_TOKENS[user]["access"]
+    return requests.post(
+        url, json=data, headers={"Authorization": f"JWTBearer {token}"}
+    )
 
 
 def associate_user_to_team(
     team_id,
     user_id,
-    user=(
-        DCI_LOGIN,
-        DCI_PASSWORD,
-    ),
+    user="admin",
 ):
     url = "%s/api/v1/teams/%s/users/%s" % (DCI_CS_URL, team_id, user_id)
     print("-------------")
     print("POST %s" % url)
-    return requests.post(url, json={}, auth=user)
+    token = JWT_TOKENS[user]["access"]
+    return requests.post(
+        url, json={}, headers={"Authorization": f"JWTBearer {token}"}
+    )
 
 
 def delete(
     endpoint,
-    user=(
-        DCI_LOGIN,
-        DCI_PASSWORD,
-    ),
+    user="admin",
 ):
     url = get_url(endpoint)
     print("DELETE %s" % url)
-    return requests.delete(url, auth=user)
+    token = JWT_TOKENS[user]["access"]
+    return requests.delete(
+        url, headers={"Authorization": f"JWTBearer {token}"}
+    )
 
 
 def get_or_create_team(name):
@@ -278,7 +286,7 @@ def create_jobs(topics, remotecis, teams):
         r = requests.post("%s/api/v1/jobs" % DCI_CS_URL, auth=auth, json=job)
         r.raise_for_status()
 
-    return get("jobs", PARTNER).json()["jobs"]
+    return get("jobs", user="partner").json()["jobs"]
 
 
 def create_job_states(jobs):
@@ -289,13 +297,15 @@ def create_job_states(jobs):
         {"job_id": jobs[1]["id"], "status": "error"},
     ]
     for jobstate in jobstates:
-        post("jobstates", jobstate, PARTNER)
+        post("jobstates", jobstate, user="partner")
 
 
-def create_file(job_id, file_name, file_path, user, content_type="application/junit"):
+def create_file(job_id, file_name, file_path, content_type="application/junit", user="admin"):
     file_path = os.path.join(file_path)
     data = open(file_path, "rb").read()
+    token = JWT_TOKENS[user]["access"]
     headers = {
+        "Authorization": f"JWTBearer {token}",
         "DCI-JOB-ID": job_id,
         "DCI-NAME": file_name,
         "DCI-MIME": content_type,
@@ -303,34 +313,36 @@ def create_file(job_id, file_name, file_path, user, content_type="application/ju
         "Content-Type": content_type,
     }
     return requests.post(
-        "%s/api/v1/files" % DCI_CS_URL, data=data, headers=headers, auth=user
+        "%s/api/v1/files" % DCI_CS_URL, data=data, headers=headers
     )
 
 
 def create_files(jobs):
-    create_file(jobs[0]["id"], "Tempest", "tests/data/tempest-results.xml", PARTNER)
-    create_file(jobs[0]["id"], "Rally", "tests/data/rally-results.xml", PARTNER)
+    create_file(jobs[0]["id"], "Tempest", "tests/data/tempest-results.xml", user="partner")
+    create_file(jobs[0]["id"], "Rally", "tests/data/rally-results.xml", user="partner")
     create_file(
         jobs[0]["id"],
         "Multiple testsuite",
         "tests/data/junit_with_multiple_testsuite.xml",
-        PARTNER,
+        user="partner",
     )
     create_file(
         jobs[0]["id"],
         "certification.xml.gz",
         "tests/data/certification.xml.tar.gz",
-        PARTNER,
         "application/x-compressed",
+        user="partner",
     )
 
 
 def wait_db_ready():
     while True:
         try:
+            login()
             r = get("identity")
             if r.status_code == 200:
                 break
+            print(r.content)
         except requests.exceptions.ConnectionError:
             continue
         finally:
@@ -341,6 +353,8 @@ def main():
     wait_db_ready()
     teams = create_teams()
     create_users(teams)
+    # Login as partner user to get their JWT token
+    login("partner@example.org", "partner", user_key="partner")
     products = create_products()
     associate_products_to_teams(products, teams)
     topics = create_topics(products)
