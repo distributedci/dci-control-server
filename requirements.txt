@@ -5,7 +5,9 @@ pytz
 psycopg[binary,pool]
 pyOpenSSL
 jsonschema
-SQLAlchemy
+# Pinning SQLAlchemy to avoid v2.1, due to
+# https://github.com/kvesteri/sqlalchemy-utils/issues/829
+SQLAlchemy>=2.0.0,<2.1.0
 alembic
 six
 requests
