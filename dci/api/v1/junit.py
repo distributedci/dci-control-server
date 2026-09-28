@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import io
 from xml.etree import ElementTree
 from xml.parsers.expat import errors as xml_errors
 from datetime import timedelta
@@ -60,10 +61,13 @@ def parse_testcase(testcase_xml):
             "failure",
             "system-out",
             "system-err",
+            "properties",
         ]:
             continue
         text = testcase_child.text
-        if tag == "system-out":
+        if tag == "properties":
+            testcase["properties"] = parse_properties(testcase_child)
+        elif tag == "system-out":
             testcase["stdout"] = text
         elif tag == "system-err":
             testcase["stderr"] = text
@@ -213,6 +217,64 @@ def update_testsuites_with_testcase_changes(testsuites1, testsuites2):
         previous_testsuite = testsuites1_map.get(testsuite["name"])
         testsuites.append(_compare_testsuites(previous_testsuite, testsuite))
     return testsuites
+
+
+class JunitUpdateError(Exception):
+    pass
+
+
+def _normalized_text(value):
+    if not value or not value.strip():
+        return ""
+    return value
+
+
+def _as_xml_source(source):
+    if hasattr(source, "read"):
+        return source
+    if isinstance(source, str):
+        source = source.encode("utf-8")
+    return io.BytesIO(source)
+
+
+def _iter_structure(source):
+    """Yield structural XML events, skipping testcase properties."""
+    stack = []
+    skip_depth = 0
+    for event, elem in ElementTree.iterparse(source, events=("start", "end")):
+        if event == "start":
+            parent = stack[-1] if stack else None
+            stack.append(elem.tag)
+            if skip_depth:
+                skip_depth += 1
+            elif parent == "testcase" and elem.tag == "properties":
+                skip_depth = 1
+            else:
+                yield ("start", elem.tag, tuple(sorted(elem.attrib.items())))
+        else:
+            stack.pop()
+            if skip_depth:
+                skip_depth -= 1
+            else:
+                text = _normalized_text(elem.text)
+                if text:
+                    yield ("text", text)
+                yield ("end", elem.tag)
+            elem.clear()
+
+
+def ensure_only_testcase_properties_changed(previous, new):
+    """Reject a JUnit update that changes anything but testcase properties."""
+    previous_events = _iter_structure(_as_xml_source(previous))
+    new_events = _iter_structure(_as_xml_source(new))
+    sentinel = object()
+    while True:
+        previous_event = next(previous_events, sentinel)
+        new_event = next(new_events, sentinel)
+        if previous_event is sentinel and new_event is sentinel:
+            return
+        if previous_event != new_event:
+            raise JunitUpdateError("Only testcase properties may be changed")
 
 
 def calculate_test_results(testsuites):
