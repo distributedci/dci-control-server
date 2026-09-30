@@ -15,7 +15,9 @@
 # under the License.
 
 from io import BytesIO
+import pytest
 from dci.api.v1 import junit
+from tests import data as tests_data
 
 
 def test_get_testsuites_from_junit():
@@ -375,3 +377,77 @@ def test_nrt_testsuites_successfix_with_prev_skipped():
             "state": "ADDED",
         }
     ]
+
+
+def test_get_testsuites_from_junit_with_properties():
+    junit_file = BytesIO(tests_data.JUNIT_with_properties.encode("utf-8"))
+    testsuites = junit.get_testsuites_from_junit(junit_file)
+    assert len(testsuites) == 1
+    assert testsuites[0]["properties"] == [
+        {"name": "p1", "value": "v1"},
+        {"name": "p2", "value": "v2"},
+    ]
+    properties_by_testcase = {
+        testcase["name"]: testcase["properties"]
+        for testcase in testsuites[0]["testcases"]
+    }
+    assert properties_by_testcase == {
+        "test_1": [
+            {"name": "p3", "value": "v3"},
+            {"name": "p4", "value": "v4"},
+        ],
+        "test_2": [
+            {"name": "p5", "value": "v5"},
+            {"name": "p6", "value": "v6"},
+        ],
+        "test_3": [],
+        "test_4": [],
+        "test_5": [],
+        "test_6": [],
+    }
+
+
+def test_ensure_only_testcase_properties_changed_allows_add_modify_delete():
+    original = tests_data.JUNIT
+    junit.ensure_only_testcase_properties_changed(original, tests_data.JUNIT)
+
+    added = tests_data.JUNIT_with_testcase_properties
+    junit.ensure_only_testcase_properties_changed(original, added)
+
+    updated = tests_data.JUNIT_with_testcase_properties_updated
+    junit.ensure_only_testcase_properties_changed(added, updated)
+
+    reordered = added.replace(
+        '<property name="p3" value="v3"></property>\n'
+        '            <property name="p4" value="v4"></property>',
+        '<property name="p4" value="v4"></property>\n'
+        '            <property name="p3" value="v3"></property>',
+    )
+    junit.ensure_only_testcase_properties_changed(added, reordered)
+
+
+def test_ensure_only_testcase_properties_changed_rejects_other_changes():
+    original = tests_data.JUNIT
+
+    with pytest.raises(junit.JunitUpdateError):
+        junit.ensure_only_testcase_properties_changed(
+            original, tests_data.JUNIT_with_properties
+        )
+
+    changed_stdout = original.replace(
+        "<system-out>STDOUT</system-out>",
+        "<system-out>other</system-out>",
+    )
+    with pytest.raises(junit.JunitUpdateError):
+        junit.ensure_only_testcase_properties_changed(original, changed_stdout)
+
+    changed_action = original.replace(
+        '<skipped message="skip message" type="skipped">test skipped</skipped>',
+        '<failure message="failure message" type="failure">test in failure</failure>',
+    )
+    with pytest.raises(junit.JunitUpdateError):
+        junit.ensure_only_testcase_properties_changed(original, changed_action)
+
+    changed_suite_tests = original.replace('tests="6"', 'tests="600"', 1)
+    with pytest.raises(junit.JunitUpdateError):
+        junit.ensure_only_testcase_properties_changed(original, changed_suite_tests)

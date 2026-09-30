@@ -625,6 +625,149 @@ def test_tests_results_table_with_multiple_testsuites(
     assert test_result.time == 24
 
 
+def _junit_headers(job_id, name):
+    return {
+        "DCI-JOB-ID": job_id,
+        "DCI-NAME": name,
+        "DCI-MIME": "application/junit",
+        "Content-Disposition": "attachment; filename=%s" % name,
+        "Content-Type": "application/junit",
+    }
+
+
+def _tests_result_counters(test_result):
+    return (
+        test_result.total,
+        test_result.skips,
+        test_result.failures,
+        test_result.errors,
+        test_result.success,
+        test_result.regressions,
+        test_result.successfixes,
+        test_result.time,
+    )
+
+
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_update_junit_file_content_updates_testcase_properties(
+    _, engine, client_user1, team1_job_id
+):
+    created = client_user1.post(
+        "/api/v1/files",
+        headers=_junit_headers(team1_job_id, "junit_file.xml"),
+        data=tests_data.JUNIT,
+    )
+    assert created.status_code == 201
+    file_id = created.data["file"]["id"]
+
+    query = sql.select(models2.TestsResult).where(
+        models2.TestsResult.file_id == file_id
+    )
+    with engine.connect() as conn:
+        original = conn.execute(query).fetchone()
+    original_counters = _tests_result_counters(original)
+
+    added = client_user1.put(
+        "/api/v1/files/%s/content" % file_id,
+        headers={"Content-Type": "application/junit"},
+        data=tests_data.JUNIT_with_testcase_properties,
+    )
+    assert added.status_code == 204
+    content = client_user1.get("/api/v1/files/%s/content" % file_id)
+    assert content.data == tests_data.JUNIT_with_testcase_properties
+
+    updated = client_user1.put(
+        "/api/v1/files/%s/content" % file_id,
+        headers={"Content-Type": "application/junit"},
+        data=tests_data.JUNIT_with_testcase_properties_updated,
+    )
+    assert updated.status_code == 204
+    content = client_user1.get("/api/v1/files/%s/content" % file_id)
+    assert content.data == tests_data.JUNIT_with_testcase_properties_updated
+
+    with engine.connect() as conn:
+        tests_results = conn.execute(query).fetchall()
+    assert len(tests_results) == 1
+    test_result = tests_results[0]
+    assert test_result.id == original.id
+    assert test_result.name == "junit_file.xml"
+    assert _tests_result_counters(test_result) == original_counters
+
+
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_update_junit_file_content_rejects_other_changes(
+    _, engine, client_user1, team1_job_id
+):
+    created = client_user1.post(
+        "/api/v1/files",
+        headers=_junit_headers(team1_job_id, "junit_file.xml"),
+        data=tests_data.JUNIT,
+    )
+    assert created.status_code == 201
+    file_id = created.data["file"]["id"]
+
+    query = sql.select(models2.TestsResult).where(
+        models2.TestsResult.file_id == file_id
+    )
+    with engine.connect() as conn:
+        original = conn.execute(query).fetchone()
+    original_counters = _tests_result_counters(original)
+
+    updated = client_user1.put(
+        "/api/v1/files/%s/content" % file_id,
+        headers={"Content-Type": "application/junit"},
+        data=tests_data.jobtest_two,
+    )
+    assert updated.status_code == 400
+    assert updated.data["message"] == "Only testcase properties may be changed"
+
+    content = client_user1.get("/api/v1/files/%s/content" % file_id)
+    assert content.data == tests_data.JUNIT
+
+    with engine.connect() as conn:
+        tests_results = conn.execute(query).fetchall()
+    assert len(tests_results) == 1
+    assert tests_results[0].id == original.id
+    assert _tests_result_counters(tests_results[0]) == original_counters
+
+
+@mock.patch("dci.app.dci_kombu.KombuProducer")
+def test_update_junit_file_content_invalid_xml_keeps_previous_content(
+    _, engine, client_user1, team1_job_id
+):
+    created = client_user1.post(
+        "/api/v1/files",
+        headers=_junit_headers(team1_job_id, "junit_file.xml"),
+        data=tests_data.JUNIT,
+    )
+    assert created.status_code == 201
+    file_id = created.data["file"]["id"]
+
+    query = sql.select(models2.TestsResult).where(
+        models2.TestsResult.file_id == file_id
+    )
+    with engine.connect() as conn:
+        original = conn.execute(query).fetchone()
+    original_counters = _tests_result_counters(original)
+
+    updated = client_user1.put(
+        "/api/v1/files/%s/content" % file_id,
+        headers={"Content-Type": "application/junit"},
+        data="garbage<>!",
+    )
+    assert updated.status_code == 400
+    assert updated.data["message"].startswith("Invalid XML: ")
+
+    content = client_user1.get("/api/v1/files/%s/content" % file_id)
+    assert content.data == tests_data.JUNIT
+
+    with engine.connect() as conn:
+        tests_results = conn.execute(query).fetchall()
+    assert len(tests_results) == 1
+    assert tests_results[0].id == original.id
+    assert _tests_result_counters(tests_results[0]) == original_counters
+
+
 @mock.patch("dci.app.dci_kombu.KombuProducer")
 def test_upload_tests_with_invalid_xml(
     _, hmac_client_team1, rhel_80_topic, rhel_80_component_id

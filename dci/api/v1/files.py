@@ -92,22 +92,17 @@ def _get_previous_testsuites(prev_job, filename):
     return junit.get_testsuites_from_junit(file_descriptor)
 
 
-def _calculate_and_save_test_results(values, junit_file, job):
+def _calculate_test_results(junit_file, job, filename):
     prev_job = get_previous_job_in_topic(job)
-    previous_testsuites = _get_previous_testsuites(prev_job, values["name"])
+    previous_testsuites = _get_previous_testsuites(prev_job, filename)
     testsuites = junit.get_testsuites_from_junit(junit_file)
     testsuites = junit.update_testsuites_with_testcase_changes(
         previous_testsuites, testsuites
     )
-    tests_results = junit.calculate_test_results(testsuites)
+    return junit.calculate_test_results(testsuites)
 
-    tr = models2.TestsResult()
-    tr.id = utils.gen_uuid()
-    tr.created_at = values["created_at"]
-    tr.updated_at = time.get_utc_now().isoformat()
-    tr.file_id = values["id"]
-    tr.job_id = job.id
-    tr.name = values["name"]
+
+def _assign_test_results(tr, tests_results):
     tr.success = tests_results["success"]
     tr.failures = tests_results["failures"]
     tr.errors = tests_results["errors"]
@@ -116,6 +111,19 @@ def _calculate_and_save_test_results(values, junit_file, job):
     tr.skips = tests_results["skipped"]
     tr.total = tests_results["tests"]
     tr.time = tests_results["time"]
+
+
+def _calculate_and_save_test_results(values, junit_file, job):
+    tests_results = _calculate_test_results(junit_file, job, values["name"])
+
+    tr = models2.TestsResult()
+    tr.id = utils.gen_uuid()
+    tr.created_at = values["created_at"]
+    tr.updated_at = time.get_utc_now().isoformat()
+    tr.file_id = values["id"]
+    tr.job_id = job.id
+    tr.name = values["name"]
+    _assign_test_results(tr, tests_results)
 
     try:
         flask.g.session.add(tr)
@@ -126,6 +134,24 @@ def _calculate_and_save_test_results(values, junit_file, job):
     except Exception as e:
         flask.g.session.rollback()
         raise dci_exc.DCIException(message=str(e))
+
+
+def _upsert_test_results(file, job, tests_results):
+    query = select(models2.TestsResult).where(models2.TestsResult.file_id == file.id)
+    rows = flask.g.session.execute(query).scalars().all()
+    now = time.get_utc_now()
+    if not rows:
+        tr = models2.TestsResult()
+        tr.id = utils.gen_uuid()
+        tr.created_at = now
+        tr.file_id = file.id
+        tr.job_id = job.id
+        tr.name = file.name
+        flask.g.session.add(tr)
+        rows = [tr]
+    for tr in rows:
+        tr.updated_at = now
+        _assign_test_results(tr, tests_results)
 
 
 def get_file_info_from_headers(headers):
@@ -278,6 +304,50 @@ def get_file_content(user, file_id):
         as_attachment=True,
         download_name=file.name.replace(" ", "_"),
     )
+
+
+@api.route("/files/<uuid:file_id>/content", methods=["PUT"])
+@decorators.login_required
+def update_file_content(user, file_id):
+    file = base.get_resource_orm(models2.File, file_id)
+    if user.is_not_in_team(file.team_id) or user.is_epm():
+        raise dci_exc.Unauthorized()
+    if file.mime != "application/junit":
+        raise dci_exc.DCIException(
+            "Only application/junit files can be updated", status_code=400
+        )
+
+    job = base.get_resource_orm(models2.Job, file.job_id)
+    content = flask.request.data
+    try:
+        stored = get_file_descriptor(file).read()
+        junit.ensure_only_testcase_properties_changed(stored, content)
+    except xml.etree.ElementTree.ParseError as xmlerror:
+        raise dci_exc.DCIException(message="Invalid XML: " + xmlerror.msg)
+    except junit.JunitUpdateError as error:
+        raise dci_exc.DCIException(message=str(error), status_code=400)
+
+    tests_results = _calculate_test_results(io.BytesIO(content), job, file.name)
+
+    store = flask.g.store
+    file_path = files_utils.build_file_path(file.team_id, file.job_id, file.id)
+    store.upload("files", file_path, io.BytesIO(content))
+    logger.info("store upload %s (%s)" % (file.name, file.id))
+    s_file = store.head("files", file_path)
+    file.size = s_file.get("content-length", s_file.get("ContentLength"))
+    file.updated_at = time.get_utc_now()
+    _upsert_test_results(file, job, tests_results)
+    job.etag = utils.gen_etag()
+    try:
+        flask.g.session.commit()
+    except Exception as e:
+        flask.g.session.rollback()
+        raise dci_exc.DCIException(message=str(e), status_code=409)
+
+    if job.status in models2.FINAL_STATUSES:
+        flask.g.messaging.publish_jobs_updated({"job_id": str(job.id)})
+
+    return flask.Response(None, 204, content_type="application/json")
 
 
 @api.route("/files/<uuid:file_id>", methods=["DELETE"])

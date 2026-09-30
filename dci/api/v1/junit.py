@@ -60,10 +60,13 @@ def parse_testcase(testcase_xml):
             "failure",
             "system-out",
             "system-err",
+            "properties",
         ]:
             continue
         text = testcase_child.text
-        if tag == "system-out":
+        if tag == "properties":
+            testcase["properties"] = parse_properties(testcase_child)
+        elif tag == "system-out":
             testcase["stdout"] = text
         elif tag == "system-err":
             testcase["stderr"] = text
@@ -213,6 +216,38 @@ def update_testsuites_with_testcase_changes(testsuites1, testsuites2):
         previous_testsuite = testsuites1_map.get(testsuite["name"])
         testsuites.append(_compare_testsuites(previous_testsuite, testsuite))
     return testsuites
+
+
+class JunitUpdateError(Exception):
+    pass
+
+
+def _normalized_text(value):
+    if not value or not value.strip():
+        return ""
+    return value
+
+
+def _xml_without_testcase_properties(element):
+    children = []
+    for child in list(element):
+        if element.tag == "testcase" and child.tag == "properties":
+            continue
+        children.append(_xml_without_testcase_properties(child))
+    return (
+        element.tag,
+        tuple(sorted(element.attrib.items())),
+        _normalized_text(element.text),
+        tuple(children),
+    )
+
+
+def ensure_only_testcase_properties_changed(previous_xml, new_xml):
+    """Reject a JUnit update that changes anything but testcase properties."""
+    previous = _xml_without_testcase_properties(ElementTree.fromstring(previous_xml))
+    new = _xml_without_testcase_properties(ElementTree.fromstring(new_xml))
+    if previous != new:
+        raise JunitUpdateError("Only testcase properties may be changed")
 
 
 def calculate_test_results(testsuites):
