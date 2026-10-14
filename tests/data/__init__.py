@@ -34,6 +34,95 @@ JUNIT = """<testsuite errors="1" failures="1" name="pytest" skipped="1" tests="6
 </testsuite>
 """
 
+JUNIT_with_properties = """<testsuite errors="1" failures="1" name="pytest" skipped="1" tests="6" time="4.04239122">
+    <properties>
+        <property name="p1" value="v1"></property>
+        <property name="p2" value="v2"></property>
+    </properties>
+    <testcase classname="classname_1" name="test_1" time="0.02311568802">
+        <skipped message="skip message" type="skipped">test skipped</skipped>
+        <properties>
+            <property name="p3" value="v3"></property>
+            <property name="p4" value="v4"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_2" time="0.91562318802">
+        <error message="error message" type="error">test in error</error>
+        <properties>
+            <property name="p5" value="v5"></property>
+            <property name="p6" value="v6"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_3" time="0.18802915623">
+        <failure message="failure message" type="failure">test in failure</failure>
+        <properties></properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_4" time="2.91562318802"/>
+    <testcase classname="classname_1" name="test_5" time="3.23423443444">
+        <system-out>STDOUT</system-out>
+        <properties></properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_6" time="2.48294832443">
+        <system-err>STDERR</system-err>
+        <properties></properties>
+    </testcase>
+</testsuite>
+"""
+
+JUNIT_with_testcase_properties = """<testsuite errors="1" failures="1" name="pytest" skipped="1" tests="6" time="4.04239122">
+    <testcase classname="classname_1" name="test_1" time="0.02311568802">
+        <skipped message="skip message" type="skipped">test skipped</skipped>
+        <properties>
+            <property name="p3" value="v3"></property>
+            <property name="p4" value="v4"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_2" time="0.91562318802">
+        <error message="error message" type="error">test in error</error>
+        <properties>
+            <property name="p5" value="v5"></property>
+            <property name="p6" value="v6"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_3" time="0.18802915623">
+        <failure message="failure message" type="failure">test in failure</failure>
+    </testcase>
+    <testcase classname="classname_1" name="test_4" time="2.91562318802"/>
+    <testcase classname="classname_1" name="test_5" time="3.23423443444">
+        <system-out>STDOUT</system-out>
+    </testcase>
+    <testcase classname="classname_1" name="test_6" time="2.48294832443">
+        <system-err>STDERR</system-err>
+    </testcase>
+</testsuite>
+"""
+
+JUNIT_with_testcase_properties_updated = """<testsuite errors="1" failures="1" name="pytest" skipped="1" tests="6" time="4.04239122">
+    <testcase classname="classname_1" name="test_1" time="0.02311568802">
+        <skipped message="skip message" type="skipped">test skipped</skipped>
+        <properties>
+            <property name="p3" value="v3-updated"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_2" time="0.91562318802">
+        <error message="error message" type="error">test in error</error>
+        <properties>
+            <property name="p6" value="v6"></property>
+        </properties>
+    </testcase>
+    <testcase classname="classname_1" name="test_3" time="0.18802915623">
+        <failure message="failure message" type="failure">test in failure</failure>
+    </testcase>
+    <testcase classname="classname_1" name="test_4" time="2.91562318802"/>
+    <testcase classname="classname_1" name="test_5" time="3.23423443444">
+        <system-out>STDOUT</system-out>
+    </testcase>
+    <testcase classname="classname_1" name="test_6" time="2.48294832443">
+        <system-err>STDERR</system-err>
+    </testcase>
+</testsuite>
+"""
+
 jobtest_one = """
 <testsuite errors="0" failures="0" name="Kikoolol1" tests="3" time="127.0">
     <testcase
