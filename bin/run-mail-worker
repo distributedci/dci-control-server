@@ -81,10 +81,10 @@ class Worker(ConsumerMixin):
         queue_jobs_finished,
         queue_components_created,
         queue_components_updated,
-        session_db,
+        session_factory,
     ):
         self.connection = connection
-        self._session_db = session_db
+        self._session_factory = session_factory
         self._queue_jobs_finished = queue_jobs_finished
         self._queue_components_created = queue_components_created
         self._queue_components_updated = queue_components_updated
@@ -104,16 +104,23 @@ class Worker(ConsumerMixin):
             ),
         ]
 
-    def on_job_finished(self, payload, message):
+    def _process(self, message, callback):
         try:
+            with self._session_factory() as session:
+                callback(session)
+        except Exception:
+            logging.exception("An error has occurred while processing the event.")
+        finally:
+            message.ack()
+
+    def on_job_finished(self, payload, message):
+        def handle(session):
             job_id = payload["job_id"]
             logging.info(
                 "received message dci.jobs.finished, processing job %s", job_id
             )
-            job = a_d_l.get_serialized_job(self._session_db, job_id)
-            emails = a_d_l.get_emails_from_remoteci(
-                self._session_db, job["remoteci_id"]
-            )
+            job = a_d_l.get_serialized_job(session, job_id)
+            emails = a_d_l.get_emails_from_remoteci(session, job["remoteci_id"])
             job_event = notifications.get_job_event(job, emails)
             if job_event:
                 email_configuration = m_w.get_email_configuration()
@@ -122,20 +129,19 @@ class Worker(ConsumerMixin):
                 m_w.send_mails(server, job_event["emails"], email)
                 server.quit()
             logging.info("Worker processed successfully the message.")
-        except Exception as e:
-            logging.exception("An error has occurred when processing the event: %s", e)
-        message.ack()
+
+        self._process(message, handle)
 
     def on_component_created(self, payload, message):
-        try:
+        def handle(session):
             component_id = payload["component_id"]
             logging.info(
                 "received message dci.components.created, processing component %s",
                 component_id,
             )
-            component = a_d_l.get_serialized_component(self._session_db, component_id)
+            component = a_d_l.get_serialized_component(session, component_id)
             emails = a_d_l.get_emails_subscribed_to_topic(
-                self._session_db, component["topic_id"]
+                session, component["topic_id"]
             )
             component_event = notifications.get_component_event(component, emails)
             if component_event and component_event["state"] == "active":
@@ -147,12 +153,11 @@ class Worker(ConsumerMixin):
                 m_w.send_mails(server, component_event["emails"], email)
                 server.quit()
             logging.info("Worker processed successfully the message.")
-        except Exception as e:
-            logging.exception("An error has occurred when processing the event: %s", e)
-        message.ack()
+
+        self._process(message, handle)
 
     def on_component_updated(self, payload, message):
-        try:
+        def handle(session):
             component_id = payload["component_id"]
             previous_state = payload["previous_state"]
             state = payload["state"]
@@ -160,9 +165,9 @@ class Worker(ConsumerMixin):
                 "received message dci.components.updated, processing component %s",
                 component_id,
             )
-            component = a_d_l.get_serialized_component(self._session_db, component_id)
+            component = a_d_l.get_serialized_component(session, component_id)
             emails = a_d_l.get_emails_subscribed_to_topic(
-                self._session_db, component["topic_id"]
+                session, component["topic_id"]
             )
             component_event = notifications.get_component_event(component, emails)
             if component_event and state == "active" and previous_state != "active":
@@ -174,21 +179,22 @@ class Worker(ConsumerMixin):
                 m_w.send_mails(server, component_event["emails"], email)
                 server.quit()
             logging.info("Worker processed successfully the message.")
-        except Exception as e:
-            logging.exception("An error has occurred when processing the event: %s", e)
-        message.ack()
+
+        self._process(message, handle)
 
 
-def get_session_db():
+def get_session_factory():
     config = dci_config.generate_conf()
-    engine = dci_config.get_engine(config["SQLALCHEMY_DATABASE_URI"])
-    return sessionmaker(bind=engine)()
+    engine = dci_config.get_engine(
+        config["SQLALCHEMY_DATABASE_URI"], pool_pre_ping=True
+    )
+    return sessionmaker(bind=engine)
 
 
 if __name__ == "__main__":
 
     setup_logging()
-    session_db = get_session_db()
+    session_factory = get_session_factory()
 
     exchange = Exchange(dci_kombu.DCI_EXCHANGE, type="topic")
     queue_jobs_finished = Queue(
@@ -222,6 +228,6 @@ if __name__ == "__main__":
             queue_jobs_finished,
             queue_components_created,
             queue_components_updated,
-            session_db,
+            session_factory,
         )
         worker.run()
