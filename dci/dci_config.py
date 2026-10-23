@@ -32,12 +32,13 @@ def generate_conf(param=None):
     return CONFIG
 
 
-def get_engine(db_uri):
+def get_engine(db_uri, pool_pre_ping=False):
     return sqlalchemy.create_engine(
         db_uri,
         pool_size=CONFIG["SQLALCHEMY_POOL_SIZE"],
         max_overflow=CONFIG["SQLALCHEMY_MAX_OVERFLOW"],
         echo=CONFIG["SQLALCHEMY_ECHO"],
+        pool_pre_ping=pool_pre_ping,
     )
 
 
