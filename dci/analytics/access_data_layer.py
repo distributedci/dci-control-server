@@ -58,12 +58,15 @@ def get_jobs(session, offset, limit, unit, amount, status=None):
 
 
 def get_jobs_ids_from_timestamp(session, offset, limit, timestamp):
-    query = select(models2.Job.id)
+    query = select(models2.Job.id, models2.Job.etag)
+    query = query.where(models2.Job.state != "archived")
     query = query.where(models2.Job.updated_at >= timestamp)
     query = query.order_by(models2.Job.updated_at.asc())
     query = query.offset(offset)
     query = query.limit(limit)
-    return [str(j_id) for j_id in session.execute(query).scalars().all()]
+    return [
+        {"id": str(j_id), "etag": etag} for j_id, etag in session.execute(query).all()
+    ]
 
 
 def get_job_by_id(session, job_id):
