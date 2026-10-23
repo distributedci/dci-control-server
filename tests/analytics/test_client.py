@@ -158,6 +158,46 @@ def test_analytics_request_accepts_custom_timeout(mock_analytics_headers, mock_r
     )
 
 
+@mock.patch("dci.analytics.client._session.request")
+@mock.patch(
+    "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
+)
+def test_analytics_request_stream_uses_longer_timeout(
+    mock_analytics_headers, mock_request
+):
+    _reset_jwt_token_cache()
+    client.analytics_request("POST", "/analytics/junit_topics_comparison", stream=True)
+
+    mock_request.assert_called_once_with(
+        "POST",
+        "%s/analytics/junit_topics_comparison" % CONFIG["ANALYTICS_URL"],
+        headers=DEFAULT_HEADERS,
+        timeout=CONFIG["ANALYTICS_STREAM_TIMEOUT"],
+        stream=True,
+    )
+
+
+@mock.patch("dci.analytics.client._session.request")
+@mock.patch(
+    "dci.analytics.client.analytics_headers", return_value=DEFAULT_HEADERS.copy()
+)
+def test_analytics_request_explicit_timeout_overrides_stream(
+    mock_analytics_headers, mock_request
+):
+    _reset_jwt_token_cache()
+    client.analytics_request(
+        "POST", "/analytics/junit_topics_comparison", stream=True, timeout=42
+    )
+
+    mock_request.assert_called_once_with(
+        "POST",
+        "%s/analytics/junit_topics_comparison" % CONFIG["ANALYTICS_URL"],
+        headers=DEFAULT_HEADERS,
+        timeout=42,
+        stream=True,
+    )
+
+
 def test_guarded_stream_yields_chunks():
     mock_res = mock.MagicMock()
     mock_res.iter_content.return_value = iter([b"chunk1", b"chunk2"])
