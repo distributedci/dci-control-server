@@ -65,6 +65,8 @@ def generate_client(app, credentials=None, access_token=None):
             "Authorization": "Bearer " + access_token,
             "Content-Type": "application/json",
         }
+    else:
+        headers = {}
 
     def client_open_decorator(func):
         def wrapper(*args, **kwargs):
