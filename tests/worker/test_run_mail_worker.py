@@ -17,8 +17,10 @@
 import importlib.machinery
 import importlib.util
 import os
+import smtplib
 
 import mock
+import pytest
 import sqlalchemy.exc
 
 from dci import dci_config
@@ -36,6 +38,144 @@ def _load_run_mail_worker():
 
 
 run_mail_worker = _load_run_mail_worker()
+
+
+def test_get_smtp_server_connects_once_and_configures_tls_and_login():
+    smtp_server = mock.MagicMock()
+
+    with mock.patch.object(
+        run_mail_worker.smtplib, "SMTP", return_value=smtp_server
+    ) as smtp:
+        result = run_mail_worker._get_smtp_server(
+            "smtp.example.com", 587, "sender@example.com", "secret", use_tls=True
+        )
+
+    assert result is smtp_server
+    smtp.assert_called_once_with("smtp.example.com", 587, timeout=10)
+    smtp_server.connect.assert_not_called()
+    smtp_server.starttls.assert_called_once_with()
+    smtp_server.login.assert_called_once_with("sender@example.com", "secret")
+
+
+def test_get_smtp_server_can_skip_tls_and_login():
+    smtp_server = mock.MagicMock()
+
+    with mock.patch.object(
+        run_mail_worker.smtplib, "SMTP", return_value=smtp_server
+    ) as smtp:
+        result = run_mail_worker._get_smtp_server(
+            "smtp.example.com", 25, None, None, use_tls=False
+        )
+
+    assert result is smtp_server
+    smtp.assert_called_once_with("smtp.example.com", 25, timeout=10)
+    smtp_server.starttls.assert_not_called()
+    smtp_server.login.assert_not_called()
+
+
+def test_get_smtp_server_retries_transient_connection_errors():
+    smtp_server = mock.MagicMock()
+    with mock.patch.object(
+        run_mail_worker.smtplib,
+        "SMTP",
+        side_effect=[
+            ConnectionRefusedError("refused"),
+            TimeoutError("timed out"),
+            smtp_server,
+        ],
+    ) as smtp, mock.patch.object(run_mail_worker.time, "sleep") as sleep:
+        result = run_mail_worker._get_smtp_server("smtp.example.com", 587, None, None)
+
+    assert result is smtp_server
+    assert smtp.call_count == 3
+    assert sleep.call_args_list == [mock.call(1), mock.call(2)]
+
+
+def test_get_smtp_server_stops_after_three_transient_failures():
+    with mock.patch.object(
+        run_mail_worker.smtplib,
+        "SMTP",
+        side_effect=[
+            ConnectionRefusedError("refused"),
+            ConnectionRefusedError("refused"),
+            ConnectionRefusedError("refused"),
+        ],
+    ) as smtp, mock.patch.object(run_mail_worker.time, "sleep") as sleep:
+        with pytest.raises(ConnectionRefusedError):
+            run_mail_worker._get_smtp_server("smtp.example.com", 587, None, None)
+
+    assert smtp.call_count == 3
+    assert sleep.call_args_list == [mock.call(1), mock.call(2)]
+
+
+def test_get_smtp_server_closes_session_after_setup_failure():
+    smtp_server = mock.MagicMock()
+    smtp_server.starttls.side_effect = smtplib.SMTPNotSupportedError("no STARTTLS")
+
+    with mock.patch.object(
+        run_mail_worker.smtplib, "SMTP", return_value=smtp_server
+    ) as smtp:
+        with pytest.raises(smtplib.SMTPNotSupportedError):
+            run_mail_worker._get_smtp_server(
+                "smtp.example.com", 587, None, None, use_tls=True
+            )
+
+    smtp.assert_called_once_with("smtp.example.com", 587, timeout=10)
+    smtp_server.quit.assert_called_once_with()
+
+
+def test_process_acknowledges_only_after_session_closes():
+    session = _session_mock("session")
+    events = []
+    session.__exit__.side_effect = lambda *args: events.append("session closed")
+    message = mock.Mock()
+    message.ack.side_effect = lambda: events.append("acknowledged")
+    worker = run_mail_worker.Worker(
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(return_value=session),
+    )
+
+    worker._process(message, lambda current_session: events.append("processed"))
+
+    assert events == ["processed", "session closed", "acknowledged"]
+    message.reject.assert_not_called()
+
+
+def test_process_requeues_when_session_close_fails():
+    session = _session_mock("session")
+    session.__exit__.side_effect = RuntimeError("session close failed")
+    message = mock.Mock()
+    worker = run_mail_worker.Worker(
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(return_value=session),
+    )
+
+    worker._process(message, lambda current_session: None)
+
+    message.ack.assert_not_called()
+    message.reject.assert_called_once_with(requeue=True)
+
+
+def test_smtp_close_error_does_not_fail_successful_send():
+    smtp_server = mock.MagicMock()
+    smtp_server.quit.side_effect = OSError("connection closed")
+
+    with mock.patch.object(
+        run_mail_worker, "_get_smtp_server", return_value=smtp_server
+    ), mock.patch.object(run_mail_worker.m_w, "send_mails") as send_mails:
+        run_mail_worker._send_event_email({}, ["recipient@example.com"], mock.Mock())
+
+    send_mails.assert_called_once_with(
+        smtp_server, ["recipient@example.com"], mock.ANY
+    )
+    smtp_server.quit.assert_called_once_with()
+    smtp_server.close.assert_called_once_with()
 
 
 def test_get_engine_pool_pre_ping_defaults_to_false():
@@ -62,7 +202,7 @@ def _session_mock(name):
     return session
 
 
-def test_failed_message_closes_session_and_next_message_uses_a_new_session():
+def test_failed_message_is_requeued_and_next_message_uses_a_new_session():
     failed = _session_mock("failed_session")
     recovered = _session_mock("recovered_session")
     factory = mock.Mock(side_effect=[failed, recovered])
@@ -106,5 +246,67 @@ def test_failed_message_closes_session_and_next_message_uses_a_new_session():
     assert seen == [failed, recovered]
     failed.__exit__.assert_called_once()
     recovered.__exit__.assert_called_once()
-    first_message.ack.assert_called_once_with()
+    first_message.ack.assert_not_called()
+    first_message.reject.assert_called_once_with(requeue=True)
     second_message.ack.assert_called_once_with()
+    second_message.reject.assert_not_called()
+
+
+def test_partial_email_send_failure_requeues_message_and_closes_smtp():
+    session = _session_mock("session")
+    worker = run_mail_worker.Worker(
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(),
+        mock.Mock(return_value=session),
+    )
+    smtp_server = mock.MagicMock()
+    smtp_server.sendmail.side_effect = [
+        {},
+        smtplib.SMTPRecipientsRefused(
+            {"second@example.com": (550, b"recipient rejected")}
+        ),
+    ]
+    component_event = {
+        "state": "active",
+        "emails": ["first@example.com", "second@example.com"],
+        "topic_name": "topic",
+        "component_name": "component",
+        "component_id": "component-id",
+        "topic_id": "topic-id",
+    }
+    message = mock.Mock()
+    payload = {"component_id": "component-id"}
+
+    with mock.patch.object(
+        run_mail_worker.a_d_l,
+        "get_serialized_component",
+        return_value={"id": "component-id", "topic_id": "topic-id"},
+    ), mock.patch.object(
+        run_mail_worker.a_d_l,
+        "get_emails_subscribed_to_topic",
+        return_value=[],
+    ), mock.patch.object(
+        run_mail_worker.notifications,
+        "get_component_event",
+        return_value=component_event,
+    ), mock.patch.object(
+        run_mail_worker.m_w,
+        "get_email_configuration",
+        return_value={
+            "host": "smtp.example.com",
+            "port": 587,
+            "account": "sender@example.com",
+            "password": None,
+            "use_tls": True,
+        },
+    ), mock.patch.object(
+        run_mail_worker, "_get_smtp_server", return_value=smtp_server
+    ):
+        worker.on_component_created(payload, message)
+
+    assert smtp_server.sendmail.call_count == 2
+    smtp_server.quit.assert_called_once_with()
+    message.ack.assert_not_called()
+    message.reject.assert_called_once_with(requeue=True)

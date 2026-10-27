@@ -28,24 +28,75 @@ import logging
 import os
 import smtplib
 import sys
+import time
 from sqlalchemy.orm import sessionmaker
-
-try:
-    from email.MIMEText import MIMEText
-except ImportError:
-    from email.mime.text import MIMEText
 
 AMQP_BROKER_URL = os.getenv("AMQP_BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")
 LOGGING_LEVEL = logging.INFO
+SMTP_TIMEOUT_SECONDS = 10
+SMTP_CONNECTION_RETRIES = 3
+SMTP_RETRY_BACKOFF_SECONDS = (1, 2)
 
 
-def _get_smtp_server(host, port, account, password):
-    smtp_server = smtplib.SMTP(host, port)
-    smtp_server.connect(host=host, port=port)
-    smtp_server.starttls()
-    if account and password:
-        smtp_server.login(account, password)
-    return smtp_server
+def _is_transient_smtp_error(error):
+    if isinstance(error, smtplib.SMTPServerDisconnected):
+        return True
+    if isinstance(error, smtplib.SMTPResponseException):
+        return 400 <= error.smtp_code < 500
+    if isinstance(error, smtplib.SMTPException):
+        return False
+    return isinstance(error, OSError)
+
+
+def _close_smtp_server(smtp_server):
+    try:
+        smtp_server.quit()
+    except Exception:
+        logging.warning("Could not gracefully close SMTP session", exc_info=True)
+        try:
+            smtp_server.close()
+        except Exception:
+            logging.warning("Could not close SMTP socket", exc_info=True)
+
+
+def _get_smtp_server(host, port, account, password, use_tls=True):
+    for attempt in range(SMTP_CONNECTION_RETRIES):
+        smtp_server = None
+        try:
+            # SMTP connects in its constructor when a host is supplied.
+            smtp_server = smtplib.SMTP(host, port, timeout=SMTP_TIMEOUT_SECONDS)
+            if use_tls:
+                smtp_server.starttls()
+            if account and password:
+                smtp_server.login(account, password)
+            return smtp_server
+        except Exception as error:
+            if smtp_server is not None:
+                _close_smtp_server(smtp_server)
+            if (
+                not _is_transient_smtp_error(error)
+                or attempt == SMTP_CONNECTION_RETRIES - 1
+            ):
+                raise
+            delay = SMTP_RETRY_BACKOFF_SECONDS[attempt]
+            logging.warning(
+                "Transient SMTP setup failure on attempt %s/%s: %s; "
+                "retrying in %s seconds",
+                attempt + 1,
+                SMTP_CONNECTION_RETRIES,
+                error,
+                delay,
+            )
+            time.sleep(delay)
+
+
+def _send_event_email(email_configuration, recipients, email):
+    smtp_server = _get_smtp_server(**email_configuration)
+    try:
+        m_w.send_mails(smtp_server, recipients, email)
+    finally:
+        # A failed QUIT must not turn an already accepted email into a retry.
+        _close_smtp_server(smtp_server)
 
 
 def setup_logging():
@@ -109,8 +160,11 @@ class Worker(ConsumerMixin):
             with self._session_factory() as session:
                 callback(session)
         except Exception:
-            logging.exception("An error has occurred while processing the event.")
-        finally:
+            logging.exception(
+                "An error has occurred while processing the event; requeueing message."
+            )
+            message.reject(requeue=True)
+        else:
             message.ack()
 
     def on_job_finished(self, payload, message):
@@ -124,10 +178,8 @@ class Worker(ConsumerMixin):
             job_event = notifications.get_job_event(job, emails)
             if job_event:
                 email_configuration = m_w.get_email_configuration()
-                server = _get_smtp_server(**email_configuration)
                 email = m_w.build_job_email(email_configuration["account"], job_event)
-                m_w.send_mails(server, job_event["emails"], email)
-                server.quit()
+                _send_event_email(email_configuration, job_event["emails"], email)
             logging.info("Worker processed successfully the message.")
 
         self._process(message, handle)
@@ -146,12 +198,12 @@ class Worker(ConsumerMixin):
             component_event = notifications.get_component_event(component, emails)
             if component_event and component_event["state"] == "active":
                 email_configuration = m_w.get_email_configuration()
-                server = _get_smtp_server(**email_configuration)
                 email = m_w.build_component_email(
                     email_configuration["account"], component_event
                 )
-                m_w.send_mails(server, component_event["emails"], email)
-                server.quit()
+                _send_event_email(
+                    email_configuration, component_event["emails"], email
+                )
             logging.info("Worker processed successfully the message.")
 
         self._process(message, handle)
@@ -172,12 +224,12 @@ class Worker(ConsumerMixin):
             component_event = notifications.get_component_event(component, emails)
             if component_event and state == "active" and previous_state != "active":
                 email_configuration = m_w.get_email_configuration()
-                server = _get_smtp_server(**email_configuration)
                 email = m_w.build_component_email(
                     email_configuration["account"], component_event
                 )
-                m_w.send_mails(server, component_event["emails"], email)
-                server.quit()
+                _send_event_email(
+                    email_configuration, component_event["emails"], email
+                )
             logging.info("Worker processed successfully the message.")
 
         self._process(message, handle)

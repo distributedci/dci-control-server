@@ -14,8 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import os
-
+from dci import dci_config
 from dci.common import notifications
 
 try:
@@ -26,10 +25,11 @@ except ImportError:
 
 def get_email_configuration():
     return {
-        "host": os.getenv("DCI_EMAIL_SERVER"),
-        "port": os.getenv("DCI_EMAIL_SERVER_PORT", 587),
-        "account": os.getenv("DCI_FROM_EMAIL", "no-reply@distributed-ci.io"),
-        "password": os.getenv("DCI_EMAIL_PASSWORD"),
+        "host": dci_config.CONFIG["DCI_EMAIL_SERVER"],
+        "port": dci_config.CONFIG["DCI_EMAIL_SERVER_PORT"],
+        "account": dci_config.CONFIG["DCI_FROM_EMAIL"],
+        "password": dci_config.CONFIG["DCI_EMAIL_PASSWORD"],
+        "use_tls": dci_config.CONFIG["DCI_EMAIL_USE_TLS"],
     }
 
 
