@@ -14,8 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import os
+import logging
+import smtplib
 
+from dci import dci_config
 from dci.common import notifications
 
 try:
@@ -26,10 +28,11 @@ except ImportError:
 
 def get_email_configuration():
     return {
-        "host": os.getenv("DCI_EMAIL_SERVER"),
-        "port": os.getenv("DCI_EMAIL_SERVER_PORT", 587),
-        "account": os.getenv("DCI_FROM_EMAIL", "no-reply@distributed-ci.io"),
-        "password": os.getenv("DCI_EMAIL_PASSWORD"),
+        "host": dci_config.CONFIG["DCI_EMAIL_SERVER"],
+        "port": dci_config.CONFIG["DCI_EMAIL_SERVER_PORT"],
+        "account": dci_config.CONFIG["DCI_FROM_EMAIL"],
+        "password": dci_config.CONFIG["DCI_EMAIL_PASSWORD"],
+        "use_tls": dci_config.CONFIG["DCI_EMAIL_USE_TLS"],
     }
 
 
@@ -48,13 +51,66 @@ def build_job_email(sender, job_event):
     return email
 
 
-def send_mails(server, recipients, email):
-    for recipient in recipients:
-        # email.message are not classic dict, a new affectation does
-        # not overwrite the previous one.
-        del email["To"]
-        email["To"] = recipient
-        server.sendmail(email["From"], email["To"], email.as_string())
+def send_mails(
+    server,
+    recipients,
+    email,
+    smtp_server_factory=None,
+    close_smtp_server=None,
+):
+    smtp_server = server
+    try:
+        for recipient in recipients:
+            # email.message are not classic dict, a new affectation does
+            # not overwrite the previous one.
+            del email["To"]
+            email["To"] = recipient
+
+            for attempt in range(1, 3):
+                if smtp_server is None:
+                    if smtp_server_factory is None:
+                        logging.error(
+                            "Could not reconnect to SMTP for recipient %s "
+                            "on attempt %s/2: no SMTP server factory is configured",
+                            recipient,
+                            attempt,
+                        )
+                        continue
+                    try:
+                        smtp_server = smtp_server_factory()
+                    except Exception:
+                        logging.exception(
+                            "Could not reconnect to SMTP for recipient %s "
+                            "on attempt %s/2",
+                            recipient,
+                            attempt,
+                        )
+                        continue
+
+                try:
+                    smtp_server.sendmail(email["From"], email["To"], email.as_string())
+                except Exception as error:
+                    logging.exception(
+                        "Could not send email to recipient %s on attempt %s/2",
+                        recipient,
+                        attempt,
+                    )
+                    if _smtp_connection_was_lost(error) and smtp_server is not None:
+                        if close_smtp_server is not None:
+                            close_smtp_server(smtp_server)
+                        smtp_server = None
+                    continue
+                break
+
+    finally:
+        if close_smtp_server is not None and smtp_server is not None:
+            close_smtp_server(smtp_server)
+
+
+def _smtp_connection_was_lost(error):
+    if isinstance(error, (smtplib.SMTPServerDisconnected, OSError)):
+        return True
+    return isinstance(error, smtplib.SMTPResponseException) and error.smtp_code == 421
 
 
 def build_component_email(sender, component_event):
