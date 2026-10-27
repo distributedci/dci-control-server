@@ -134,4 +134,5 @@ DCI_EMAIL_USE_TLS = (
 DCI_EMAIL_SERVER = os.getenv("DCI_EMAIL_SERVER", "smtp.corp.redhat.com")
 DCI_EMAIL_SERVER_PORT = int(os.getenv("DCI_EMAIL_SERVER_PORT", "587"))
 DCI_FROM_EMAIL = os.getenv("DCI_FROM_EMAIL", "no-reply@distributed-ci.io")
+DCI_EMAIL_PASSWORD = os.getenv("DCI_EMAIL_PASSWORD")
 DCI_ALERT_EMAIL = os.getenv("DCI_ALERT_EMAIL", "distributed-ci+alerts@redhat.com")

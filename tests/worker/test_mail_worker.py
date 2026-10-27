@@ -14,8 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from dci.worker import mail_worker as m_w
 import mock
+
+from dci import dci_config
+from dci.worker import mail_worker as m_w
 
 
 def test_get_email_configuration():
@@ -24,6 +26,8 @@ def test_get_email_configuration():
     assert "port" in email_configuration
     assert "account" in email_configuration
     assert "password" in email_configuration
+    assert email_configuration["port"] == int(email_configuration["port"])
+    assert email_configuration["use_tls"] == dci_config.CONFIG["DCI_EMAIL_USE_TLS"]
 
 
 def test_build_job_email():
