@@ -45,7 +45,9 @@ class DciControlServer(flask.Flask):
         self.url_map.strict_slashes = False
         self.engine = dci_config.get_engine(self.config["SQLALCHEMY_DATABASE_URI"])
         self.store = dci_config.get_store()
-        self.redis_client = RedisClient(self.config.get("DCI_REDIS_URL"))
+        self.redis_client = RedisClient(
+            self.config.get("DCI_REDIS_URL"), self.config.get("DCI_REDIS_CA_CERT")
+        )
         session = sessionmaker(bind=self.engine)()
         self.team_admin_id = self._get_team_id(session, "admin")
         self.team_redhat_id = self._get_team_id(session, "Red Hat")
