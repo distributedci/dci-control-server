@@ -20,6 +20,7 @@ from sqlalchemy import exc as sa_exc
 from sqlalchemy import sql, select
 from sqlalchemy import orm
 from tenacity import retry, retry_if_exception_type, stop_after_attempt
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 from dci.api.v1 import base, sso
 from dci.auth import check_passwords_equal, decode_jwt
@@ -353,3 +354,17 @@ class OpenIDCAuth(BaseMechanism):
     def _update_user(self, user, user_info):
         base.update_resource_orm(user, {"email": user_info["email"]})
         return self._get_user_with_email_and_red_hat_login(user_info)
+
+
+class JWTAuth(BaseMechanism):
+    def authenticate(self):
+        verify_jwt_in_request()
+        email = get_jwt_identity()
+        user = self.get_user(models2.User.email == email)
+        if user is None:
+            raise dci_exc.DCIException(
+                f"User with {email} does not exists.", status_code=401
+            )
+        self.identity = self.identity_from_user(user)
+        self.track_authentication()
+        return True
