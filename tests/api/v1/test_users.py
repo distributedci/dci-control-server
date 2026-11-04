@@ -538,7 +538,7 @@ def test_get_current_user(client_user1):
     assert user_me.data["user"]["name"] == "user1"
 
 
-def test_update_current_user_password(client_admin, client_user1):
+def test_update_current_user_password(app, client_admin, client_user1):
     user_data, user_etag = get_user(client_admin, "user1")
 
     assert client_user1.get("/api/v1/users/me").status_code == 200
@@ -552,8 +552,15 @@ def test_update_current_user_password(client_admin, client_user1):
         == 200
     )
 
-    assert client_user1.get("/api/v1/users/me").status_code == 401
+    # Verify old password no longer works
+    with pytest.raises(Exception):
+        utils.generate_client(app, ("user1@example.org", "user1"))
 
+    # Verify new password works
+    new_client = utils.generate_client(app, ("user1@example.org", "password"))
+    assert new_client.get("/api/v1/users/me").status_code == 200
+
+    # Admin resets password back
     user_data, user_etag = get_user(client_admin, "user1")
 
     assert (
@@ -565,7 +572,13 @@ def test_update_current_user_password(client_admin, client_user1):
         == 200
     )
 
-    assert client_user1.get("/api/v1/users/me").status_code == 200
+    # Verify new password no longer works
+    with pytest.raises(Exception):
+        utils.generate_client(app, ("user1@example.org", "password"))
+
+    # Verify original password works again
+    restored_client = utils.generate_client(app, ("user1@example.org", "user1"))
+    assert restored_client.get("/api/v1/users/me").status_code == 200
 
 
 def test_update_current_user_current_password_wrong(client_admin, client_user1):
@@ -855,9 +868,12 @@ def test_admin_can_update_sso_sub_field(client_admin):
 def test_a_user_can_log_in_after_his_creation_with_a_password(app, client_admin):
     email = "user@example.org"
     password = "user password"
-    client = utils.generate_client(app, (email, password))
-    assert client.get("/api/v1/identity").status_code == 401
 
+    # Verify user cannot authenticate before creation
+    with pytest.raises(Exception):
+        utils.generate_client(app, (email, password))
+
+    # Create user with password
     request = client_admin.post(
         "/api/v1/users",
         data={
@@ -868,15 +884,20 @@ def test_a_user_can_log_in_after_his_creation_with_a_password(app, client_admin)
         },
     )
     assert request.status_code == 201
+
+    # Verify user can authenticate after creation
+    client = utils.generate_client(app, (email, password))
     assert client.get("/api/v1/identity").status_code == 200
 
 
 def test_a_user_cant_log_in_after_his_creation_without_a_password(app, client_admin):
     email = "user@example.org"
-    password = ""
-    client = utils.generate_client(app, (email, password))
-    assert client.get("/api/v1/identity").status_code == 401
 
+    # Verify user cannot authenticate before creation
+    with pytest.raises(Exception):
+        utils.generate_client(app, (email, ""))
+
+    # Create user without password
     request = client_admin.post(
         "/api/v1/users",
         data={
@@ -886,7 +907,10 @@ def test_a_user_cant_log_in_after_his_creation_without_a_password(app, client_ad
         },
     )
     assert request.status_code == 201
-    assert client.get("/api/v1/identity").status_code == 401
+
+    # Verify user still cannot authenticate without a password
+    with pytest.raises(Exception):
+        utils.generate_client(app, (email, ""))
 
 
 def test_a_user_can_log_in_after_his_password_changed(
@@ -900,8 +924,12 @@ def test_a_user_can_log_in_after_his_password_changed(
         headers={"If-match": user1["etag"]},
     )
     assert request.status_code == 200
-    assert client_user1.get("/api/v1/identity").status_code == 401
 
+    # Verify old password no longer works
+    with pytest.raises(Exception):
+        utils.generate_client(app, (user1["email"], "user1"))
+
+    # Verify new password works
     new_client_user1 = utils.generate_client(app, (user1["email"], new_password))
     assert new_client_user1.get("/api/v1/identity").status_code == 200
 

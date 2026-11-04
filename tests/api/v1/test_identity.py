@@ -14,6 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import pytest
+
+from tests import utils
+
 
 def test_get_identity_admin(client_admin, team_admin_id):
     response = client_admin.get("/api/v1/identity")
@@ -46,7 +50,7 @@ def get_user(flask_user, name):
     return get2.data["user"], get2.headers.get("ETag")
 
 
-def test_update_identity_password(client_admin, client_user1):
+def test_update_identity_password(app, client_admin, client_user1):
     user_data, user_etag = get_user(client_admin, "user1")
 
     assert client_user1.get("/api/v1/identity").status_code == 200
@@ -60,8 +64,15 @@ def test_update_identity_password(client_admin, client_user1):
         == 200
     )
 
-    assert client_user1.get("/api/v1/identity").status_code == 401
+    # Verify old password no longer works
+    with pytest.raises(Exception):
+        utils.generate_client(app, ("user1@example.org", "user1"))
 
+    # Verify new password works
+    new_client = utils.generate_client(app, ("user1@example.org", "password"))
+    assert new_client.get("/api/v1/identity").status_code == 200
+
+    # Admin resets password back
     user_data, user_etag = get_user(client_admin, "user1")
 
     assert (
@@ -73,7 +84,13 @@ def test_update_identity_password(client_admin, client_user1):
         == 200
     )
 
-    assert client_user1.get("/api/v1/identity").status_code == 200
+    # Verify new password no longer works
+    with pytest.raises(Exception):
+        utils.generate_client(app, ("user1@example.org", "password"))
+
+    # Verify original password works again
+    restored_client = utils.generate_client(app, ("user1@example.org", "user1"))
+    assert restored_client.get("/api/v1/identity").status_code == 200
 
 
 def test_update_current_user_current_password_wrong(client_admin, client_user1):

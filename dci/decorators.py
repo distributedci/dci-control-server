@@ -50,10 +50,10 @@ def _get_auth_class_from_headers(headers):
     auth_type = headers.get("Authorization").split(" ")[0]
     if auth_type == "Bearer":
         return am.OpenIDCAuth
+    elif auth_type == "JWTBearer":
+        return am.JWTAuth
     elif auth_type in ["DCI-HMAC-SHA256", "DCI2-HMAC-SHA256", "AWS4-HMAC-SHA256"]:
         return am.HmacMechanism
-    elif auth_type == "Basic":
-        return am.BasicAuthMechanism
 
     raise dci_exc.DCIException(
         "Authorization scheme %s unknown" % auth_type, status_code=401

@@ -17,6 +17,9 @@
 # Global parameters about the API itself
 #
 import os
+import secrets
+
+from datetime import timedelta
 
 HOST = os.getenv("API_HOST", "127.0.0.1")
 PORT = int(os.getenv("API_PORT", "5000"))
@@ -24,6 +27,13 @@ DEBUG = os.getenv("API_DEBUG", "True").strip().capitalize() == "True"
 JSONIFY_PRETTYPRINT_REGULAR = (
     os.getenv("JSONIFY_PRETTYPRINT_REGULAR ", "False").strip().capitalize() == "True"
 )
+
+# JWT configuration
+SECRET_KEY_LENGTH = 42
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(SECRET_KEY_LENGTH))
+JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+JWT_HEADER_TYPE = "JWTBearer"
 
 # Database (SQLAlchemy) related parameters
 #
