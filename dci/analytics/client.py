@@ -90,7 +90,11 @@ def analytics_request(method, path, **kwargs):
     else:
         kwargs["headers"] = a_headers
     if "timeout" not in kwargs:
-        kwargs["timeout"] = CONFIG["REQUESTS_TIMEOUT"]
+        kwargs["timeout"] = (
+            CONFIG["ANALYTICS_STREAM_TIMEOUT"]
+            if kwargs.get("stream")
+            else CONFIG["REQUESTS_TIMEOUT"]
+        )
 
     return _session.request(
         method,

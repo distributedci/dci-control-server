@@ -120,6 +120,12 @@ REQUESTS_TIMEOUT = (
     float(os.getenv("REQUESTS_TIMEOUT_CONNECT", "3.0")),
     float(os.getenv("REQUESTS_TIMEOUT_READ", "10.0")),
 )
+# Streamed analytics calls do not send headers until the query finishes,
+# so the read timeout must cover the whole computation.
+ANALYTICS_STREAM_TIMEOUT = (
+    float(os.getenv("REQUESTS_TIMEOUT_CONNECT", "3.0")),
+    float(os.getenv("ANALYTICS_STREAM_TIMEOUT_READ", "120.0")),
+)
 
 # Redis connection for authentication tracking
 DCI_REDIS_URL = os.getenv("DCI_REDIS_URL", "redis://localhost:6379/0")
