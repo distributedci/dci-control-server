@@ -99,7 +99,10 @@ def handle_args(query, model_object, args):
             else:
                 query = query.order_by(getattr(model_object, s).desc())
     else:
-        query = query.order_by(getattr(model_object, "created_at").desc())
+        query = query.order_by(
+            getattr(model_object, "created_at").desc(),
+            getattr(model_object, "id").desc(),
+        )
     where = args.get("where")
     if where:
         columns = model_object.__mapper__.columns.keys()

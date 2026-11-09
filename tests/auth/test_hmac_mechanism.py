@@ -16,6 +16,29 @@
 
 from dci import auth_mechanism
 import flask
+import mock
+
+
+def test_hmac_uses_request_path_without_reencoding():
+    request = mock.Mock()
+    request.method = "GET"
+    request.path = "/cert/a%2Fb"
+    request.data = b""
+    request.args.to_dict.return_value = {}
+    mechanism = auth_mechanism.HmacMechanism(request)
+    identity = mock.Mock(api_secret="secret", teams_ids=[])
+    with mock.patch.object(
+        auth_mechanism, "parse_headers", return_value={"signature": "signature"}
+    ), mock.patch.object(
+        mechanism, "build_identity", return_value=identity
+    ), mock.patch.object(
+        auth_mechanism, "is_valid", return_value=(True, "")
+    ) as is_valid, mock.patch.object(
+        mechanism, "track_authentication"
+    ):
+        assert mechanism.authenticate()
+
+    assert is_valid.call_args.args[0]["endpoint"] == request.path
 
 
 def test_hmac_mechanism_api_get_jobs_remoteci(hmac_client_team1):

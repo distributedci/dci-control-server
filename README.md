@@ -56,6 +56,15 @@ Enter it again:
 $ createdb dci_control_server -O dci
 ```
 
+## Certification storage
+
+Vulnerability scan results use the logical `certifications` container. Set
+`STORE_CERTIFICATIONS_CONTAINER` to the S3 bucket name or local storage directory;
+the default is `dci-certifications`. Set `STORE_ENGINE=filesystem` for local
+storage, rooted at `FILES_UPLOAD_FOLDER` by default. For S3, provision the bucket and grant
+`s3:ListBucket`, `s3:GetObject`, `s3:PutObject` and `s3:DeleteObject`. Automatic
+bucket initialization also requires `s3:ListAllMyBuckets` and `s3:CreateBucket`.
+
 ## REST interface
 
 The REST API is available for any type of objects. You can browse the database on <http://127.0.0.1:5000/>.

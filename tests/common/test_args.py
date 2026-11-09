@@ -13,12 +13,16 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import csv
+
 import pytest
 
 from datetime import datetime
+from dci.common import vulnerability_scans
 from dci.common.exceptions import DCIException
 from dci.common.schemas import check_json_is_valid, args_schema
 from dci.common.args import parse_args
+from tests.vulnerability_scan_utils import CSV_HEADER
 
 
 def test_args():
@@ -88,3 +92,22 @@ def test_parse_args():
         "updated_after": datetime(2021, 12, 21, 12, 38, 11),
     }
     assert parse_args(args) == args_expected
+
+
+def test_argument_reader_keeps_its_field_limit_after_a_scan():
+    field_limit = csv.field_size_limit()
+    vulnerability_scans.csv_to_json(CSV_HEADER + b"value,,,,,,,,\n", 1024)
+    assert csv.field_size_limit() == field_limit
+
+    with pytest.raises(DCIException):
+        vulnerability_scans.csv_to_json(
+            CSV_HEADER + b"x" * (field_limit + 1) + b",,,,,,,,\n", 1024
+        )
+    assert csv.field_size_limit() == field_limit
+
+    assert parse_args({"sort": 'first,"second,third"'})["sort"] == [
+        "first",
+        "second,third",
+    ]
+    with pytest.raises(csv.Error):
+        parse_args({"sort": "x" * (field_limit + 1)})
