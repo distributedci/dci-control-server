@@ -23,7 +23,7 @@ class Store(object):
     def delete(self, container, filename):
         pass
 
-    def get(self, container, filename):
+    def get(self, container, filename, binary=False):
         pass
 
     def upload(self, container, filename, iterable):

@@ -49,11 +49,11 @@ class FileSystem(stores.Store):
                 status_code=status_code,
             )
 
-    def get(self, container_name, filename):
+    def get(self, container_name, filename, binary=False):
         root_directory = self._get_root_directory(container_name)
         file_path = os.path.join(root_directory, filename)
         try:
-            return ([], open(file_path, "r"))
+            return ([], open(file_path, "rb" if binary else "r"))
         except IOError as e:
             status_code = 400
             if e.errno == errno.ENOENT:
