@@ -3,9 +3,106 @@
 
 ## Endpoints
 
-The resources of DCI can be accessed through our API in a Restful way. Currently, only the json output format is supported.
+The resources of DCI can be accessed through our API in a Restful way. Responses use JSON unless otherwise documented.
+
+### Vulnerability scans
+
+`POST /api/v1/certifications/scans/vulnerabilities` accepts a raw UTF-8 CSV body
+with `Content-Type: text/csv`. For example, the body can contain:
+
+```csv
+cve_id,rh_severity
+CVE-1,High
+```
+
+An optional UTF-8 BOM is accepted. The first nonempty CSV record defines unique,
+nonblank headers; each subsequent row must have the same number of fields and
+becomes a JSON object with string values. Physically empty lines outside quoted
+fields are ignored, and a header without rows produces an empty array. Invalid
+UTF-8 or CSV returns `400`; an incorrect content type returns `415`.
+
+The CSV body is limited to 5 MiB, and the global request limit still applies
+when lower. The converted JSON is also limited to the value configured using
+`MAX_CONTENT_LENGTH_MB`, which defaults to 20 MiB. Exceeding either limit
+returns `413`, before storing the results or creating a scan. CSV decoding,
+JSON serialization and JSON validation during retrieval can still consume more
+memory than the body or the stored result.
+
+Only an authenticated RemoteCI can create a scan; its team owns the scan.
+On success, the response is `201` with metadata:
+
+```json
+{
+  "vulnerability_scan": {
+    "id": "<scan_id>",
+    "team_id": "<team_id>",
+    "created_at": "<UTC datetime>",
+    "results_id": "<results_id>"
+  }
+}
+```
+
+`GET /api/v1/certifications/scans/vulnerabilities` returns scan metadata
+belonging to the user's teams, newest first. EPM users, administrators and
+read-only users see scans from every team. Other users see only their own
+teams' scans. The response contains a `vulnerability_scans` array and
+`_meta.count` with the total number of accessible scans, regardless of the page.
+No result objects are read from storage.
+
+The default page contains up to 20 scans. Use `?limit=20&offset=20` to request
+the next page. `limit` and `offset` must be provided together: `limit` must be a
+positive integer and `offset` a non-negative integer. The maximum page size is
+200; larger limits are capped at 200. The order is descending by `created_at`,
+then by scan `id`. This endpoint does not support filtering or custom sorting.
+
+`GET /api/v1/certifications/scans/vulnerabilities/<scan_id>`
+returns `200` with the same metadata, without reading from storage. The results
+are available separately:
+
+- `GET /api/v1/certifications/scans/vulnerabilities/<scan_id>/results/json`
+  returns the converted JSON array directly as `application/json`.
+- `GET /api/v1/certifications/scans/vulnerabilities/<scan_id>/results/csv`
+  returns the original CSV bytes, including any BOM and line endings, as
+  `text/csv`.
+
+Members of the owning team, EPM users, administrators and read-only users can
+read the metadata and either result. An absent scan returns `404`; an
+unavailable result or corrupt JSON returns `502` without affecting metadata
+access. GET and DELETE identify the scan by `scan_id`. The previous URLs
+containing a certification ID are no longer supported.
+
+`DELETE` on the scan URL deletes the scan and both result objects and returns
+`204`. Members of the owning team, EPM users and administrators can delete it;
+a read-only user who belongs to the owning team can also delete it. The scan is
+deleted from the database before either object. Both object deletions are
+attempted even if one fails. On a storage failure, the endpoint returns `502`,
+the scan no longer exists, and the logged object paths may require manual
+cleanup. A subsequent GET or DELETE returns `404`. If database deletion fails,
+both objects are left untouched; an uncertain commit outcome may still leave
+them without scan metadata.
+
+The URL's `scan_id` is the metadata `id`. Results are saved in the logical
+`certifications` container under the base path
+`certifications/scans/vulnerabilities/<scan_id>/results/<results_id>`: the JSON
+uses the `/json` suffix and the original CSV uses `/csv`. Objects at previous
+paths are not automatically migrated; their result endpoints return `502` until
+the corresponding objects are moved to the new paths. Databases created with an
+earlier version of the unpublished migration must be recreated or migrated
+separately. Move any existing objects before removing the old certification ID
+column, which is needed to identify their previous paths.
+The bucket is configured with `STORE_CERTIFICATIONS_CONTAINER` and defaults to
+`dci-certifications`. Physically purging a team cascades to scan metadata, but
+does not delete either stored result. PostgreSQL and S3 operations are not atomic.
+If an error occurs during upload or after uploading results but before attempting
+a POST commit, rollback and cleanup of all attempted objects are performed on a
+best-effort basis. If the commit raises an exception, both objects are retained
+because the commit outcome may be unknown. Failed requests can therefore leave
+objects without scan metadata; their storage paths are logged for manual cleanup.
 
 Each resource provides two endpoints, one for listing: `/<resources>/`, one for fetching a dedicated element: `/<resources>/<resource_id>/`.
+Vulnerability scans are an exception: their listing endpoint supports only the
+`limit` and `offset` listing parameters below, and they do not use `ETag` or
+require `If-Match`.
 
 On those endpoints we can use some parameters on the GET method to filter, search or complete results.
 

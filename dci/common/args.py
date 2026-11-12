@@ -1,12 +1,15 @@
 import csv
 from datetime import datetime
 
+from dci.common import csv_utils
+
 
 def _get_csv(element, dict):
     e = dict.get(element, [])
     if e:
         e = e.strip().replace("\n", "").replace("\t", "")
-        return list(csv.reader([e]))[0]
+        with csv_utils.csv_field_size_limit():
+            return list(csv.reader([e]))[0]
     return e
 
 

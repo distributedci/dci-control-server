@@ -66,6 +66,9 @@ STORE_ENGINE = os.getenv("STORE_ENGINE", S3_STORE)
 # Generic store
 STORE_FILES_CONTAINER = os.getenv("STORE_FILES_CONTAINER", "dci-files")
 STORE_COMPONENTS_CONTAINER = os.getenv("STORE_COMPONENTS_CONTAINER", "dci-components")
+STORE_CERTIFICATIONS_CONTAINER = os.getenv(
+    "STORE_CERTIFICATIONS_CONTAINER", "dci-certifications"
+)
 
 
 # S3/minio Store

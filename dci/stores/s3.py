@@ -86,7 +86,7 @@ class S3(stores.Store):
                 status_code=e.response["Error"]["Code"],
             )
 
-    def get(self, container_name, filename):
+    def get(self, container_name, filename, binary=False):
         bucket = self._get_container(container_name)
         try:
             # TODO(fc): try redirect to:
