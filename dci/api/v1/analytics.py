@@ -62,23 +62,21 @@ def tasks_duration_cumulated(user):
             raise dci_exc.Unauthorized()
     permissions.verify_access_to_topic(user, topic)
 
-    query = "q=topic_id:%s AND remoteci_id:%s" % (args["topic_id"], args["remoteci_id"])
     offset, limit = handle_pagination(args)
     try:
         res = analytics_request(
             "GET",
-            "/elasticsearch/tasks_duration_cumulated/_search?%s" % query,
-            data=json.dumps(
-                {
-                    "from": offset,
-                    "size": limit,
-                    "sort": [{"created_at": {"order": "desc"}}],
-                }
-            ),
+            "/duration_cumulated",
+            params={
+                "topic_id": args["topic_id"],
+                "remoteci_id": args["remoteci_id"],
+                "offset": offset,
+                "limit": limit,
+            },
         )
 
         if res.status_code == 200:
-            return flask.jsonify(res.json()["hits"])
+            return flask.jsonify(res.json())
         elif res.status_code == 404:
             raise dci_exc.DCIException(
                 "resource not found in backend server: %s" % res.text, status_code=404
@@ -115,43 +113,15 @@ def tasks_components_coverage(user):
     else:
         team_id = args.get("team_id") if args.get("team_id") else "red_hat"
 
-    query = {
-        "size": 10000,
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"topic_id": topic_id}},
-                    {"term": {"team_id": team_id}},
-                ]
-            }
-        },
-        "sort": [
-            {
-                "released_at": {
-                    "order": "desc",
-                    "format": "strict_date_optional_time_nanos",
-                }
-            }
-        ],
-    }
-    if types:
-        bool_should = {"bool": {"should": []}}
-        for t in types:
-            bool_should["bool"]["should"].append({"term": {"type": t}})
-        query["query"]["bool"]["must"].append(bool_should)
-    else:
-        # returns only one unique component for each type (with latest first)
-        query["collapse"] = {"field": "type"}
-
     try:
         res = analytics_request(
             "GET",
-            "/elasticsearch/tasks_components_coverage/_search",
-            json=query,
+            "/components_coverage",
+            params={"topic_id": topic_id, "team_id": team_id, "types": types},
         )
 
         if res.status_code == 200:
-            return flask.jsonify(res.json()["hits"])
+            return flask.jsonify(res.json())
         elif res.status_code == 404:
             raise dci_exc.DCIException(
                 "resource not found in backend server: %s" % res.text, status_code=404
