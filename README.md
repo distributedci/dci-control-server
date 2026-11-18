@@ -56,6 +56,13 @@ Enter it again:
 $ createdb dci_control_server -O dci
 ```
 
+## Certification storage
+
+Vulnerability scan results and report documents use the logical `certification`
+container. Set `STORE_CERTIFICATION_CONTAINER` to the S3 bucket name; its default
+is `certification`. Keep the bucket private: direct access bypasses API
+permissions. Filesystem storage is used only for tests.
+
 ## REST interface
 
 The REST API is available for any type of objects. You can browse the database on <http://127.0.0.1:5000/>.

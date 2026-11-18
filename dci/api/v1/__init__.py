@@ -55,3 +55,4 @@ import dci.api.v1.teams_users  # noqa
 import dci.api.v1.topics  # noqa
 import dci.api.v1.users  # noqa
 import dci.api.v1.vulnerability_scans  # noqa
+import dci.api.v1.vulnerability_scan_reports  # noqa

@@ -174,8 +174,9 @@ transaction is rolled back and attempted objects are cleaned up. If the commit
 outcome is uncertain, objects are retained and their paths are logged. Any
 cleanup failures are logged as well.
 
-Purging locks and processes one archived scan at a time, deleting both objects
-before its SQL row. If storage deletion fails, the row is retained and the purge
+Purging locks and processes one archived scan at a time, deleting both result
+objects and its report documents before its SQL row. If storage deletion fails,
+the scan and report rows are retained and the purge
 continues with the other scans. A failed rollback or SQL operation stops the
 purge immediately. A `500` response includes `payload.failed_scan_ids` with the
 IDs of failed scans, including the current scan on an SQL failure when known.
@@ -202,6 +203,19 @@ FROM vulnerability_scans
 WHERE team_id = '<team-id>';
 ```
 
+Include report documents in the saved inventory as well:
+
+```sql
+SELECT r.id AS report_id, s.id AS scan_id,
+       format('certifications/%s/scans/vulnerabilities/%s/reports/%s/%s.json',
+              s.certification_id, s.id, r.id, document.name) AS document_key
+FROM vulnerability_scan_reports r
+JOIN vulnerability_scans s ON s.id = r.scan_id
+CROSS JOIN (VALUES ('affectedness'), ('cvss'), ('package'), ('rhsa'),
+                   ('severity'), ('summary')) AS document(name)
+WHERE s.team_id = '<team-id>';
+```
+
 Save this inventory before purging the team. After the team purge, confirm that
 its transaction committed and, from a fresh SQL transaction, verify that no scan
 rows remain for the team:
@@ -215,16 +229,109 @@ fails or its outcome is uncertain, keep the objects until their scan rows are
 confirmed deleted. Then use the saved inventory to remove only that team's S3
 objects. After cleanup, run
 `aws s3api head-object --bucket <certification-bucket> --key <inventoried-key>`
-for each CSV and JSON key: each must report `404`; an access error does not
-confirm deletion. A certification can contain scans from several teams, so
-never delete its entire prefix to clean up a single team's results. Filesystem
+for each result and report document key: each must report `404`; an access error
+does not confirm deletion. A certification can contain scans from several teams,
+so never delete its entire prefix to clean up a single team's results. Filesystem
 storage is used only for tests, whose temporary directory is removed afterward.
 
 In a versioned S3 bucket, deleting an object creates a delete marker and retains
-its earlier versions. A successful purge and its `204` response therefore do
-not guarantee permanent erasure of the CSV and JSON results. Earlier versions
-must be removed separately, for example by an S3 lifecycle policy or explicit
-version deletion.
+its earlier versions. A `HEAD` response of `404` can indicate that a delete
+marker is current while older versions still exist. Neither this check nor a
+successful purge and its `204` response guarantees permanent erasure of scan
+CSV/JSON results or report documents. Permanent erasure requires removing and
+verifying the absence of earlier versions for every inventoried key, for example
+using an S3 lifecycle policy or explicit version deletion.
+
+### Vulnerability scan reports
+
+Reports belong to a scan; a scan can have multiple reports. Let the collection
+URL be
+`/api/v1/certifications/<certification_id>/scans/vulnerabilities/<scan_id>/reports`.
+
+`POST` to the collection requires an authenticated feeder, regardless of the
+scan's team. Other identities, including RemoteCIs and privileged users, receive
+`401`. The body must be an `application/json` object with exactly these six keys:
+
+```json
+{
+  "affectedness": {"affected": true},
+  "cvss": {"score": 7.5},
+  "package": ["openssl"],
+  "rhsa": null,
+  "severity": "High",
+  "summary": {"count": 1}
+}
+```
+
+Each value can be any valid JSON value, including `null`; no document schema is
+imposed. Malformed JSON, missing, duplicate or unexpected keys return `400`, an
+incorrect content type returns `415`, and a body exceeding the global
+`MAX_CONTENT_LENGTH_MB` limit returns `413`. The response is `201` and contains
+metadata only:
+
+```json
+{
+  "vulnerability_scan_report": {
+    "id": "<report_id>",
+    "scan_id": "<scan_id>",
+    "state": "active",
+    "created_at": "<UTC datetime>",
+    "updated_at": "<UTC datetime>"
+  }
+}
+```
+
+`GET` on the collection returns `vulnerability_scan_reports` and `_meta.count`.
+It supports the same pagination, sorting and filters as the scan collection,
+restricted to this scan's active reports. `_meta.count` excludes archived and
+inactive reports. The default report order is `created_at` descending, then `id`
+descending. Explicit sorts add `id` ascending to break ties unless `id` or `-id`
+is already specified. `GET /<report_id>` returns the same report metadata.
+Neither metadata endpoint reads the stored documents. An absent scan or report,
+a certification not matching the scan, a report belonging to a different
+scan, or an archived or inactive scan or report returns `404` without accessing
+storage.
+All report routes use the same certification ID validation as scan routes.
+
+`GET /<report_id>/documents/<name>` returns one document as `application/json`.
+The allowed names are `affectedness`, `cvss`, `package`, `rhsa`, `severity` and
+`summary`. Team members can read report metadata and `summary`; the other five
+documents can only be read by administrators, EPM users and read-only users.
+These privileged roles can also read `summary` and metadata across teams. Role
+checks use the effective identity, including `X-Dci-Team-Id` scoping. Creating a
+report does not grant a feeder read access to another team's scan or report.
+Denied requests return `401` without reading storage; unavailable or corrupt
+documents return `502`. The scan's existing raw CSV and JSON results remain
+accessible to its team and include details such as package, severity and CVSS
+information.
+
+`DELETE /<report_id>` locks the active report, sets its state to `archived` and
+returns `204` after SQL commit without accessing storage. Team members, EPM users
+and administrators can archive a report; a read-only user who belongs to the team
+can also archive it. Its metadata row and all six documents are retained, while
+the report disappears from API reads and listings. A repeated `DELETE` returns
+`404`. SQL errors return the existing database error response; an uncertain
+commit may have archived the report, but its documents are always retained.
+
+Archiving a scan also retains its reports and their documents. Only the global
+scan purge, reserved for admins/EPM, removes the reports and their documents
+together with the archived scan, regardless of each report's state. An archived
+report on an active scan remains stored until that scan is archived and purged.
+A storage failure retains the scan and report metadata so cleanup can be retried
+safely. There is no separate report purge endpoint.
+
+Documents are stored in the logical `certification` container, configured with
+`STORE_CERTIFICATION_CONTAINER`, at
+`certifications/<certification_id>/scans/vulnerabilities/<scan_id>/reports/<report_id>/<name>.json`.
+The certification ID has the same 32-character ASCII limit as scan results.
+The bucket must be private and accessible only to trusted services: API
+permissions cannot prevent direct access to S3 objects. The filesystem storage
+directory must be protected similarly. If upload or serialization fails before
+commit, attempted objects are cleaned up on a best-effort basis. On a creation
+commit error, objects are retained and their paths logged because the commit
+outcome may be unknown. Physical team purges or direct SQL deletions can also leave report
+documents without metadata and require manual cleanup. Reports do not use `ETag`
+or require `If-Match`.
 
 ### Component Type
 
