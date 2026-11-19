@@ -3,9 +3,153 @@
 
 ## Endpoints
 
-The resources of DCI can be accessed through our API in a Restful way. Currently, only the json output format is supported.
+The resources of DCI can be accessed through our API in a Restful way. Responses use JSON unless otherwise documented.
+
+### Vulnerability scans
+
+`POST /api/v1/certifications/<certification_id>/scans/vulnerabilities` accepts
+a raw UTF-8 CSV body with `Content-Type: text/csv`. For example, the body can
+contain:
+
+```csv
+snyk_id,cve_id,package,package_version,rh_severity,rh_cvss,container,container_tag,advisory
+SNYK-1,CVE-1,openssl,1.2,High,7.5,registry/image,latest,RHSA-1
+```
+
+An optional UTF-8 BOM is accepted. The first nonempty CSV record must contain
+exactly these nine headers, in any order: `snyk_id`, `cve_id`, `package`,
+`package_version`, `rh_severity`, `rh_cvss`, `container`, `container_tag`,
+and `advisory`. Header names are case- and space-sensitive. Each subsequent
+row must have the same number of fields and becomes a JSON object with string
+values. Physically empty lines outside quoted fields are ignored, and a header
+without rows produces an empty array.
+
+Missing, unexpected or duplicate headers return `400`, with the sorted names
+for each applicable category in the response's `message`, for example:
+`Missing CSV headers: ['advisory']; unexpected CSV headers: ['extra']`.
+A CSV without a header reports all nine names as missing. Invalid UTF-8 or CSV
+also returns `400`; an incorrect content type returns `415`. This header
+validation applies only to new POSTs; existing scans remain readable.
+The Python CSV reader's default limit applies to each decoded field (131,072
+characters in the project's current environment); exceeding it also returns `400`.
+
+The CSV body is limited to 5 MiB, and the global request limit still applies
+when lower. The converted JSON is also limited to the value configured using
+`MAX_CONTENT_LENGTH_MB`, which defaults to 20 MiB. Exceeding either limit
+returns `413`, before storing the results or creating a scan. CSV decoding,
+JSON serialization and JSON validation during retrieval can still consume more
+memory than the body or the stored result.
+
+Only an authenticated RemoteCI can create a scan; its team owns the scan. The
+URL supplies an external, nonempty certification ID. A certification ID is
+globally unique across teams, so only one scan may exist for each ID. Creating
+a duplicate returns `409` before storing results. Clients must supply simple
+ASCII IDs without percent-escape sequences; the server does not validate this
+format. On success, the response is `201` with metadata:
+
+```json
+{
+  "vulnerability_scan": {
+    "id": "<scan_id>",
+    "team_id": "<team_id>",
+    "certification_id": "<certification_id>",
+    "created_at": "<UTC datetime>",
+    "updated_at": "<UTC datetime>",
+    "status": "new",
+    "results_id": "<results_id>"
+  }
+}
+```
+
+The initial status is `new`; other status strings are not restricted. The
+`updated_at` timestamp is initialized on creation and updated by SQLAlchemy
+when the scan changes. Direct SQL updates do not update it automatically.
+
+`GET /api/v1/certifications/<certification_id>/scans/vulnerabilities` returns
+metadata for that certification only. EPM users, administrators and read-only
+users can see scans from every team; other users see only their own teams'
+scans. The effective team and roles honor `X-Dci-Team-Id`. The response contains
+a `vulnerability_scans` array and `_meta.count`
+with the total number of accessible scans matching the filters, regardless of
+the page. Since the certification ID is unique, the count is at most one. No
+result objects are read from storage.
+
+Pagination remains available even though each collection contains at most one
+scan. `limit` and `offset` must be provided together: `limit` must be a positive
+integer and `offset` a non-negative integer. The default limit is 20 and the
+maximum is 200; larger limits are capped at 200. By default, the order is
+descending by `created_at`, then by scan `id`.
+
+The standard `sort`, `where`, `query`, `created_after` and `updated_after`
+parameters apply to scan metadata. The sortable and filterable fields are
+`id`, `team_id`, `certification_id`, `created_at`, `updated_at`, `status` and
+`results_id`. For
+example, `?where=status:new&sort=-created_at&limit=20&offset=0` lists new
+scans, newest first. `where` takes precedence when both `where` and `query` are
+provided. The date parameters use the common parser; include fractional seconds
+in date values, for example `2026-01-01T00:00:00.000000`. Formats the parser
+cannot interpret may be ignored.
+
+`GET /api/v1/certifications/<certification_id>/scans/vulnerabilities/<scan_id>`
+returns `200` with the same metadata, without reading from storage. The results
+are available separately:
+
+- `GET /api/v1/certifications/<certification_id>/scans/vulnerabilities/<scan_id>/results/json`
+  returns the converted JSON array directly as `application/json`.
+- `GET /api/v1/certifications/<certification_id>/scans/vulnerabilities/<scan_id>/results/csv`
+  returns the original CSV bytes, including any BOM and line endings, as
+  `text/csv`.
+
+Members of the owning team, EPM users, administrators and read-only users can
+read the metadata and either result. An absent scan returns `404`; an
+unavailable result or corrupt JSON returns `502` without affecting metadata
+access. GET and DELETE require both the matching certification ID and scan ID;
+a mismatch returns `404` without accessing storage. The previous URLs without a
+certification ID are no longer supported.
+
+`DELETE` on the scan URL deletes the scan and both result objects and returns
+`204`. Members of the owning team, EPM users and administrators can delete it;
+a read-only user who belongs to the owning team can also delete it. The scan is
+deleted from the database before either object. Both object deletions are
+attempted even if one fails. On a storage failure, the endpoint returns `502`,
+the scan no longer exists, and the logged object paths may require manual
+cleanup. A subsequent GET or DELETE returns `404`. If database deletion fails,
+both objects are left untouched; an uncertain commit outcome may still leave
+them without scan metadata.
+
+The URL's `scan_id` is the metadata `id`. Results are saved in the logical
+`certifications` container under the base path
+`certifications/<encoded_certification_id>/scans/vulnerabilities/<scan_id>/results/<results_id>`:
+the JSON uses the `/json` suffix and the original CSV uses `/csv`. The
+certification ID is URL-encoded as one storage segment: `%` becomes `%25`, and
+the complete IDs `.` and `..` become `%2E` and `%2E%2E`.
+The encoded ID cannot exceed 200 characters; longer IDs return `400` before any
+storage access. URL-encode special characters when sending the ID in a request.
+The API accepts a single path segment; IDs containing `/`, including an encoded
+`%2F`, return `404`. Clients and reverse proxies must preserve `.` or `..` path
+segments; normalizing them makes those IDs inaccessible.
+For HMAC authentication, an ID containing a literal percent-escape sequence
+such as `%2F` can cause an ambiguous or invalid signature.
+Objects at previous paths are not automatically migrated and may require manual
+cleanup.
+
+The unpublished scan migration `d4e3a9c7b821` was modified in place. If it has
+already been applied, changing the migration file does not update the database.
+After verifying there are no scans to retain, downgrade to `7114805` and reapply
+the migration, accounting for any descendant revisions. Downgrading drops the
+scan table and does not remove stored objects; do not do this automatically.
+The bucket is configured with `STORE_CERTIFICATIONS_CONTAINER`, defaults to
+`dci-certifications`, and must remain private. Physically purging a team cascades
+to scan metadata, but does not delete either stored result. PostgreSQL and S3
+operations are not atomic.
+If an error occurs during upload or after uploading results but before attempting
+a POST commit, rollback and cleanup of all attempted objects are performed on a
+best-effort basis. If the commit raises an exception, both objects are retained
+because the commit outcome may be unknown. Failed requests can therefore leave
+objects without scan metadata; their storage paths are logged for manual cleanup.
 
 Each resource provides two endpoints, one for listing: `/<resources>/`, one for fetching a dedicated element: `/<resources>/<resource_id>/`.
+Vulnerability scans do not use `ETag` or require `If-Match`.
 
 On those endpoints we can use some parameters on the GET method to filter, search or complete results.
 
@@ -17,6 +161,10 @@ On the listing endpoint:
 - **limit** parameter is usually used with the offset one in order to paginate results. It will limit the number of resources retrivied, by default it is set to 20 entries, but you can augment that value. Be careful, the more you fetch the longer the http call can be.
 - **offset** parameter is the second pagination parameter, this will indicate at which entry we want to start the listing in the order defined by default or with other parameters.
 - **where** parameter is here to filter the resources according to a field value. In this example we will retrieve the resources which field1 is equal to foo and field2 equal to bar.
+
+Unless an endpoint specifies a different default, listings using these parameters
+are sorted by `created_at` descending, then by `id` descending. An explicit
+`sort` replaces this default.
 
 On the resource endpoint:
 

@@ -205,6 +205,16 @@ def hmac_client_team1(app, team1_remoteci):
 
 
 @pytest.fixture
+def hmac_client_team2(app, team2_remoteci):
+    remoteci = {
+        "id": team2_remoteci["id"],
+        "api_secret": team2_remoteci["api_secret"],
+        "type": "remoteci",
+    }
+    return utils.generate_token_based_client(app, remoteci)
+
+
+@pytest.fixture
 def hmac_client_redhat(app, redhat_remoteci):
     return utils.generate_token_based_client(
         app,

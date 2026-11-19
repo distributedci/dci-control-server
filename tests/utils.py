@@ -98,7 +98,11 @@ def generate_token_based_client(app, resource):
     def client_open_decorator(func):
         def wrapper(*args, **kwargs):
             payload = kwargs.get("data")
-            data = flask.json.dumps(payload) if payload else ""
+            binary_payload = isinstance(payload, bytes)
+            if binary_payload:
+                data = payload
+            else:
+                data = flask.json.dumps(payload) if payload else ""
             url = urlparse(args[0])
             params = dict(parse_qsl(url.query))
             headers = kwargs.get("headers", {})
@@ -117,9 +121,14 @@ def generate_token_based_client(app, resource):
                     },
                 )
             )
-            headers.update({"Content-Type": "application/json"})
+            if not binary_payload:
+                headers.update({"Content-Type": "application/json"})
+            elif not kwargs.get("content_type") and not any(
+                key.lower() == "content-type" for key in headers.keys()
+            ):
+                headers["Content-Type"] = "application/json"
             kwargs["headers"] = headers
-            if data:
+            if data or binary_payload:
                 kwargs["data"] = data
             response = func(*args, **kwargs)
             content_type = response.headers.get("Content-Type")
