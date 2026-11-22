@@ -23,6 +23,7 @@ from dci.api import v1 as api_v1
 from dci.api import v2 as api_v2
 from dci.common import exceptions
 from dci.common import utils
+from dci.common import vulnerability_scans
 from dci.common.redis_client import RedisClient
 from dci import dci_kombu
 from dci.db import models2
@@ -104,6 +105,7 @@ def werkzeug_logger_to_error():
 def create_app(param=None):
     werkzeug_logger_to_error()
     configure_root_logger()
+    vulnerability_scans.configure_csv_limits(dci_config.CONFIG["MAX_CSV_SIZE"])
 
     dci_app = DciControlServer()
 

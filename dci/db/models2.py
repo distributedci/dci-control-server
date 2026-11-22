@@ -670,6 +670,35 @@ class File(dci_declarative.Mixin, Base):
     )
 
 
+class VulnerabilityScan(dci_declarative.Mixin, Base):
+    __tablename__ = "vulnerability_scans"
+    __table_args__ = (
+        sa.Index("vulnerability_scans_team_id_idx", "team_id"),
+        sa.Index("vulnerability_scans_certification_id_idx", "certification_id"),
+        sa.Index(
+            "vulnerability_scans_state_created_at_id_idx", "state", "created_at", "id"
+        ),
+    )
+
+    id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=utils.gen_uuid)
+    team_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    certification_id = sa.Column(sa.String(), nullable=False)
+    name = sa.Column(sa.String(), nullable=False)
+    state = sa.Column(STATES, nullable=False, default="active", server_default="active")
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
+    updated_at = sa.Column(
+        sa.DateTime(),
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
+        nullable=False,
+    )
+    results_id = sa.Column(pg.UUID(as_uuid=True), nullable=False)
+
+
 class JobEvent(dci_declarative.Mixin, Base):
     __tablename__ = "jobs_events"
     __table_args__ = (sa.Index("jobs_events_job_id_idx", "job_id"),)
