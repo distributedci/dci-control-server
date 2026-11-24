@@ -44,21 +44,21 @@ class FileSystem(stores.Store):
             if e.errno == errno.ENOENT:
                 logger.warn("file %s not found in local filesystem" % file_path)
                 return
-            raise exceptions.StoreExceptions(
+            raise exceptions.StoreException(
                 "Error while deleting file " "%s: %s" % (filename, str(e)),
                 status_code=status_code,
             )
 
-    def get(self, container_name, filename):
+    def get(self, container_name, filename, binary=False):
         root_directory = self._get_root_directory(container_name)
         file_path = os.path.join(root_directory, filename)
         try:
-            return ([], open(file_path, "r"))
+            return ([], open(file_path, "rb" if binary else "r"))
         except IOError as e:
             status_code = 400
             if e.errno == errno.ENOENT:
                 status_code = 404
-            raise exceptions.StoreExceptions(
+            raise exceptions.StoreException(
                 "Error while accessing file " "%s: %s" % (filename, str(e)),
                 status_code=status_code,
             )

@@ -66,6 +66,9 @@ STORE_ENGINE = os.getenv("STORE_ENGINE", S3_STORE)
 # Generic store
 STORE_FILES_CONTAINER = os.getenv("STORE_FILES_CONTAINER", "dci-files")
 STORE_COMPONENTS_CONTAINER = os.getenv("STORE_COMPONENTS_CONTAINER", "dci-components")
+STORE_CERTIFICATION_CONTAINER = os.getenv(
+    "STORE_CERTIFICATION_CONTAINER", "certification"
+)
 
 
 # S3/minio Store
@@ -96,6 +99,9 @@ X_HEADERS = (
     "Authorization, Content-Type, If-Match, ETag, X-Requested-With, X-Dci-Team-Id"
 )
 MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH_MB", "20")) * 1024 * 1024
+MAX_CSV_SIZE = min(
+    int(os.getenv("MAX_CSV_SIZE_MB", "5")) * 1024 * 1024, MAX_CONTENT_LENGTH
+)
 
 FILES_UPLOAD_FOLDER = os.getenv(
     "FILES_UPLOAD_FOLDER", "/var/lib/dci-control-server/files"

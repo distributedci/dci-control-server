@@ -3,7 +3,7 @@
 
 ## Endpoints
 
-The resources of DCI can be accessed through our API in a Restful way. Currently, only the json output format is supported.
+The resources of DCI can be accessed through our API in a Restful way. Unless otherwise documented, resources use JSON.
 
 Each resource provides two endpoints, one for listing: `/<resources>/`, one for fetching a dedicated element: `/<resources>/<resource_id>/`.
 
@@ -92,6 +92,139 @@ You can use the comparison functions `gt` (greater than), `ge` (greater or equal
 `and(<op1>(...),<op2>(...))`, `or(<op1>(...),<op2>(...))` and `not(<op>)` allow to build nested boolean queries.
 
 `null(<field>)` to lookup resources with a `field` having a `NULL` value.
+
+### Vulnerability scans
+
+Vulnerability scans are scoped by a certification identifier. Let `C` be
+`/api/v1/certifications/<certification_id>/scans/vulnerabilities`. A certification
+can have multiple scans, including scans owned by different teams. Scan IDs,
+team IDs, and results IDs are UUIDs; the certification ID is not a foreign key.
+After URL decoding, the certification ID must contain 1 to 32 ASCII letters
+(`A-Z`, `a-z`), digits (`0-9`), hyphens (`-`), or underscores (`_`). Allowed
+characters may be URL-encoded. A slash,
+including `%2F`, does not match the route and returns `404`; other disallowed
+characters, including a decoded percent (`%25`), and IDs longer than 32
+characters return `400` after authentication. Existing IDs that do not meet
+these rules are also rejected by routes containing a certification ID.
+
+| Method and route | Behavior |
+| --- | --- |
+| `POST C` | Create a scan; returns `201` and `{"vulnerability_scan": {...}}`. |
+| `GET /api/v1/certifications/scans/vulnerabilities` | List accessible active scans across all certifications; returns `{"vulnerability_scans": [...], "_meta": {"count": ...}}`. |
+| `GET C` | List accessible active scans for the certification; returns `{"vulnerability_scans": [...], "_meta": {"count": ...}}`. |
+| `GET C/<scan_id>` | Return active scan metadata as `{"vulnerability_scan": {...}}`. |
+| `GET C/<scan_id>/results/csv` | Return the original CSV bytes as `text/csv`. |
+| `GET C/<scan_id>/results/json` | Return converted results as `application/json`. |
+| `DELETE C/<scan_id>` | Archive the scan and return `204`; no `If-Match` header is required. |
+| `GET /api/v1/certifications/scans/vulnerabilities/purge` | List archived scans and their count; EPM or super-admin only. |
+| `POST /api/v1/certifications/scans/vulnerabilities/purge` | Purge archived scans; returns `204` on success or `500` on failure; EPM or super-admin only. |
+
+The certification ID must match the scan for metadata, results, and archival.
+Archived and inactive scans are not available through ordinary read or delete
+routes. Team members and read-only identities may read a scan's metadata and
+results. Read-only identities may read scans from any team. Archiving requires
+membership in the scan's team; non-members receive `401`. Read-only identities
+may archive scans in their own teams, even with a single team. Membership is
+determined by `Identity`, which treats EPM and super-admin identities as members
+of every team. Effective membership accounts for `X-Dci-Team-Id`.
+Both ordinary listings share the same visibility rules: EPM, super-admins,
+and read-only identities can list active scans from all teams;
+other identities see only their effective teams' scans. The global listing
+covers all certifications; `GET C` restricts the results to one certification.
+Listing archived scans for purge and purging them cover all teams and are
+reserved for EPM and super-admins.
+The purge endpoint has no team filter.
+Metadata contains `id`, `team_id`, `certification_id`, `name`, `state`,
+`created_at`, `updated_at`, and `results_id`.
+
+Only a RemoteCI can create a scan, which is owned by that RemoteCI's team. Send
+the raw CSV in the request body with `Content-Type: text/csv` and a non-empty
+`DCI-NAME` header. Sign the original body and request path using the existing
+RemoteCI HMAC mechanism. The CSV must be UTF-8 (a UTF-8 BOM is accepted) and at
+most `MAX_CSV_SIZE` bytes. Set the `MAX_CSV_SIZE_MB` environment variable to
+configure this limit in MiB; the default is **5 MiB** (5,242,880 bytes). The
+effective setting is capped by the application-wide `MAX_CONTENT_LENGTH_MB`, and
+the upload size is checked before authentication.
+The CSV must contain exactly these nine headers, in any order:
+
+```
+snyk_id,cve_id,package,package_version,rh_severity,rh_cvss,container,container_tag,advisory
+```
+
+Each result is converted to a JSON object with string values, including empty
+strings. Missing, extra, and duplicate headers are reported in the error
+payload as `missing_headers`, `unexpected_headers`, and `duplicate_headers`.
+Invalid UTF-8, malformed CSV, and rows with the wrong number of fields return
+`400`; an unsupported content type returns `415`; a body over the limit returns
+`413`. Validation completes before any objects are stored.
+
+Both listings support `sort`, `limit`, `offset`, `where`, `query`, `created_after`,
+and `updated_after` as described above. `limit` and `offset` must be supplied
+together; the default limit is 20 and the maximum is 200. If both `where` and
+`query` are supplied, `where` takes precedence. `_meta.count` is the filtered,
+accessible total before pagination. Scans with equal sort values are ordered by
+ascending ID before pagination.
+
+The logical S3 container is `certification` (bucket name `certification` by
+default, configurable with `STORE_CERTIFICATION_CONTAINER`). Results are stored
+without a leading slash under
+`certifications/{certification_id}/scans/vulnerabilities/{scan_id}/results/{results_id}/csv`
+and the corresponding `/json` key. When an upload fails before SQL commit, the
+transaction is rolled back and attempted objects are cleaned up. If the commit
+outcome is uncertain, objects are retained and their paths are logged. Any
+cleanup failures are logged as well.
+
+Purging locks and processes one archived scan at a time, deleting both objects
+before its SQL row. If storage deletion fails, the row is retained and the purge
+continues with the other scans. A failed rollback or SQL operation stops the
+purge immediately. A `500` response includes `payload.failed_scan_ids` with the
+IDs of failed scans, including the current scan on an SQL failure when known.
+An SQL commit error may leave the commit outcome uncertain, even for an ID in
+that list; retrying is safe if an object or row has already been removed. Scans
+archived concurrently behind the purge cursor may wait until the next request.
+
+A team purge cascades to its scan rows without deleting their stored results.
+To clean up only one team's results, first suspend new uploads from its
+RemoteCIs and let their in-flight HTTP requests finish. This is an operator
+action; archiving the team does not cancel already authenticated requests.
+Keep uploads suspended until cleanup and the team purge are complete. Before
+purging the team, export an inventory of all its scans, regardless of state,
+from PostgreSQL before the cascade removes that metadata (replace `<team-id>`
+with the team's UUID):
+
+```sql
+SELECT id, state, certification_id, results_id,
+       format('certifications/%s/scans/vulnerabilities/%s/results/%s/csv',
+              certification_id, id, results_id) AS csv_key,
+       format('certifications/%s/scans/vulnerabilities/%s/results/%s/json',
+              certification_id, id, results_id) AS json_key
+FROM vulnerability_scans
+WHERE team_id = '<team-id>';
+```
+
+Save this inventory before purging the team. After the team purge, confirm that
+its transaction committed and, from a fresh SQL transaction, verify that no scan
+rows remain for the team:
+
+```sql
+SELECT count(*) FROM vulnerability_scans WHERE team_id = '<team-id>';
+```
+
+The count must be zero before deleting any inventoried objects. If the purge
+fails or its outcome is uncertain, keep the objects until their scan rows are
+confirmed deleted. Then use the saved inventory to remove only that team's S3
+objects. After cleanup, run
+`aws s3api head-object --bucket <certification-bucket> --key <inventoried-key>`
+for each CSV and JSON key: each must report `404`; an access error does not
+confirm deletion. A certification can contain scans from several teams, so
+never delete its entire prefix to clean up a single team's results. Filesystem
+storage is used only for tests, whose temporary directory is removed afterward.
+
+In a versioned S3 bucket, deleting an object creates a delete marker and retains
+its earlier versions. A successful purge and its `204` response therefore do
+not guarantee permanent erasure of the CSV and JSON results. Earlier versions
+must be removed separately, for example by an S3 lifecycle policy or explicit
+version deletion.
 
 ### Component Type
 

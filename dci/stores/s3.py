@@ -75,7 +75,8 @@ class S3(stores.Store):
         try:
             self.s3.delete_object(Bucket=bucket, Key=filename)
         except ClientError as e:
-            if int(e.response["Error"]["Code"]) == 404:
+            error_code = str(e.response["Error"]["Code"])
+            if error_code in ("404", "NoSuchKey", "NotFound"):
                 logger.warning(
                     "file '%s' not found in s3 bucket '%s'" % (filename, bucket)
                 )
@@ -83,10 +84,12 @@ class S3(stores.Store):
             raise exceptions.StoreException(
                 "Error while deleting file '%s'from bucket '%s': %s"
                 % (filename, bucket, e),
-                status_code=e.response["Error"]["Code"],
+                status_code=e.response.get("ResponseMetadata", {}).get(
+                    "HTTPStatusCode", 500
+                ),
             )
 
-    def get(self, container_name, filename):
+    def get(self, container_name, filename, binary=False):
         bucket = self._get_container(container_name)
         try:
             # TODO(fc): try redirect to:
@@ -94,10 +97,19 @@ class S3(stores.Store):
             obj = self.s3.get_object(Bucket=bucket, Key=filename)
             return obj, obj["Body"]
         except ClientError as e:
+            logger.exception("Failed to get file %r from bucket %r", filename, bucket)
+            error_code = str(e.response["Error"]["Code"])
+            if error_code == "NoSuchBucket":
+                status_code = 500
+            elif error_code in ("404", "NoSuchKey", "NotFound"):
+                status_code = 404
+            else:
+                status_code = int(
+                    e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", 500)
+                )
             raise exceptions.StoreException(
-                "Error while getting file '%s': %s" % (filename, e),
-                status_code=e.response["Error"]["Code"],
-            )
+                "Failed to retrieve stored object", status_code=status_code
+            ) from e
 
     def get_presigned_url(self, method, container_name, filepath):
         bucket = self._get_container(container_name)
