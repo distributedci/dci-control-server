@@ -130,6 +130,7 @@ def main():
         conf = dci_config.CONFIG
         db_uri = conf["SQLALCHEMY_DATABASE_URI"]
         redis_url = conf.get("DCI_REDIS_URL")
+        redis_ca_cert = conf.get("DCI_REDIS_CA_CERT")
 
         if not redis_url:
             logger.error("DCI_REDIS_URL not configured, cannot sync auth data")
@@ -137,7 +138,7 @@ def main():
 
         # Initialize Redis client
         logger.info(f"Connecting to Redis at {redis_url}")
-        redis_client = RedisClient(redis_url)
+        redis_client = RedisClient(redis_url, redis_ca_cert)
 
         if not redis_client.is_available():
             logger.error("Redis is not available, cannot sync auth data")

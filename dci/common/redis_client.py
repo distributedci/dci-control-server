@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class RedisClient:
     """Redis client for tracking authentication events."""
 
-    def __init__(self, redis_url):
+    def __init__(self, redis_url, redis_ca_cert=None):
         """Initialize Redis client with connection URL.
 
         Args:
@@ -38,7 +38,12 @@ class RedisClient:
 
         if redis_url:
             try:
-                self._client = redis.from_url(redis_url, decode_responses=True)
+                redis_kwargs = {
+                    "decode_responses": True,
+                }
+                if redis_url.startswith("rediss://") and redis_ca_cert:
+                    redis_kwargs["ssl_ca_certs"] = redis_ca_cert
+                self._client = redis.from_url(redis_url, **redis_kwargs)
                 # Test connection
                 self._client.ping()
                 logger.info(f"Redis client initialized successfully: {redis_url}")

@@ -123,6 +123,7 @@ REQUESTS_TIMEOUT = (
 
 # Redis connection for authentication tracking
 DCI_REDIS_URL = os.getenv("DCI_REDIS_URL", "redis://localhost:6379/0")
+DCI_REDIS_CA_CERT = os.getenv("DCI_REDIS_CA_CERT", None)
 
 # RemoteCI inactivity threshold (in days)
 REMOTECI_INACTIVITY_DAYS = int(os.getenv("REMOTECI_INACTIVITY_DAYS", "90"))
