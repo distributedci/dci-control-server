@@ -13,6 +13,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import uuid
+
 from dci.common import signature
 from dci.common import utils
 from dci.common import time
@@ -747,3 +749,23 @@ class Pipeline(dci_declarative.Mixin, Base):
     )
     team = sa_orm.relationship("Team")
     state = sa.Column(STATES, default="active")
+
+
+class VulnerabilityScanReport(dci_declarative.Mixin, Base):
+    __tablename__ = "vulnerability_scan_reports"
+    __table_args__ = (sa.Index("vulnerability_scan_reports_scan_id_idx", "scan_id"),)
+
+    id = sa.Column(pg.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    scan_id = sa.Column(
+        pg.UUID(as_uuid=True),
+        sa.ForeignKey("vulnerability_scans.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    state = sa.Column(STATES, nullable=False, default="active", server_default="active")
+    created_at = sa.Column(sa.DateTime(), default=time.get_utc_now, nullable=False)
+    updated_at = sa.Column(
+        sa.DateTime(),
+        onupdate=time.get_utc_now,
+        default=time.get_utc_now,
+        nullable=False,
+    )
